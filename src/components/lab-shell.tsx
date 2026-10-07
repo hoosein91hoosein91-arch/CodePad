@@ -11,7 +11,9 @@ import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
 import { isPythonWarm, runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
 import { LANG_META, LANG_ORDER, type Lang, type TermLine, type TermStream } from "@/labshell/types";
-import { CodeEditor, editHistory, hotkeys, insertAtCursor, moveCursor } from "@/components/code-editor";
+import { CodeEditor, editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/code-editor";
+import { ThemePanel } from "@/components/theme-panel";
+import { runShell } from "@/labshell/shell";
 import { MachineView } from "@/components/machine-view";
 
 const iconBtn =
@@ -88,6 +90,7 @@ export function LabShell() {
   const [menu, setMenu] = useState(false);
   const [composer, setComposer] = useState<"file" | "project" | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shellInput, setShellInput] = useState("");
   const [liveCss, setLiveCss] = useState(cssFile?.content ?? "");
   const [scene, setScene] = useState<(FarsiPage & { lines: string[] }) | null>(null);
   const [machine, setMachine] = useState<MachineSnap | null>(null);
@@ -425,6 +428,7 @@ export function LabShell() {
           </p>
           <p className="truncate text-sm font-semibold leading-tight">{project.name}</p>
         </div>
+        <ThemePanel />
         <button type="button" className={iconBtn} aria-label="بازگردانی" onClick={() => editHistory("undo")}>
           <Undo2 className="size-5" />
         </button>
@@ -568,6 +572,32 @@ export function LabShell() {
               ))}
             </div>
           )}
+          {panel === "out" ? (
+            <form
+              className="flex shrink-0 items-center gap-2 border-t border-line px-3"
+              dir="ltr"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const text = shellInput.trim();
+                setShellInput("");
+                if (!text) return;
+                const out = runShell(text, () => hotkeys.run());
+                pushLines([termLine("cmd", `$ ${text}`), ...out.map((row) => termLine("out", row))]);
+              }}
+            >
+              <span className="font-mono text-lime">$</span>
+              <input
+                value={shellInput}
+                onChange={(event) => setShellInput(event.target.value)}
+                placeholder="help"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                aria-label="ترمینال"
+                className="h-11 min-w-0 flex-1 bg-transparent font-mono text-sm text-paper outline-none"
+              />
+            </form>
+          ) : null}
         </section>
       </div>
       <div className="pb-safe flex min-w-0 shrink-0 gap-1 overflow-x-auto border-t border-line bg-panel px-2 py-1">
@@ -577,7 +607,8 @@ export function LabShell() {
             type="button"
             className={`h-11 shrink-0 rounded-lab bg-panel-2 px-3 text-sm text-paper ${/[\u0600-\u06FF]/.test(key.label) ? "font-sans" : "min-w-11 font-mono"}`}
             onClick={() => {
-              if ("move" in key && key.move) moveCursor(key.move);
+              if (key.label === "Tab") pressTab();
+              else if ("move" in key && key.move) moveCursor(key.move);
               else if (key.insert) insertAtCursor(key.insert);
             }}
           >

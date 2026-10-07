@@ -4,7 +4,7 @@ import type { RunResult } from "@/labshell/runtime";
 
 export type MixKind = "python" | "javascript" | "jib" | "farsi" | "c" | "cpp" | "binary" | "css";
 
-export type MixBlock = { kind: MixKind; code: string; line: number };
+export type MixBlock = { kind: MixKind; code: string; line: number; auto?: boolean };
 
 export const MIX_NAMES: Record<MixKind, string> = {
   python: "پایتون",
@@ -28,11 +28,25 @@ const ALIASES: Record<string, MixKind> = {
   css: "css", "سی‌اس‌اس": "css", "استایل": "css",
 };
 
-function kindOf(word: string): MixKind | null {
+export function kindOf(word: string): MixKind | null {
   return ALIASES[word.trim().toLowerCase().replace(/\s+/g, "_")] ?? ALIASES[word.trim().toLowerCase()] ?? null;
 }
 
 export type MixParse = { blocks: MixBlock[]; error?: string };
+
+// تشخیص خودکار زبان از روی خود کد (وقتی بالای کد «@@ نام» نیامده یا نام ناشناخته است)
+export function detectKind(code: string): MixKind {
+  const src = code.replace(/^\s*(#|\/\/).*$/gm, "").trim();
+  if (!src) return "jib";
+  if (/^[01\s]+$/.test(src)) return "binary";
+  if (/^\s*#\s*include\b/m.test(code)) return /iostream|std::|\bcout\b|\bclass\b|using\s+namespace/.test(code) ? "cpp" : "c";
+  if (!/^\s*(page|صفحه)\b/m.test(src) && /^[^\n{};]+\{\s*[a-z-]+\s*:[^{}]*;/m.test(src) && !/\b(let|fn|function|const|var)\b/.test(src)) return "css";
+  if (/^\s*(def |class |import |from \S+ import |elif\b)|^\s*(if|for|while|else|try|except|with)\b[^\n{]*:\s*$/m.test(src)) return "python";
+  if (/[\u0600-\u06FF]/.test(src.replace(/"[^"\n]*"|'[^'\n]*'/g, ""))) return "farsi";
+  if (/\bfn\b|\bfor\s+\w+\s+from\b|^\s*page\s*\{/m.test(src)) return "jib";
+  if (/\b(const|var|function)\b|console\.|document\.|=>|;\s*$/m.test(src)) return "javascript";
+  return "jib";
+}
 
 export function parseMix(source: string): MixParse {
   const rows = source.replace(/\r\n?/g, "\n").split("\n");
@@ -40,11 +54,10 @@ export function parseMix(source: string): MixParse {
   let current: MixBlock | null = null;
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const head = row.match(/^\s*@@\s*([^:\s][^:]*?)\s*(?::\s?(.*))?$/);
+    const head = row.match(/^\s*@@\s*([^:]*?)\s*(?::\s?(.*))?$/);
     if (head) {
       const kind = kindOf(head[1]);
-      if (!kind) return { blocks, error: `خط ${i + 1}: زبان «${head[1]}» شناخته نشد. نمونه‌ها: پایتون، جاوااسکریپت، جیب، سی، سی‌پلاس، ماشین، سی‌اس‌اس` };
-      current = { kind, code: "", line: i + 1 };
+      current = { kind: kind ?? "jib", code: "", line: i + 1, auto: !kind };
       blocks.push(current);
       if (head[2] !== undefined) {
         current.code = head[2] + "\n";
@@ -54,10 +67,12 @@ export function parseMix(source: string): MixParse {
     }
     if (current) current.code += row + "\n";
     else if (row.trim() && !row.trim().startsWith("#")) {
-      return { blocks, error: `خط ${i + 1}: بالای هر کد باید نام زبان بیاید، مثلاً «@@ پایتون»` };
+      current = { kind: "jib", code: row + "\n", line: i + 1, auto: true }; // بدون نام زبان: خودکار
+      blocks.push(current);
     }
   }
-  if (blocks.length === 0) return { blocks, error: "هیچ بلوکی پیدا نشد. با «@@ پایتون» یا «@@ جاوااسکریپت» شروع کن." };
+  for (const b of blocks) if (b.auto) b.kind = detectKind(b.code);
+  if (blocks.length === 0) return { blocks, error: "فایل خالی است. کد را بنویس؛ نام زبان لازم نیست." };
   return { blocks };
 }
 
@@ -123,7 +138,7 @@ export async function runMix(
   const out: string[] = [];
   const result: RunResult = { stdout: "", stderr: "", aborted: false };
   for (const block of parsed.blocks) {
-    const title = `── ${MIX_NAMES[block.kind]} (خط ${block.line}) ──`;
+    const title = `── ${MIX_NAMES[block.kind]}${block.auto ? " · تشخیص خودکار" : ""} (خط ${block.line}) ──`;
     onBlock?.(title);
     out.push(title);
     let r: RunResult;

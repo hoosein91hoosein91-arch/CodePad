@@ -1,4 +1,4 @@
-import { closeBrackets } from "@codemirror/autocomplete";
+import { acceptCompletion, autocompletion, closeBrackets, snippetCompletion, type Completion, type CompletionContext } from "@codemirror/autocomplete";
 import { cpp } from "@codemirror/lang-cpp";
 import { css } from "@codemirror/lang-css";
 import { javascript } from "@codemirror/lang-javascript";
@@ -32,6 +32,8 @@ import { useEffect, useRef } from "react";
 import { FARSI_KEYWORDS } from "@/labshell/farsi";
 import { ENGLISH_KEYWORDS } from "@/labshell/english";
 import type { Lang } from "@/labshell/types";
+import { detectKind, kindOf } from "@/labshell/mix";
+import { useTheme } from "@/labshell/theme";
 
 const highlight = HighlightStyle.define([
   { tag: tags.keyword, color: "var(--color-lime)" },
@@ -87,7 +89,7 @@ function themeFor(rtl: boolean) {
     ".cm-scroller": {
       overflow: "auto",
       fontFamily: rtl ? 'Vazirmatn, "JetBrains Mono", ui-monospace, monospace' : "var(--font-mono)",
-      fontSize: "1rem",
+      fontSize: "var(--editor-font-size, 16px)",
       lineHeight: rtl ? "1.75" : "1.55",
     },
     ".cm-content": { padding: "0.75rem 0" },
@@ -169,6 +171,66 @@ function languageOf(lang: Lang) {
   return cpp();
 }
 
+const split = (s: string) => s.split(" ");
+const WORDS: Record<string, string[]> = {
+  python: split("def class return if elif else for while in import from as try except finally with lambda yield pass break continue print len range input int str float list dict set tuple open enumerate zip map sorted True False None and or not is"),
+  javascript: split("const let var function return if else for while of in switch case break continue class new this async await try catch throw import export console.log document.getElementById addEventListener JSON.stringify JSON.parse Math.floor setTimeout true false null undefined"),
+  c: split("int float double char void long unsigned struct return if else for while do switch case break continue include define printf scanf main sizeof const static"),
+  cpp: split("int float double char void long bool struct return if else for while do switch case break continue include cout cin endl std string vector using namespace class public private const static auto"),
+  css: split("color background background-color font-size font-family margin padding border border-radius display flex grid align-items justify-content width height position top left right bottom opacity transform transition animation box-shadow text-align gap"),
+  farsi: [...FARSI_KEYWORDS],
+  english: [...ENGLISH_KEYWORDS],
+};
+const SNIPPETS: Record<string, Completion[]> = {
+  english: [
+    snippetCompletion("fn ${name}(${args}) {\n  ${}\n}", { label: "fn", detail: "function", boost: 3 }),
+    snippetCompletion("if ${cond} {\n  ${}\n}", { label: "if", detail: "branch", boost: 3 }),
+    snippetCompletion("for ${i} from ${1} to ${10} {\n  ${}\n}", { label: "for", detail: "loop", boost: 3 }),
+  ],
+  farsi: [
+    snippetCompletion("تابع ${نام}(${ورودی}) {\n  ${}\n}", { label: "تابع", detail: "تابع", boost: 3 }),
+    snippetCompletion("اگر ${شرط} {\n  ${}\n}", { label: "اگر", detail: "شرط", boost: 3 }),
+    snippetCompletion("برای ${i} از ${1} تا ${10} {\n  ${}\n}", { label: "برای", detail: "حلقه", boost: 3 }),
+  ],
+  python: [snippetCompletion("def ${name}(${args}):\n    ${}", { label: "def", detail: "function", boost: 3 }), snippetCompletion("for ${i} in range(${10}):\n    ${}", { label: "for", detail: "loop", boost: 3 })],
+  javascript: [snippetCompletion("function ${name}(${args}) {\n  ${}\n}", { label: "function", detail: "function", boost: 3 })],
+};
+const KIND_LANG = { python: "python", javascript: "javascript", jib: "english", farsi: "farsi", c: "c", cpp: "cpp", binary: "binary", css: "css" } as const;
+
+function mixKindAt(text: string): Lang {
+  const m = [...text.matchAll(/^\s*@@\s*([^:\n]*)/gm)].pop();
+  const kind = (m ? kindOf(m[1]) : null) ?? detectKind(m ? text.slice((m.index ?? 0) + m[0].length) : text);
+  return KIND_LANG[kind];
+}
+
+// پیشنهاد کد: کلیدواژه‌های زبان فعلی + قالب‌ها + واژه‌هایی که خودت در فایل نوشته‌ای
+function completer(lang: Lang) {
+  return (ctx: CompletionContext) => {
+    const kind = lang === "mix" ? mixKindAt(ctx.state.doc.sliceString(0, ctx.pos)) : lang;
+    const re = kind === "css" ? /[\w-]+/ : /[\w\u0600-\u06FF\u200c]+/;
+    const w = ctx.matchBefore(re);
+    if (!w && !ctx.explicit) return null;
+    const word = w?.text ?? "";
+    const seen = new Set<string>();
+    const options: Completion[] = [];
+    const add = (c: Completion) => {
+      if (c.label !== word && !seen.has(c.label)) {
+        seen.add(c.label);
+        options.push(c);
+      }
+    };
+    (SNIPPETS[kind] ?? []).forEach(add);
+    (WORDS[kind] ?? []).forEach((label) => add({ label, type: "keyword", boost: 2 }));
+    (ctx.state.doc.toString().match(/[\w\u0600-\u06FF\u200c]{3,}/g) ?? []).forEach((label) => add({ label, type: "variable" }));
+    return { from: w ? w.from : ctx.pos, options, validFor: re };
+  };
+}
+
+export function pressTab() {
+  if (view && !acceptCompletion(view)) insertAtCursor("  ");
+  else view?.focus();
+}
+
 let view: EditorView | null = null;
 
 export const hotkeys = {
@@ -215,6 +277,7 @@ export function CodeEditor({
   onChange: (content: string) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const ac = useTheme((state) => state.autocomplete);
   const onChangeRef = useRef(onChange);
   const contentRef = useRef(content);
   onChangeRef.current = onChange;
@@ -237,6 +300,7 @@ export function CodeEditor({
           indentUnit.of("  "),
           bracketMatching(),
           closeBrackets(),
+          ...(ac ? [autocompletion({ override: [completer(lang)], icons: false })] : []),
           keymap.of([
             {
               key: "Mod-Enter",
@@ -246,6 +310,7 @@ export function CodeEditor({
                 return true;
               },
             },
+            { key: "Tab", run: acceptCompletion },
             indentWithTab,
             ...defaultKeymap,
             ...historyKeymap,
@@ -272,7 +337,7 @@ export function CodeEditor({
       next.destroy();
       if (view === next) view = null;
     };
-  }, [fileId, lang]);
+  }, [fileId, lang, ac]);
 
   return <div ref={host} className="h-full min-h-0 overflow-hidden" dir={lang === "farsi" ? "rtl" : "ltr"} />;
 }
