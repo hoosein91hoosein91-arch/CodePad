@@ -6,6 +6,7 @@ import { compileFarsi, FARSI_BAR, type FarsiPage } from "@/labshell/farsi";
 import { compileEnglish, ENGLISH_BAR } from "@/labshell/english";
 import { BINARY_BAR, runBinary, type MachineSnap } from "@/labshell/binary";
 import { TEMPLATE_CHOICES } from "@/labshell/samples";
+import { buildHtmlDoc, buildMixHtmlDoc } from "@/labshell/html-doc";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
@@ -26,6 +27,7 @@ const MIX_BAR = [
   { label: "@@ جیب", insert: "\n@@ جیب\n" },
   { label: "@@ سی", insert: "\n@@ سی\n" },
   { label: "@@ ماشین", insert: "\n@@ ماشین\n" },
+  { label: "@@ html", insert: "\n@@ html\n" },
 ];
 
 const KEYS: { label: string; insert?: string; move?: "left" | "right" | "up" | "down" }[] = [
@@ -97,6 +99,13 @@ export function LabShell() {
   const [scene, setScene] = useState<(FarsiPage & { lines: string[] }) | null>(null);
   const [machine, setMachine] = useState<MachineSnap | null>(null);
   const token = useRef(0);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const htmlToken = useRef("");
+  const [reload, setReload] = useState(0);
+  const [htmlDoc, setHtmlDoc] = useState("");
+  // صفحهٔ ساخته‌شده از بلوک‌های @@ html در آخرین اجرای فایل ترکیبی
+  const [mixPage, setMixPage] = useState<{ fileId: string; doc: string } | null>(null);
+  const showFrame = file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id);
   const scroller = useRef<HTMLDivElement>(null);
   const wantsInput = file.lang === "mix" || file.lang === "farsi" || file.lang === "english" || file.lang === "binary" || file.lang === "python" || file.lang === "c" || file.lang === "cpp";
 
@@ -108,6 +117,27 @@ export function LabShell() {
     const timer = window.setTimeout(() => setLiveCss(cssFile?.content ?? ""), 80);
     return () => window.clearTimeout(timer);
   }, [cssFile?.content]);
+
+  useEffect(() => {
+    if (file.lang !== "html") return;
+    const timer = window.setTimeout(() => {
+      const fresh = Math.random().toString(36).slice(2);
+      htmlToken.current = fresh;
+      setHtmlDoc(buildHtmlDoc(file.content, project.files, fresh));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [file.lang, file.content, project.files, reload]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { jib?: string; k?: string; t?: unknown } | null;
+      if (!data || typeof data !== "object" || !htmlToken.current || data.jib !== htmlToken.current || typeof data.t !== "string") return;
+      if (event.source !== frameRef.current?.contentWindow) return;
+      useLab.getState().pushLines([termLine(data.k === "error" || data.k === "warn" ? "err" : "out", data.t.slice(0, 2000))]);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
   useEffect(() => {
     const node = scroller.current;
@@ -126,7 +156,7 @@ export function LabShell() {
     const state = useLab.getState();
     const current = activeFile(activeProject(state));
     state.setRunning(true);
-    state.setPanel(current.lang === "css" || current.lang === "binary" ? "stage" : "out");
+    state.setPanel(current.lang === "css" || current.lang === "html" || current.lang === "binary" ? "stage" : "out");
     const intro = [termLine("cmd", current.name)];
     if (current.lang === "farsi") intro.push(termLine("sys", "در حال خواندن جیب فارسی…"));
     if (current.lang === "english") intro.push(termLine("sys", "در حال اجرای جیب…"));
@@ -135,7 +165,7 @@ export function LabShell() {
       intro.push(termLine("sys", "پایتون در حال راه‌اندازی است. اجرای اول چند ثانیه طول می‌کشد."));
     }
     if (current.lang === "javascript" && /\b(document|window)\b/.test(current.content)) {
-      intro.push(termLine("sys", "این اجرا کنسول است نه صفحه. برای صفحه از page { } در جیب استفاده کن."));
+      intro.push(termLine("sys", "این اجرا کنسول است نه صفحه. برای صفحه از فایل html یا page { } در جیب استفاده کن."));
     }
     state.pushLines(intro);
     if (current.lang === "mix") {
@@ -163,12 +193,24 @@ export function LabShell() {
       for (const line of result.stderr.replace(/\s+$/, "").split("\n")) if (line) next.push(termLine("err", line));
       if (!next.length) next.push(termLine("sys", "خروجی‌ای نبود."));
       if (result.machine) setMachine(result.machine);
+      if (result.html) {
+        const fresh = Math.random().toString(36).slice(2);
+        htmlToken.current = fresh;
+        setMixPage({ fileId: current.id, doc: buildMixHtmlDoc(result.html, activeProject(useLab.getState()).files, fresh) });
+      } else setMixPage(null);
       if (result.page) {
         setScene({ ...result.page, title: result.page.title || "جیب", text: result.page.text || "", mark: result.page.mark || "JIB", lines: [] });
       }
       useLab.getState().pushLines(next);
-      useLab.getState().setPanel(result.page || result.machine ? "stage" : "out");
+      useLab.getState().setPanel(result.html || result.page || result.machine ? "stage" : "out");
       useLab.getState().setRunning(false);
+      return;
+    }
+    if (current.lang === "html") {
+      if (token.current !== mine) return;
+      setReload((n) => n + 1);
+      state.pushLines([termLine("sys", "صفحه دوباره بارگذاری شد. خروجی کنسول صفحه همین‌جا نشان داده می‌شود.")]);
+      state.setRunning(false);
       return;
     }
     if (current.lang === "css") {
@@ -254,7 +296,7 @@ export function LabShell() {
 
   function openFile(id: string, lang: Lang) {
     setActiveFile(id);
-    setPanel(lang === "css" || lang === "binary" ? "stage" : "out");
+    setPanel(lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out");
   }
 
   async function copyOutput() {
@@ -555,6 +597,14 @@ export function LabShell() {
           {panel === "stage" ? (
             file.lang === "binary" ? (
               <MachineView snap={machine} />
+            ) : showFrame ? (
+              <iframe
+                ref={frameRef}
+                title="پیش‌نمایش صفحه"
+                sandbox="allow-scripts allow-modals allow-forms"
+                className="min-h-0 w-full flex-1 border-0 bg-white"
+                srcDoc={file.lang === "html" ? htmlDoc : mixPage?.doc}
+              />
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">
                 {machine ? (

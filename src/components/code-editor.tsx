@@ -1,6 +1,7 @@
 import { acceptCompletion, autocompletion, closeBrackets, snippetCompletion, type Completion, type CompletionContext } from "@codemirror/autocomplete";
 import { cpp } from "@codemirror/lang-cpp";
 import { css } from "@codemirror/lang-css";
+import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import {
@@ -158,6 +159,7 @@ function languageOf(lang: Lang) {
   if (lang === "python") return python();
   if (lang === "javascript") return javascript();
   if (lang === "css") return css();
+  if (lang === "html") return html();
   return cpp();
 }
 
@@ -168,6 +170,7 @@ const WORDS: Record<string, string[]> = {
   c: split("int float double char void long unsigned struct return if else for while do switch case break continue include define printf scanf main sizeof const static"),
   cpp: split("int float double char void long bool struct return if else for while do switch case break continue include cout cin endl std string vector using namespace class public private const static auto"),
   css: split("color background background-color font-size font-family margin padding border border-radius display flex grid align-items justify-content width height position top left right bottom opacity transform transition animation box-shadow text-align gap"),
+  html: split("div span p a img ul ol li h1 h2 h3 button input form label section header footer main nav script style link meta title body head html class id href src type onclick"),
   farsi: [...FARSI_KEYWORDS],
   english: [...ENGLISH_KEYWORDS],
 };
@@ -185,7 +188,7 @@ const SNIPPETS: Record<string, Completion[]> = {
   python: [snippetCompletion("def ${name}(${args}):\n    ${}", { label: "def", detail: "function", boost: 3 }), snippetCompletion("for ${i} in range(${10}):\n    ${}", { label: "for", detail: "loop", boost: 3 })],
   javascript: [snippetCompletion("function ${name}(${args}) {\n  ${}\n}", { label: "function", detail: "function", boost: 3 })],
 };
-const KIND_LANG = { python: "python", javascript: "javascript", jib: "english", farsi: "farsi", c: "c", cpp: "cpp", binary: "binary", css: "css" } as const;
+const KIND_LANG = { python: "python", javascript: "javascript", jib: "english", farsi: "farsi", c: "c", cpp: "cpp", binary: "binary", css: "css", html: "html" } as const;
 
 function mixKindAt(text: string): Lang {
   const m = [...text.matchAll(/^\s*@@\s*([^:\n]*)/gm)].pop();

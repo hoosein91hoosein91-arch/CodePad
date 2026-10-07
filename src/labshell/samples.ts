@@ -125,6 +125,34 @@ int main() {
 }
 `;
 
+const HTML = `<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>صفحهٔ من</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; background: #101410; color: #e7f0e4; margin: 0; padding: 1rem; }
+    button { background: #c6f135; border: 0; border-radius: 999px; padding: 0.6rem 1.2rem; font-size: 1rem; }
+    #count { font-size: 2rem; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>سلام دنیا</h1>
+  <p id="count">۰</p>
+  <button id="add">یکی اضافه کن</button>
+  <script>
+    let n = 0;
+    document.getElementById("add").addEventListener("click", () => {
+      n += 1;
+      document.getElementById("count").textContent = n.toLocaleString("fa-IR");
+      console.log("شمارنده:", n);
+    });
+  </script>
+</body>
+</html>
+`;
+
 const CSS = `body {
   margin: 0;
   min-height: 100%;
@@ -302,6 +330,7 @@ export const SAMPLES: Record<Lang, { name: string; stdin: string; content: strin
   c: { name: "main.c", stdin: "12", content: C },
   cpp: { name: "main.cpp", stdin: "", content: CPP },
   css: { name: "theme.css", stdin: "", content: CSS },
+  html: { name: "index.html", stdin: "", content: HTML },
 };
 
 function fileFrom(lang: Lang, id: string): LabFile {
@@ -374,4 +403,5 @@ export const TEMPLATE_CHOICES: { kind: TemplateKind; title: string; detail: stri
   { kind: "c", title: "سی", detail: "printf، حلقه و تابع" },
   { kind: "cpp", title: "سی‌پلاس‌پلاس", detail: "cin و cout" },
   { kind: "css", title: "سی‌اس‌اس", detail: "پیش‌نمایش زنده" },
+  { kind: "html", title: "صفحهٔ وب", detail: "اچ‌تی‌ام‌ال، سی‌اس‌اس و جاوااسکریپت با پیش‌نمایش زنده" },
 ];

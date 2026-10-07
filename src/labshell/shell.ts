@@ -3,12 +3,12 @@ import { createFile, createProject } from "@/labshell/samples";
 import { activeFile, activeProject, useLab } from "@/labshell/store";
 import type { Lang, Project } from "@/labshell/types";
 
-const EXT: Record<string, Lang> = { mix: "mix", fa: "farsi", jib: "english", bit: "binary", py: "python", js: "javascript", c: "c", cpp: "cpp", css: "css" };
+const EXT: Record<string, Lang> = { mix: "mix", fa: "farsi", jib: "english", bit: "binary", py: "python", js: "javascript", c: "c", cpp: "cpp", css: "css", html: "html", htm: "html" };
 
 const HELP = [
   "help                 این راهنما",
   "ls / pwd             فهرست فایل‌ها / مسیر",
-  "cat f / touch f / rm f   خواندن / ساختن / حذف فایل (پسوند: mix fa jib bit py js c cpp css)",
+  "cat f / touch f / rm f   خواندن / ساختن / حذف فایل (پسوند: mix fa jib bit py js c cpp css html)",
   "run [f]  (python f، node f)   اجرای فایل",
   "venv create|ls|activate|deactivate <name>   محیط مجازی جدا",
   "pkg list             زبان‌ها و موتورهای موجود",
@@ -85,7 +85,7 @@ export function runShell(input: string, run: () => void): string[] {
       return ["usage: venv create|ls|activate|deactivate <name>"];
     }
     case "pkg":
-      return ["python (Pyodide)", "javascript", "c, c++ (JSCPP interpreter)", "css", "jib, jib-fa, 0/1 machine", "mix (auto language detection)"];
+      return ["python (Pyodide)", "javascript", "c, c++ (JSCPP interpreter)", "css, html (live preview)", "jib, jib-fa, 0/1 machine", "mix (auto language detection)"];
     case "echo":
       return [args.join(" ")];
     case "date":
