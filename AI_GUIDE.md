@@ -1,8 +1,8 @@
 # CodePad (جیب‌کد) — Guide for AI assistants
 
 This file is for an AI assistant (or a human) **writing programs that run inside the CodePad app**.
-Everything here comes from the source on `main` (CodePad v1.7.0, which adds the **attachments** feature, §2.8: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
-Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works.
+Everything here comes from the source on `main` (CodePad v1.8.0: **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
+Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later.
 If the code changes, re-check the files listed in [§9 Where things live](#9-where-things-live).
 
 > **The three rules that matter most**
@@ -54,6 +54,7 @@ Opening files from outside: you can use the open-file button, Android "Share →
 - **Text files ≤ 1 MB** open as **code files**. Unknown extensions (e.g. `.txt`) open as **mix**, and auto-detection decides the language of each chunk.
 - **Everything else becomes an attachment** (§2.8): images, audio, video, fonts, PDFs, archives, any binary file, and any text file **larger than 1 MB**. There is no size or type limit for attachments.
 - To force a small text file (a `.csv`, a `.json`, even a `.py` used as data) to be an attachment instead of code, add it with **افزودن عکس یا فایل** in the menu.
+- **A pack file (`.jibpack`, §2.9)** opens as a **new project**: its code becomes project files and its images/files become attachments (v1.8.0+).
 
 ### 2.1 Python (`.py`)
 - This is real CPython, but **only the standard library**. Pyodide's extra packages (numpy, pandas, matplotlib…) are **not installed**, and `micropip` cannot fetch them offline. `import numpy` → `ModuleNotFoundError`.
@@ -198,6 +199,38 @@ The user can upload **any file** into the active project: images, CSV/JSON/text 
 **Not available**
 - JavaScript console files (`.js`), C/C++, Jib, Jib Farsi and the binary machine **cannot read attachments**. To use an attachment from JavaScript, put the code in an HTML page or an `@@ js` block that mentions `document` (§3.5).
 - A plain `.css` file previews on a fixed demo card; to see a background image, use an HTML page.
+
+
+### 2.9 Packs (`.jibpack`): code and images in one light file
+A pack is **one text file** that carries code files and attachments together. When the user opens it (open-file button, Share → CodePad, Open with), CodePad creates a **new project** named after the pack, puts the code files in it, stores the images and files as attachments of that project, and says so in the output panel. The user then only presses **اجرا**. Use a pack whenever you hand the user a program that needs images or data files: one file to download instead of several uploads.
+
+Format (plain text, UTF-8):
+```
+@@@ jibpack 1 My project name
+@@@ file snake.mix
+...the code of snake.mix, exactly as in the app...
+@@@ file helper.py
+...more code...
+@@@ asset apple.png
+iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAA...
+...base64, may be split over many lines...
+```
+- The first non-empty line is `@@@ jibpack <version> <project name>` (the version is `1`; the name is optional).
+- `@@@ file NAME` starts a code file: everything up to the next `@@@` line is its content. The file's language comes from its extension (§2). The **first file** is the one that opens.
+- `@@@ asset NAME` starts an attachment: the following lines are its **base64** (whitespace and line breaks are ignored). Any file type works; there is no size limit, but a pack is text, so it grows by about a third: keep images small (e.g. 64×64 sprites, a few KB each).
+- A line that starts with `@@@` is reserved by the format. Do not write one inside code.
+- Names are flat (no folders), like attachments (§2.8). If the user already has a project open, the pack never touches it: it always creates a new project, so file names cannot collide.
+- A pack whose base64 is damaged still opens; the broken assets are listed as errors in the output panel.
+- Pack files use the extension `.jibpack`. A file with another extension (other than image/media/archive extensions) is also treated as a pack if its first non-empty line is `@@@ jibpack`.
+
+How to produce one:
+- With the helper script (Node): put the code files and images in a folder, then run `node scripts/make-pack.mjs <folder> "Project name" > game.jibpack`. Code files (`mix fa jib bit py js mjs c h cpp cc hpp css html htm`) become `@@@ file` sections and every other file becomes an `@@@ asset`.
+- By hand: write the `@@@ file` sections as text and paste each image as base64 (`base64 -w 76 image.png`).
+- Always check the result: the first line is the header, and every image header is `@@@ asset name.ext`.
+
+**Built-in example (v1.8.0+):** menu (☰) → **پروژهٔ تازه** → **مار و سیب (با عکس)** opens the snake-and-apple game as a pack. You get a new project «مار و سیب» with `snake.mix` and four 64×64 sprite attachments (`apple.png`, `head.png`, `body.png`, `grass.png`). Press **اجرا** and the game draws with the images. It works offline, and the images can be replaced by uploading files with the same names.
+- How it works: Python puts the image **names** in `shared["images"]`, and the page JS loads them with `new Image()`. CodePad replaces the names with the images themselves (§2.8). If an image is missing, the game falls back to plain shapes.
+- The pack file itself is in the repository at `src/labshell/packs/snake-images.jibpack` (about 27 KB). Use it as a template for your own packs.
 
 ---
 
@@ -679,11 +712,13 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 7. C/C++: simple C-style code. Input comes from the **ورودی** box.
 8. Use a mobile layout: a viewport fitting about 360 px wide, touch/pointer events (`pointerdown`), and large buttons.
 9. Tell the user: press **اجرا**, then look at **صفحه** (graphics) or **خروجی** (text). Switching tabs restarts a page.
-10. If the program needs the user's images or files: ask for their exact names, use flat names in full literal strings (§2.8), read data in a page with `assetText(...)` (not `fetch`), read data in Python with `open(...)`, and tell the user to upload them first via **افزودن عکس یا فایل**.
+10. To give the user a program together with its images or data, deliver **one `.jibpack`** (§2.9) instead of asking for separate uploads.
+11. If the program needs the user's images or files: ask for their exact names, use flat names in full literal strings (§2.8), read data in a page with `assetText(...)` (not `fetch`), read data in Python with `open(...)`, and tell the user to upload them first via **افزودن عکس یا فایل**.
 
 ## 7. Getting the Android app (APK)
 - Latest release: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest
-- Direct download, v1.7.0 (adds attachments): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.7.0/CodePad.apk
+- Direct download, v1.8.0 (adds `.jibpack` packs and the built-in image snake sample): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.8.0/CodePad.apk
+- v1.7.0 (attachments, no packs): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.7.0/CodePad.apk
 - Previous version, v1.6.0 (no attachments): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.6.0/CodePad.apk
 - Source: https://github.com/hoosein91hoosein91-arch/CodePad
 - Each APK is a **debug build** from GitHub Actions (`./gradlew assembleDebug`). It is not release-signed and is not on Google Play.
@@ -711,6 +746,9 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 | `src/labshell/binary.ts` | 8-bit machine |
 | `src/labshell/open-files.ts` | opening external files, extension map, 1 MB code limit, routing everything else to attachments |
 | `src/labshell/assets.ts` | attachments: IndexedDB storage, add/remove, `data:` URLs for pages |
+| `src/labshell/pack.ts` | `.jibpack` parser: code files + base64 attachments in one text file |
+| `src/labshell/pack-samples.ts`, `src/labshell/packs/*.jibpack` | built-in pack samples shown under **پروژهٔ تازه** (e.g. «مار و سیب (با عکس)») |
+| `scripts/make-pack.mjs` | builds a `.jibpack` from a folder |
 | `src/labshell/asset-refs.ts` | pure helpers: finding and replacing attachment names in code, `assetText`/`assetBytes` page helpers |
 | `src/labshell/samples.ts` | built-in samples and project templates |
 | `src/components/lab-shell.tsx` | UI, Run button, tabs, sandboxed iframe |

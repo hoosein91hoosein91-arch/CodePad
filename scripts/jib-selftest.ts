@@ -3,6 +3,8 @@ import { compileEnglish } from "../src/labshell/english.ts";
 import { compileFarsi } from "../src/labshell/farsi.ts";
 import { SAMPLES } from "../src/labshell/samples.ts";
 import { detectKind, parseMix, runMix } from "../src/labshell/mix.ts";
+import { parsePack } from "../src/labshell/pack.ts";
+import { readFileSync } from "node:fs";
 
 type Page = { title: string; text: string; mark: string; css: string };
 type Snap = { a: number; bits: string; pc: number; steps: number; gloss: string };
@@ -175,5 +177,12 @@ const withShared = await runMix('@@ js\nshared.n = 3\n@@ html\n<p id="n"></p>\n'
 });
 must("mix html shared", withShared.web?.data === '{"n":3}');
 
+// نمونهٔ آمادهٔ «مار و سیب (با عکس)»: بسته باید یک فایل mix و چهار عکس PNG سالم داشته باشد
+const snakePack = parsePack(readFileSync(new URL("../src/labshell/packs/snake-images.jibpack", import.meta.url), "utf8"));
+must("pack parses", !!snakePack && snakePack.problems.length === 0);
+must("pack files", snakePack?.files.map((f) => f.name).join(",") === "snake.mix");
+must("pack assets", snakePack?.assets.map((a) => a.name).sort().join(",") === "apple.png,body.png,grass.png,head.png");
+must("pack pngs", !!snakePack && snakePack.assets.every((a) => a.bytes[0] === 0x89 && a.bytes[1] === 0x50 && a.bytes[2] === 0x4e && a.bytes[3] === 0x47));
+must("pack mix blocks", parseMix(snakePack?.files[0]?.content ?? "").blocks.map((b) => b.kind).join(",") === "python,html,css,javascript");
 if (process.exitCode) process.exit(process.exitCode);
 console.log("ALL PASSED");

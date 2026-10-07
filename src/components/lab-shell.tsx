@@ -9,7 +9,9 @@ import { TEMPLATE_CHOICES } from "@/labshell/samples";
 import { addAssets, assetUrlsFor, loadAssets, readAssetBlob, removeAsset, useAssets, type AssetMeta } from "@/labshell/assets";
 import { formatSize } from "@/labshell/asset-refs";
 import { buildHtmlDoc, buildWebDoc, webText, withAssets } from "@/labshell/html-doc";
-import { listenLaunchFiles, readOpened, takeSharedFiles } from "@/labshell/open-files";
+import { langFromName, listenLaunchFiles, readOpened, takeSharedFiles } from "@/labshell/open-files";
+import { assetFile, parsePack, type Pack } from "@/labshell/pack";
+import { PACK_SAMPLES } from "@/labshell/pack-samples";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
@@ -168,16 +170,37 @@ export function LabShell() {
     if (failed.length) state.pushLines([termLine("err", `ذخیره نشد: ${failed.join("، ")}`)]);
   }, []);
 
+  // «بستهٔ جیب»: هر بسته یک پروژهٔ تازه می‌شود؛ کدها داخل پروژه و عکس‌ها/فایل‌ها پیوست آن
+  // (هم برای فایل .jibpack که باز می‌شود و هم برای نمونه‌های آمادهٔ منوی «پروژهٔ تازه»)
+  const openPack = useCallback(async (pack: Pack) => {
+    const state = useLab.getState();
+    if (!pack.files.length) {
+      state.pushLines([termLine("err", `بستهٔ «${pack.name}» فایل کد نداشت.`)]);
+      return;
+    }
+    const projectId = state.importProject(
+      pack.name,
+      pack.files.map((item) => ({ name: item.name, lang: langFromName(item.name), content: item.content })),
+    );
+    const saved = await addAssets(projectId, pack.assets.map(assetFile));
+    state.pushLines([
+      termLine("sys", `بستهٔ «${pack.name}» باز شد: ${pack.files.length} فایل کد و ${saved.added.length + saved.replaced.length} پیوست. برای دیدن نتیجه «اجرا» را بزن.`),
+    ]);
+    const bad = [...pack.problems, ...saved.failed];
+    if (bad.length) state.pushLines([termLine("err", `در بسته ذخیره نشد: ${bad.join("، ")}`)]);
+  }, []);
+
   const bringIn = useCallback(async (files: File[]) => {
     if (!files.length) return;
-    const { opened, assets } = await readOpened(files);
+    const { opened, assets, packs } = await readOpened(files);
     const state = useLab.getState();
+    for (const pack of packs) await openPack(pack);
     if (opened.length) {
       state.importFiles(opened);
       state.pushLines([termLine("sys", `${opened.length} فایل باز شد: ${opened.map((item) => item.name).join("، ")}`)]);
     }
     if (assets.length) await attach(assets);
-  }, [attach]);
+  }, [attach, openPack]);
   const scroller = useRef<HTMLDivElement>(null);
   const wantsInput = file.lang === "mix" || file.lang === "farsi" || file.lang === "english" || file.lang === "binary" || file.lang === "python" || file.lang === "c" || file.lang === "cpp";
 
@@ -498,6 +521,22 @@ export function LabShell() {
                         >
                           <span className="text-sm">{choice.title}</span>
                           <span className="text-xs text-mist">{choice.detail}</span>
+                        </button>
+                      ))}
+                      {PACK_SAMPLES.map((sample) => (
+                        <button
+                          key={`pack-${sample.id}`}
+                          type="button"
+                          className="flex min-h-11 flex-col items-start justify-center rounded-lab bg-ink px-3 py-2 text-start"
+                          onClick={() => {
+                            setComposer(null);
+                            setMenu(false);
+                            const pack = parsePack(sample.text);
+                            if (pack) void openPack(pack);
+                          }}
+                        >
+                          <span className="text-sm">{sample.title}</span>
+                          <span className="text-xs text-mist">{sample.detail}</span>
                         </button>
                       ))}
                     </div>

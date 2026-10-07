@@ -29,6 +29,7 @@ type LabState = {
   updateStdin: (stdin: string) => void;
   addFile: (lang: Lang) => void;
   importFiles: (items: { name: string; lang: Lang; content: string }[]) => void;
+  importProject: (name: string, items: { name: string; lang: Lang; content: string }[]) => string;
   removeFile: (id: string) => void;
   addProject: (kind: TemplateKind) => void;
   removeProject: (id: string) => void;
@@ -146,6 +147,26 @@ export const useLab = create<LabState>()(
             panel: lastLang === "css" || lastLang === "html" || lastLang === "binary" ? "stage" : "out",
           };
         }),
+      // پروژهٔ تازه از یک بسته (.jibpack): فایل اول فعال می‌شود. شناسهٔ پروژه برگردانده می‌شود تا پیوست‌ها به آن اضافه شوند
+      importProject: (name, items) => {
+        const project: Project = {
+          id: uid("proj"),
+          name: "",
+          files: items.map((item) => ({ id: uid("file"), name: item.name, lang: item.lang, content: item.content, stdin: "" })),
+          activeFileId: "",
+        };
+        project.activeFileId = project.files[0]?.id ?? "";
+        set((state) => {
+          project.name = freshName(name, state.projects.map((item) => item.name));
+          const first = project.files[0]?.lang;
+          return {
+            projects: [...state.projects, project],
+            activeProjectId: project.id,
+            panel: first === "css" || first === "html" || first === "binary" ? "stage" : "out",
+          };
+        });
+        return project.id;
+      },
       removeFile: (id) =>
         set((state) => ({
           projects: patchProject(state.projects, state.activeProjectId, (project) => {

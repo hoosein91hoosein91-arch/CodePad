@@ -1,3 +1,4 @@
+import { isPackText, parsePack, type Pack } from "@/labshell/pack";
 import type { Lang } from "@/labshell/types";
 
 // باز کردن فایل از بیرون برنامه: انتخاب‌گر فایل، «اشتراک‌گذاری ← جیب‌کد» (share target) و «باز کردن با» (file handler)
@@ -29,14 +30,24 @@ async function looksBinary(file: File): Promise<boolean> {
   return head.includes(0);
 }
 
-export type OpenResult = { opened: OpenedFile[]; assets: File[] };
+export type OpenResult = { opened: OpenedFile[]; assets: File[]; packs: Pack[] };
 
 // دکمهٔ «باز کردن فایل»: کد (متنی و ≤ ۱ مگابایت) به فایل پروژه تبدیل می‌شود؛ عکس و هر چیز دیگر پیوست می‌شود. چیزی رد نمی‌شود.
 export async function readOpened(files: File[]): Promise<OpenResult> {
   const opened: OpenedFile[] = [];
   const assets: File[] = [];
+  const packs: Pack[] = [];
   for (const file of files) {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    // «بستهٔ جیب»: کد و عکس‌ها در یک فایل (هر اندازه‌ای که باشد)؛ با پسوند .jibpack یا نشانهٔ @@@ jibpack در خط اول
+    if (ext === "jibpack" || (!MEDIA_EXT.has(ext) && isPackText(await file.slice(0, 200).text()))) {
+      const pack = parsePack(await file.text());
+      if (pack) {
+        if (!pack.name || pack.name === "Pack") pack.name = file.name.replace(/\.[^.]+$/, "") || "Pack";
+        packs.push(pack);
+        continue;
+      }
+    }
     const media = file.type.startsWith("image/") || file.type.startsWith("audio/") || file.type.startsWith("video/") || MEDIA_EXT.has(ext);
     if (media || file.size > MAX_CODE_BYTES || (await looksBinary(file))) {
       assets.push(file);
@@ -45,7 +56,7 @@ export async function readOpened(files: File[]): Promise<OpenResult> {
     const content = (await file.text()).replace(/\r\n?/g, "\n");
     opened.push({ name: file.name || "file.txt", lang: langFromName(file.name), content });
   }
-  return { opened, assets };
+  return { opened, assets, packs };
 }
 
 // اگر نام تکراری بود، قبل از پسوند شماره می‌گذارد: main.py ← main (2).py
