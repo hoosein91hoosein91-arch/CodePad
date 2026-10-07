@@ -7,8 +7,8 @@ export type RunResult = {
   aborted: boolean;
   page?: FarsiPage;
   machine?: { a: number; bits: string; pc: number; steps: number; gloss: string };
-  /** Mix files: the page built from @@ html (+ @@ css) blocks, with the final shared data. */
-  html?: { body: string; css: string; shared: Record<string, unknown> };
+  /** Mix files: page from @@ html blocks (+ css, DOM scripts); `data` = final shared JSON for the page. */
+  web?: { html: string; css: string; js: string; data?: string };
 };
 
 type Pending = {

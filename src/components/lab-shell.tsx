@@ -1,12 +1,13 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronDown, ChevronUp, Download, Eye, Maximize2, Menu, Minimize2, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Eye, FolderOpen, Maximize2, Menu, Minimize2, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { APP_NAME } from "@/labshell/brand";
 import { compileFarsi, FARSI_BAR, type FarsiPage } from "@/labshell/farsi";
 import { compileEnglish, ENGLISH_BAR } from "@/labshell/english";
 import { BINARY_BAR, runBinary, type MachineSnap } from "@/labshell/binary";
 import { TEMPLATE_CHOICES } from "@/labshell/samples";
-import { buildHtmlDoc, buildMixHtmlDoc } from "@/labshell/html-doc";
+import { buildHtmlDoc, buildWebDoc } from "@/labshell/html-doc";
+import { listenLaunchFiles, readOpened, takeSharedFiles } from "@/labshell/open-files";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
@@ -104,12 +105,24 @@ export function LabShell() {
   const [reload, setReload] = useState(0);
   const [htmlDoc, setHtmlDoc] = useState("");
   // صفحهٔ ساخته‌شده از بلوک‌های @@ html در آخرین اجرای فایل ترکیبی
-  const [mixPage, setMixPage] = useState<{ fileId: string; doc: string; page: NonNullable<RunResult["html"]> } | null>(null);
+  const [mixPage, setMixPage] = useState<{ fileId: string; doc: string; web: NonNullable<RunResult["web"]> } | null>(null);
   // اندازهٔ پنل‌ها روی گوشی: سهم ویرایشگر (کشیدنی) و حالت تمام‌صفحهٔ خروجی
   const [split, setSplit] = useState(0.58);
   const [full, setFull] = useState(false);
   const splitRef = useRef<HTMLDivElement>(null);
   const showFrame = file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id);
+  const pickRef = useRef<HTMLInputElement>(null);
+
+  const bringIn = useCallback(async (files: File[]) => {
+    if (!files.length) return;
+    const { opened, skipped } = await readOpened(files);
+    const state = useLab.getState();
+    if (opened.length) {
+      state.importFiles(opened);
+      state.pushLines([termLine("sys", `${opened.length} فایل باز شد: ${opened.map((item) => item.name).join("، ")}`)]);
+    }
+    if (skipped.length) state.pushLines([termLine("err", `باز نشد: ${skipped.join("، ")}`)]);
+  }, []);
   const scroller = useRef<HTMLDivElement>(null);
   const wantsInput = file.lang === "mix" || file.lang === "farsi" || file.lang === "english" || file.lang === "binary" || file.lang === "python" || file.lang === "c" || file.lang === "cpp";
 
@@ -121,6 +134,15 @@ export function LabShell() {
     const timer = window.setTimeout(() => setLiveCss(cssFile?.content ?? ""), 80);
     return () => window.clearTimeout(timer);
   }, [cssFile?.content]);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (new URLSearchParams(window.location.search).has("shared")) {
+      window.history.replaceState(null, "", window.location.pathname);
+      void takeSharedFiles().then(bringIn).catch(() => {});
+    }
+    listenLaunchFiles((files) => void bringIn(files));
+  }, [ready, bringIn]);
 
   useEffect(() => {
     if (file.lang !== "html") return;
@@ -197,16 +219,16 @@ export function LabShell() {
       for (const line of result.stderr.replace(/\s+$/, "").split("\n")) if (line) next.push(termLine("err", line));
       if (!next.length) next.push(termLine("sys", "خروجی‌ای نبود."));
       if (result.machine) setMachine(result.machine);
-      if (result.html) {
+      if (result.web) {
         const fresh = Math.random().toString(36).slice(2);
         htmlToken.current = fresh;
-        setMixPage({ fileId: current.id, doc: buildMixHtmlDoc(result.html, activeProject(useLab.getState()).files, fresh), page: result.html });
+        setMixPage({ fileId: current.id, doc: buildWebDoc(result.web, fresh), web: result.web });
       } else setMixPage(null);
       if (result.page) {
         setScene({ ...result.page, title: result.page.title || "جیب", text: result.page.text || "", mark: result.page.mark || "JIB", lines: [] });
       }
       useLab.getState().pushLines(next);
-      useLab.getState().setPanel(result.html || result.page || result.machine ? "stage" : "out");
+      useLab.getState().setPanel(result.web || result.page || result.machine ? "stage" : "out");
       useLab.getState().setRunning(false);
       return;
     }
@@ -309,7 +331,7 @@ export function LabShell() {
       file.lang === "html"
         ? buildHtmlDoc(file.content, project.files, null)
         : file.lang === "mix" && mixPage?.fileId === file.id
-          ? buildMixHtmlDoc(mixPage.page, project.files, null)
+          ? buildWebDoc(mixPage.web, null)
           : "";
     if (!doc) return;
     const url = URL.createObjectURL(new Blob([doc], { type: "text/html;charset=utf-8" }));
@@ -494,6 +516,20 @@ export function LabShell() {
           </p>
         </div>
         <ThemePanel />
+        <input
+          ref={pickRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(event) => {
+            const list = [...(event.target.files ?? [])];
+            event.target.value = "";
+            void bringIn(list);
+          }}
+        />
+        <button type="button" className={iconBtn} aria-label="باز کردن فایل" onClick={() => pickRef.current?.click()}>
+          <FolderOpen className="size-5" />
+        </button>
         <button type="button" className={iconBtn} aria-label="بازگردانی" onClick={() => editHistory("undo")}>
           <Undo2 className="size-5" />
         </button>

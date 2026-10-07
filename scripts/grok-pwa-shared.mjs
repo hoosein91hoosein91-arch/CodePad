@@ -171,6 +171,29 @@ export function renderWebManifest(hostHeader) {
       display: "standalone",
       background_color: "#101410",
       theme_color: "#101410",
+      launch_handler: { client_mode: ["focus-existing", "auto"] },
+      file_handlers: [
+        {
+          action: "/",
+          accept: {
+            "text/plain": [".mix", ".fa", ".jib", ".bit", ".txt"],
+            "text/html": [".html", ".htm"],
+            "text/css": [".css"],
+            "text/javascript": [".js", ".mjs"],
+            "text/x-python": [".py"],
+            "text/x-csrc": [".c", ".h"],
+            "text/x-c++src": [".cpp", ".cc", ".hpp"],
+          },
+        },
+      ],
+      share_target: {
+        action: "/_share",
+        method: "POST",
+        enctype: "multipart/form-data",
+        params: {
+          files: [{ name: "files", accept: [".mix", ".fa", ".jib", ".bit", ".py", ".js", ".c", ".cpp", ".css", ".html", ".htm", ".txt", "text/*"] }],
+        },
+      },
       icons: [
         { src: "/__grok/icon-180.png", sizes: "180x180", type: "image/png" },
         { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },

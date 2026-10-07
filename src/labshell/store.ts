@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { freshName } from "@/labshell/open-files";
 import { createFile, createProject, SEED_PROJECT, uid } from "@/labshell/samples";
 import type { LabFile, Lang, Project, TemplateKind, TermLine } from "@/labshell/types";
 
@@ -26,6 +27,7 @@ type LabState = {
   updateContent: (content: string) => void;
   updateStdin: (stdin: string) => void;
   addFile: (lang: Lang) => void;
+  importFiles: (items: { name: string; lang: Lang; content: string }[]) => void;
   removeFile: (id: string) => void;
   addProject: (kind: TemplateKind) => void;
   removeProject: (id: string) => void;
@@ -125,6 +127,24 @@ export const useLab = create<LabState>()(
           }),
           panel: lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out",
         })),
+      importFiles: (items) =>
+        set((state) => {
+          if (!items.length) return state;
+          let lastLang: Lang = items[items.length - 1].lang;
+          return {
+            projects: patchProject(state.projects, state.activeProjectId, (project) => {
+              const names = project.files.map((item) => item.name);
+              const added = items.map((item) => {
+                const name = freshName(item.name, names);
+                names.push(name);
+                lastLang = item.lang;
+                return { id: uid("file"), name, lang: item.lang, content: item.content, stdin: "" };
+              });
+              return { ...project, files: [...project.files, ...added], activeFileId: added[added.length - 1].id };
+            }),
+            panel: lastLang === "css" || lastLang === "html" || lastLang === "binary" ? "stage" : "out",
+          };
+        }),
       removeFile: (id) =>
         set((state) => ({
           projects: patchProject(state.projects, state.activeProjectId, (project) => {

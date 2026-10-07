@@ -19,8 +19,7 @@ window.addEventListener("unhandledrejection",function(e){s("error",["Unhandled: 
 
 const noCloseTag = (text: string, tag: "script" | "style") => text.replace(new RegExp(`</${tag}`, "gi"), `<\\/${tag}`);
 
-// token = null: a standalone page for download (no console bridge).
-export function buildHtmlDoc(html: string, files: LabFile[], token: string | null, extraHead = ""): string {
+export function buildHtmlDoc(html: string, files: LabFile[], token: string | null): string {
   const byName = new Map(files.map((item) => [item.name, item]));
   const find = (ref: string) => byName.get(ref.replace(/^\.?\//, ""));
 
@@ -33,15 +32,30 @@ export function buildHtmlDoc(html: string, files: LabFile[], token: string | nul
     return file && file.lang === "javascript" ? `<script>${noCloseTag(file.content, "script")}</script>` : tag;
   });
 
-  const head = `<meta http-equiv="Content-Security-Policy" content="${CSP}">${token ? bridge(token) : ""}${extraHead}`;
+  return finish(doc, token);
+}
+
+// token === null → نسخهٔ خروجی بدون پل و CSP (برای ذخیره به‌عنوان برنامهٔ مستقل)
+function finish(doc: string, token: string | null): string {
+  const head = token === null ? "" : `<meta http-equiv="Content-Security-Policy" content="${CSP}">${bridge(token)}`;
+  if (token === null && /<html\b/i.test(doc)) return doc;
   if (/<head\b[^>]*>/i.test(doc)) return doc.replace(/<head\b[^>]*>/i, (open) => `${open}${head}`);
   if (/<html\b[^>]*>/i.test(doc)) return doc.replace(/<html\b[^>]*>/i, (open) => `${open}<head>${head}</head>`);
   return `<!doctype html><html><head>${head}</head><body>${doc}</body></html>`;
 }
 
-// صفحهٔ فایل ترکیبی: بلوک‌های @@ html کنار هم، سی‌اس‌اس بلوک‌های @@ css و دادهٔ مشترک `shared`.
-export function buildMixHtmlDoc(page: { body: string; css: string; shared: Record<string, unknown> }, files: LabFile[], token: string | null): string {
-  const data = JSON.stringify(page.shared).replace(/</g, "\\u003c");
-  const extra = `<script>window.shared=${data};</script>${page.css ? `<style>${noCloseTag(page.css, "style")}</style>` : ""}`;
-  return buildHtmlDoc(page.body, files, token, extra);
+export function buildWebDoc(parts: { html: string; css: string; js: string; data?: string }, token: string | null): string {
+  // دادهٔ مشترک بلوک‌ها، اول از همه تعریف می‌شود تا هر اسکریپتی در صفحه به `shared` برسد
+  const data = parts.data ? `<script>window.shared = ${parts.data};</script>` : "";
+  const style = parts.css.trim() ? `<style>${noCloseTag(parts.css, "style")}</style>` : "";
+  const script = parts.js.trim() ? `<script>${noCloseTag(parts.js, "script")}</script>` : "";
+  let doc = parts.html;
+  if (!/<html\b/i.test(doc)) {
+    doc = `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${data}${style}</head><body>${doc}${script}</body></html>`;
+  } else {
+    doc = /<\/head>/i.test(doc) ? doc.replace(/<\/head>/i, () => `${style}</head>`) : doc.replace(/<html\b[^>]*>/i, (open) => `${open}<head>${style}</head>`);
+    if (data) doc = doc.replace(/<head\b[^>]*>/i, (open) => `${open}${data}`);
+    doc = /<\/body>/i.test(doc) ? doc.replace(/<\/body>/i, () => `${script}</body>`) : `${doc}${script}`;
+  }
+  return finish(doc, token);
 }

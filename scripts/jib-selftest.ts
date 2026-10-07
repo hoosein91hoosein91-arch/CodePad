@@ -169,7 +169,11 @@ const noop = async () => ({ stdout: "", stderr: "", aborted: false });
 const mixed = await runMix('@@ html\n<h1 id="t">x</h1>\n@@ css\nh1 { color: red; }\n<p>auto</p>\n', "", {
   python: noop, javascript: async () => ({ stdout: '\u0001SHARED:{"n":3}', stderr: "", aborted: false }), jib: noop, c: noop, cpp: noop, binary: noop,
 });
-must("mix html page", !!mixed.html && mixed.html.body.includes('<h1 id="t">') && mixed.html.css.includes("color: red"));
+must("mix html page", !!mixed.web && mixed.web.html.includes('<h1 id="t">') && mixed.web.css.includes("color: red"));
+const withShared = await runMix('@@ js\nshared.n = 3\n@@ html\n<p id="n"></p>\n', "", {
+  python: noop, javascript: async () => ({ stdout: '\u0001SHARED:{"n":3}', stderr: "", aborted: false }), jib: noop, c: noop, cpp: noop, binary: noop,
+});
+must("mix html shared", withShared.web?.data === '{"n":3}');
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log("ALL PASSED");

@@ -1,7 +1,5 @@
 // زبان ترکیبی: چند زبان در یک فایل. هر بلوک با «@@ نام‌زبان» شروع می‌شود.
 // بلوک‌ها به ترتیب اجرا می‌شوند. پایتون و جاوااسکریپت از طریق متغیر مشترک `shared` داده رد و بدل می‌کنند.
-// بلوک‌های اچ‌تی‌ام‌ال (و سی‌اس‌اس) کنار هم یک صفحه می‌سازند که در زبانهٔ «صفحه» نشان داده می‌شود؛
-// داخل آن صفحه هم `shared` (دادهٔ نهایی بلوک‌ها) در دسترس است.
 import type { RunResult } from "@/labshell/runtime";
 
 export type MixKind = "python" | "javascript" | "jib" | "farsi" | "c" | "cpp" | "binary" | "css" | "html";
@@ -17,7 +15,7 @@ export const MIX_NAMES: Record<MixKind, string> = {
   cpp: "سی‌پلاس‌پلاس",
   binary: "ماشین صفر و یک",
   css: "سی‌اس‌اس",
-  html: "اچ‌تی‌ام‌ال",
+  html: "صفحهٔ وب",
 };
 
 const ALIASES: Record<string, MixKind> = {
@@ -29,7 +27,7 @@ const ALIASES: Record<string, MixKind> = {
   cpp: "cpp", "c++": "cpp", "سی‌پلاس": "cpp", "سی_پلاس": "cpp", "سی‌پلاس‌پلاس": "cpp",
   bit: "binary", binary: "binary", machine: "binary", "ماشین": "binary", "صفرویک": "binary", "صفر_و_یک": "binary",
   css: "css", "سی‌اس‌اس": "css", "استایل": "css",
-  html: "html", htm: "html", "اچ‌تی‌ام‌ال": "html", "اچ_تی_ام_ال": "html", "وب": "html",
+  html: "html", htm: "html", "اچ‌تی‌ام‌ال": "html", "وب": "html", "صفحه‌وب": "html", "اچ_تی_ام_ال": "html",
 };
 
 export function kindOf(word: string): MixKind | null {
@@ -38,19 +36,113 @@ export function kindOf(word: string): MixKind | null {
 
 export type MixParse = { blocks: MixBlock[]; error?: string };
 
-// تشخیص خودکار زبان از روی خود کد (وقتی بالای کد «@@ نام» نیامده یا نام ناشناخته است)
-export function detectKind(code: string): MixKind {
+// ── تشخیص خودکار زبان ──
+// classify: برای یک تکه کد، زبان و قطعی‌بودن تشخیص را برمی‌گرداند. strong=false یعنی نشانهٔ روشنی پیدا نشد.
+type Guess = { kind: MixKind; strong: boolean };
+
+export function classify(code: string): Guess {
   const src = code.replace(/^\s*(#|\/\/).*$/gm, "").trim();
-  if (!src) return "jib";
-  if (/^[01\s]+$/.test(src)) return "binary";
-  if (/^<(!doctype\s+html|[a-z][\w-]*)(\s[^<>]*)?\/?>/i.test(src) && /<\/[a-z][\w-]*\s*>|\/>/i.test(src)) return "html";
-  if (/^\s*#\s*include\b/m.test(code)) return /iostream|std::|\bcout\b|\bclass\b|using\s+namespace/.test(code) ? "cpp" : "c";
-  if (!/^\s*(page|صفحه)\b/m.test(src) && /^[^\n{};]+\{\s*[a-z-]+\s*:[^{}]*;/m.test(src) && !/\b(let|fn|function|const|var)\b/.test(src)) return "css";
-  if (/^\s*(def |class |import |from \S+ import |elif\b)|^\s*(if|for|while|else|try|except|with)\b[^\n{]*:\s*$/m.test(src)) return "python";
-  if (/[\u0600-\u06FF]/.test(src.replace(/"[^"\n]*"|'[^'\n]*'/g, ""))) return "farsi";
-  if (/\bfn\b|\bfor\s+\w+\s+from\b|^\s*page\s*\{/m.test(src)) return "jib";
-  if (/\b(const|var|function)\b|console\.|document\.|=>|;\s*$/m.test(src)) return "javascript";
-  return "jib";
+  if (!src) return { kind: "jib", strong: false };
+  if (/^[01\s]+$/.test(src)) return { kind: "binary", strong: true };
+  if (/^<(!doctype|[a-z][\w-]*)[\s>/]/i.test(src) || /<\/(div|body|html|p|span|section|script|style|canvas|button)>/i.test(src)) return { kind: "html", strong: true };
+  if (/^\s*#\s*include\b/m.test(code)) return { kind: /iostream|std::|\bcout\b|\bclass\b|using\s+namespace/.test(code) ? "cpp" : "c", strong: true };
+  if (/^\s*(int|void|float|double|char)\s+\w+\s*\([^)]*\)\s*\{/m.test(src)) return { kind: /std::|\bcout\b|\bcin\b/.test(src) ? "cpp" : "c", strong: true };
+  if (/^\s*(@media|@keyframes|@font-face|:root)\b[^{]*\{/m.test(src)) return { kind: "css", strong: true };
+  if (!/^\s*(page|صفحه)\b/m.test(src) && /^[^\n{};=]+\{\s*[a-z-]+\s*:[^{}]*;/m.test(src) && !/\b(let|fn|function|const|var)\b/.test(src)) return { kind: "css", strong: true };
+  if (/^\s*(def |class |import |from \S+ import |elif\b)|^\s*(if|for|while|else|try|except|with)\b[^\n{]*:\s*$/m.test(src)) return { kind: "python", strong: true };
+  if (/[\u0600-\u06FF]/.test(src.replace(/"[^"\n]*"|'[^'\n]*'/g, ""))) return { kind: "farsi", strong: true };
+  if (/\bfn\b|\bfor\s+\w+\s+from\b|^\s*page\s*\{/m.test(src)) return { kind: "jib", strong: true };
+  if (/\b(const|var|function)\b|console\.|document\.|window\.|=>|\bnew\s+\w+\(|\blet\s+\w+\s*=[^\n]*;\s*$/m.test(src)) return { kind: "javascript", strong: true };
+  return { kind: "jib", strong: false };
+}
+
+export function detectKind(code: string): MixKind {
+  return classify(code).kind;
+}
+
+const VOID_TAGS = new Set(["meta", "link", "img", "input", "br", "hr", "source", "area", "base", "col", "embed", "param", "track", "wbr"]);
+
+function openness(line: string): number {
+  const bare = line.replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`[^`]*`/g, '""');
+  let depth = 0;
+  for (const ch of bare) {
+    if ("{([".includes(ch)) depth++;
+    else if ("})]".includes(ch)) depth--;
+  }
+  return depth;
+}
+
+function tagBalance(line: string): number {
+  let n = 0;
+  for (const t of line.matchAll(/<(\/?)([a-z][\w-]*)\b[^<>]*?(\/?)>/gi)) {
+    if (t[3] || VOID_TAGS.has(t[2].toLowerCase())) continue;
+    n += t[1] ? -1 : 1;
+  }
+  return n;
+}
+
+// متن بدون نام زبان را به تکه‌های جدا می‌شکند: جداکننده = خط خالی در عمق صفر، وقتی خط بعدی تو رفته نیست
+export function splitAuto(text: string, firstLine: number): { code: string; line: number }[] {
+  const rows = text.split("\n");
+  const parts: { code: string; line: number }[] = [];
+  let buf: string[] = [];
+  let start = firstLine;
+  let depth = 0;
+  let tags = 0;
+  const flush = () => {
+    const code = buf.join("\n");
+    if (code.trim()) parts.push({ code: code + "\n", line: start });
+    buf = [];
+    depth = 0;
+    tags = 0;
+  };
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row.trim() && depth <= 0 && tags <= 0 && buf.length) {
+      let k = i + 1;
+      while (k < rows.length && !rows[k].trim()) k++;
+      const next = rows[k] ?? "";
+      if (!next || (!/^\s/.test(next) && !/^(else|elif|except|finally|catch)\b/.test(next))) {
+        flush();
+        start = firstLine + k;
+        i = k - 1;
+        continue;
+      }
+    }
+    if (!buf.length) start = firstLine + i;
+    buf.push(row);
+    depth += openness(row);
+    if (/^\s*</.test(buf[0])) tags += tagBalance(row); // شمارش تگ فقط وقتی تکه با < شروع شده (HTML)
+  }
+  flush();
+  return parts;
+}
+
+// تکه‌های مبهم به بلوک قبلی می‌چسبند؛ تکه‌های هم‌زبان یکی می‌شوند
+export function autoBlocks(text: string, firstLine: number): MixBlock[] {
+  const guessed = splitAuto(text, firstLine).map((p) => ({ ...p, guess: classify(p.code) }));
+  const blocks: MixBlock[] = [];
+  let carry = "";
+  let carryLine = 0;
+  for (const p of guessed) {
+    const prev = blocks[blocks.length - 1];
+    if (!p.guess.strong) {
+      if (prev) prev.code += "\n" + p.code;
+      else {
+        carry += p.code;
+        carryLine ||= p.line;
+      }
+      continue;
+    }
+    const code = carry ? carry + "\n" + p.code : p.code;
+    const line = carry ? carryLine : p.line;
+    carry = "";
+    carryLine = 0;
+    if (prev && prev.kind === p.guess.kind) prev.code += "\n" + code;
+    else blocks.push({ kind: p.guess.kind, code, line, auto: true });
+  }
+  if (carry) blocks.push({ kind: classify(carry).kind, code: carry, line: carryLine, auto: true });
+  return blocks;
 }
 
 export function parseMix(source: string): MixParse {
@@ -76,7 +168,8 @@ export function parseMix(source: string): MixParse {
       blocks.push(current);
     }
   }
-  for (const b of blocks) if (b.auto) b.kind = detectKind(b.code);
+  const expanded = blocks.flatMap((b) => (b.auto ? autoBlocks(b.code, b.line) : [b]));
+  blocks.splice(0, blocks.length, ...expanded);
   if (blocks.length === 0) return { blocks, error: "فایل خالی است. کد را بنویس؛ نام زبان لازم نیست." };
   return { blocks };
 }
@@ -142,26 +235,40 @@ export async function runMix(
   let shared: Record<string, unknown> = {};
   const out: string[] = [];
   const result: RunResult = { stdout: "", stderr: "", aborted: false };
-  const htmlParts: string[] = [];
-  const cssParts: string[] = [];
+  const hasHtml = parsed.blocks.some((b) => b.kind === "html");
+  const web = { html: "", css: "", js: "" };
+  const pageCss: string[] = [];
+  const DOM = /\b(document|window|canvas|getElementById|querySelector|addEventListener|requestAnimationFrame|localStorage)\b/;
   for (const block of parsed.blocks) {
     const title = `── ${MIX_NAMES[block.kind]}${block.auto ? " · تشخیص خودکار" : ""} (خط ${block.line}) ──`;
     onBlock?.(title);
     out.push(title);
     let r: RunResult;
+    if (block.kind === "html") {
+      web.html += block.code + "\n";
+      out.push("(صفحه در پنل «صفحه» نشان داده می‌شود)");
+      continue;
+    }
+    if (block.kind === "css" && hasHtml) {
+      web.css += block.code + "\n";
+      out.push("(استایل روی صفحه اعمال شد)");
+      continue;
+    }
+    if (block.kind === "javascript" && hasHtml && DOM.test(block.code)) {
+      web.js += block.code + "\n";
+      out.push("(اسکریپت داخل صفحه اجرا می‌شود؛ کنسولش همین‌جا پیدا می‌شود)");
+      continue;
+    }
     if (block.kind === "python") r = await runners.python(wrapPython(block.code, shared), stdin);
     else if (block.kind === "javascript") r = await runners.javascript(wrapJavaScript(block.code, shared));
     else if (block.kind === "jib" || block.kind === "farsi") r = await runners.jib(block.code, stdin, block.kind === "farsi");
     else if (block.kind === "c") r = await runners.c(block.code, stdin);
     else if (block.kind === "cpp") r = await runners.cpp(block.code, stdin);
     else if (block.kind === "binary") r = await runners.binary(block.code, stdin);
-    else if (block.kind === "html") {
-      htmlParts.push(block.code);
-      out.push("(اچ‌تی‌ام‌ال در زبانهٔ «صفحه» نشان داده می‌شود)");
-      continue;
-    } else {
-      cssParts.push(block.code);
-      out.push("(سی‌اس‌اس روی صفحهٔ اچ‌تی‌ام‌ال یا صفحهٔ جیب اعمال می‌شود)");
+    else {
+      // بدون اچ‌تی‌ام‌ال، سی‌اس‌اس روی صفحهٔ جیب (page { }) اعمال می‌شود
+      pageCss.push(block.code);
+      out.push("(سی‌اس‌اس روی صفحهٔ جیب اعمال می‌شود)");
       continue;
     }
     const taken = takeShared(r.stdout, shared);
@@ -178,10 +285,15 @@ export async function runMix(
       break;
     }
   }
-  const css = cssParts.join("\n").trim();
-  if (htmlParts.length) result.html = { body: htmlParts.join("\n"), css, shared };
-  else if (css && result.page) result.page = { ...result.page, css: [result.page.css, css].filter(Boolean).join("\n") };
   if (Object.keys(shared).length) out.push(`── داده مشترک ──\n${JSON.stringify(shared)}`);
+  if (hasHtml) {
+    // داده‌ای که پایتون یا بلوک‌های دیگر در shared گذاشته‌اند به اسکریپت صفحه هم می‌رسد
+    // window.shared در <head> تعریف می‌شود تا اسکریپت‌های داخل بلوک html هم به آن برسند
+    const data = JSON.stringify(shared).replace(/</g, "\\u003c");
+    result.web = { ...web, data };
+  }
+  const css = pageCss.join("\n").trim();
+  if (css && result.page) result.page = { ...result.page, css: [result.page.css, css].filter(Boolean).join("\n") };
   result.stdout = out.join("\n");
   return result;
 }
