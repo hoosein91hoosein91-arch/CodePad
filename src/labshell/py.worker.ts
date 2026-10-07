@@ -30,10 +30,27 @@ self.onmessage = async (event: MessageEvent<{ id: number; code: string; stdin: s
   try {
     const py = await boot();
     const source = stdin.endsWith("\n") ? stdin : `${stdin}\n`;
+    const answers = stdin === "" ? [] : stdin.replace(/\n$/, "").split("\n");
     py.runPython(`
-import sys
+import sys, builtins
 from io import StringIO
 sys.stdin = StringIO(${JSON.stringify(source)})
+_ans = ${JSON.stringify(answers)}
+_pos = [0]
+_need = [""]
+_asked = [False]
+class _NeedInput(BaseException):
+    pass
+def _input(prompt=""):
+    if _pos[0] >= len(_ans):
+        _need[0] = str(prompt)
+        _asked[0] = True
+        raise _NeedInput()
+    v = _ans[_pos[0]]
+    _pos[0] += 1
+    sys.stdout.write(str(prompt) + v + "\\n")
+    return v
+builtins.input = _input
 _jib_out = StringIO()
 _jib_err = StringIO()
 sys.stdout = _jib_out
@@ -44,6 +61,14 @@ sys.stderr = _jib_err
       py.runPython(code);
     } catch (error) {
       failure = error instanceof Error ? error.message : String(error);
+    }
+    // Pyodide does not always rethrow a BaseException to JS (it may only print the
+    // traceback to sys.stderr), so check the flag set by _input instead of the message.
+    if (failure.includes("_NeedInput") || py.runPython("_asked[0]") === true) {
+      // برنامه ورودی خواست و جوابش را ندارد: به صفحه خبر بده تا بپرسد و دوباره اجرا کند
+      const need = textOf(py.runPython("_need[0]"));
+      self.postMessage({ id, stdout: "", stderr: "@@NEED_INPUT@@" + encodeURIComponent(need) });
+      return;
     }
     const stdout = textOf(py.runPython("_jib_out.getvalue()"));
     const stderr = textOf(py.runPython("_jib_err.getvalue()"));

@@ -101,7 +101,7 @@ function runWorker(
   });
 }
 
-export function runPython(code: string, stdin: string): Promise<RunResult> {
+function runPythonRaw(code: string, stdin: string): Promise<RunResult> {
   return runWorker(
     python(),
     pythonPending,
@@ -233,11 +233,15 @@ self.onmessage = (event) => {
   const errs = [];
   const page = { title: "", text: "", mark: "", css: "" };
   let machine = null;
-  const stdinLines = String(event.data.stdin || "")
+  const hasInput = String(event.data.stdin || "") !== "";
+  const stdinLines = !hasInput ? [] : String(event.data.stdin).replace(/\\n$/, "")
     .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
     .split(/\\n/);
   let at = 0;
-  const takeLine = () => (stdinLines[at++] ?? "").trim();
+  const takeLine = () => {
+    if (at >= stdinLines.length) throw { __need: true };
+    return (stdinLines[at++] ?? "").trim();
+  };
   const readBits = () => {
     const raw = takeLine();
     if (!raw) return 0;
@@ -307,13 +311,17 @@ self.onmessage = (event) => {
     run(__چاپ, __بخوان, __صفحه, __machine, __len, __push);
     self.postMessage({ logs, errs, page, machine });
   } catch (error) {
+    if (error && error.__need) {
+      self.postMessage({ need: true, prompt: logs.length ? logs[logs.length - 1] : "" });
+      return;
+    }
     errs.push(faError(error));
     self.postMessage({ logs, errs, page, machine });
   }
 };
 `;
 
-export function runFarsi(code: string, stdin: string): Promise<RunResult> {
+function runFarsiRaw(code: string, stdin: string): Promise<RunResult> {
   jsWorker?.terminate();
   const worker = new Worker(URL.createObjectURL(new Blob([FARSI_WORKER], { type: "text/javascript" })));
   jsWorker = worker;
@@ -323,10 +331,14 @@ export function runFarsi(code: string, stdin: string): Promise<RunResult> {
       if (jsWorker === worker) jsWorker = null;
       resolve({ stdout: "", stderr: "The program ran too long. A loop may not stop.", aborted: false });
     }, 2500);
-    worker.addEventListener("message", (event: MessageEvent<{ logs?: string[]; errs?: string[]; page?: FarsiPage; machine?: RunResult["machine"] }>) => {
+    worker.addEventListener("message", (event: MessageEvent<{ need?: boolean; prompt?: string; logs?: string[]; errs?: string[]; page?: FarsiPage; machine?: RunResult["machine"] }>) => {
       window.clearTimeout(timer);
       worker.terminate();
       if (jsWorker === worker) jsWorker = null;
+      if (event.data.need) {
+        resolve({ stdout: "", stderr: NEED + encodeURIComponent(event.data.prompt ?? ""), aborted: false });
+        return;
+      }
       resolve({
         stdout: (event.data.logs ?? []).join("\n"),
         stderr: (event.data.errs ?? []).join("\n"),
@@ -344,3 +356,24 @@ export function runFarsi(code: string, stdin: string): Promise<RunResult> {
     worker.postMessage({ code, stdin });
   });
 }
+
+// ── ورودی تعاملی ──
+// برنامه وسط اجرا جواب نداشت ← از کاربر می‌پرسیم، جواب را اضافه می‌کنیم و برنامه را از اول دوباره اجرا می‌کنیم.
+// (برای برنامه‌هایی که چاپ می‌کنند و ورودی می‌خوانند درست است؛ random و زمان هر بار دوباره حساب می‌شوند.)
+const NEED = "@@NEED_INPUT@@";
+
+async function interactive(run: (stdin: string) => Promise<RunResult>, stdin: string): Promise<RunResult> {
+  const answers = stdin === "" ? [] : stdin.replace(/\n$/, "").split("\n");
+  for (let round = 0; round < 200; round++) {
+    const result = await run(answers.length ? `${answers.join("\n")}\n` : "");
+    if (!result.stderr.startsWith(NEED)) return result;
+    const asked = decodeURIComponent(result.stderr.slice(NEED.length)) || "Input:";
+    const reply = window.prompt(asked);
+    if (reply === null) return { stdout: "", stderr: "Input cancelled.", aborted: true };
+    answers.push(reply);
+  }
+  return { stdout: "", stderr: "Too many inputs asked in one run.", aborted: false };
+}
+
+export const runPython = (code: string, stdin: string) => interactive((text) => runPythonRaw(code, text), stdin);
+export const runFarsi = (code: string, stdin: string) => interactive((text) => runFarsiRaw(code, text), stdin);
