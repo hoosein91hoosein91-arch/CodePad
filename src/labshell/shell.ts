@@ -1,4 +1,6 @@
 // پوستهٔ ترموکس‌مانند: دستورهای ساده روی فایل‌های پروژهٔ فعال. محیط مجازی = یک فضای کار جدا به نام .venv-نام
+import { formatSize } from "@/labshell/asset-refs";
+import { assetsOf, removeAsset } from "@/labshell/assets";
 import { createFile, createProject } from "@/labshell/samples";
 import { activeFile, activeProject, useLab } from "@/labshell/store";
 import type { Lang, Project } from "@/labshell/types";
@@ -7,7 +9,7 @@ const EXT: Record<string, Lang> = { mix: "mix", fa: "farsi", jib: "english", bit
 
 const HELP = [
   "help                 این راهنما",
-  "ls / pwd             فهرست فایل‌ها / مسیر",
+  "ls / pwd             فهرست فایل‌ها و پیوست‌ها / مسیر",
   "cat f / touch f / rm f   خواندن / ساختن / حذف فایل (پسوند: mix fa jib bit py js c cpp css html)",
   "run [f]  (python f، node f)   اجرای فایل",
   "venv create|ls|activate|deactivate <name>   محیط مجازی جدا",
@@ -32,7 +34,7 @@ export function runShell(input: string, run: () => void): string[] {
     case "pwd":
       return [`~/${project.name}`];
     case "ls":
-      return project.files.map((f) => f.name);
+      return [...project.files.map((f) => f.name), ...assetsOf(project.id).map((a) => `${a.name}  (attachment, ${formatSize(a.size)})`)];
     case "cat": {
       const f = find(args[0]);
       return f ? f.content.split("\n") : [`cat: ${args[0] ?? ""}: No such file`];
@@ -48,6 +50,11 @@ export function runShell(input: string, run: () => void): string[] {
     }
     case "rm": {
       const f = find(args[0]);
+      const attachment = assetsOf(project.id).find((a) => a.name === args[0]);
+      if (!f && attachment) {
+        void removeAsset(project.id, attachment.name);
+        return [];
+      }
       if (!f) return [`rm: ${args[0] ?? ""}: No such file`];
       if (project.files.length < 2) return ["rm: a project must keep at least one file"];
       st.removeFile(f.id);

@@ -1,5 +1,6 @@
 import JSCPP from "JSCPP";
 import type { FarsiPage } from "@/labshell/farsi";
+import { assetsOf, readAssetBlob } from "@/labshell/assets";
 
 export type RunResult = {
   stdout: string;
@@ -21,6 +22,30 @@ let jsWorker: Worker | null = null;
 let pythonWarm = false;
 const pythonPending = new Map<number, Pending>();
 let seq = 0;
+
+// پیوست‌هایی که به کارگر پایتون فرستاده‌ایم (نام ← مهر نسخه)؛ تا هر بار فایل بزرگ دوباره کپی نشود
+const sentToPython = new Map<string, string>();
+type PyAsset = { name: string; stamp: string; buf?: ArrayBuffer };
+
+async function preparePyAssets(projectId: string | undefined): Promise<{ assets: PyAsset[]; transfer: ArrayBuffer[] }> {
+  const metas = projectId ? assetsOf(projectId) : [];
+  const names = new Set(metas.map((meta) => meta.name));
+  for (const name of [...sentToPython.keys()]) if (!names.has(name)) sentToPython.delete(name);
+  const assets: PyAsset[] = [];
+  const transfer: ArrayBuffer[] = [];
+  for (const meta of metas) {
+    if (sentToPython.get(meta.name) === meta.stamp) {
+      assets.push({ name: meta.name, stamp: meta.stamp });
+      continue;
+    }
+    const blob = projectId ? await readAssetBlob(projectId, meta.name) : null;
+    if (!blob) continue;
+    const buf = await blob.arrayBuffer();
+    assets.push({ name: meta.name, stamp: meta.stamp, buf });
+    transfer.push(buf);
+  }
+  return { assets, transfer };
+}
 
 export function isPythonWarm(): boolean {
   return pythonWarm;
@@ -74,6 +99,7 @@ export function stopRuntimes() {
   pythonWorker?.terminate();
   pythonWorker = null;
   pythonWarm = false;
+  sentToPython.clear();
   abortMap(pythonPending);
   jsWorker?.terminate();
   jsWorker = null;
@@ -86,6 +112,7 @@ function runWorker(
   stdin: string,
   timeoutMs: number,
   timeoutText: string,
+  mount?: { assets: PyAsset[]; transfer: ArrayBuffer[] },
 ): Promise<RunResult> {
   const id = ++seq;
   return new Promise((resolve) => {
@@ -94,16 +121,19 @@ function runWorker(
       if (worker === pythonWorker) {
         pythonWorker = null;
         pythonWarm = false;
+        sentToPython.clear();
       }
       map.delete(id);
       resolve({ stdout: "", stderr: timeoutText, aborted: false });
     }, timeoutMs);
     map.set(id, { resolve, timer });
-    worker.postMessage({ id, code, stdin });
+    worker.postMessage({ id, code, stdin, assets: mount?.assets }, mount?.transfer ?? []);
+    for (const asset of mount?.assets ?? []) if (asset.buf) sentToPython.set(asset.name, asset.stamp);
   });
 }
 
-function runPythonRaw(code: string, stdin: string): Promise<RunResult> {
+async function runPythonRaw(code: string, stdin: string, projectId?: string): Promise<RunResult> {
+  const mount = await preparePyAssets(projectId);
   return runWorker(
     python(),
     pythonPending,
@@ -111,6 +141,7 @@ function runPythonRaw(code: string, stdin: string): Promise<RunResult> {
     stdin,
     25000,
     "Python timed out. If a loop never ends, run it again.",
+    mount,
   );
 }
 
@@ -377,5 +408,6 @@ async function interactive(run: (stdin: string) => Promise<RunResult>, stdin: st
   return { stdout: "", stderr: "Too many inputs asked in one run.", aborted: false };
 }
 
-export const runPython = (code: string, stdin: string) => interactive((text) => runPythonRaw(code, text), stdin);
+// projectId: پیوست‌های آن پروژه کنار برنامهٔ پایتون در پوشهٔ کاری گذاشته می‌شوند (open("photo.png", "rb"))
+export const runPython = (code: string, stdin: string, projectId?: string) => interactive((text) => runPythonRaw(code, text, projectId), stdin);
 export const runFarsi = (code: string, stdin: string) => interactive((text) => runFarsiRaw(code, text), stdin);

@@ -1,13 +1,15 @@
 # CodePad (جیب‌کد) — Guide for AI assistants
 
 This file is for an AI assistant (or a human) **writing programs that run inside the CodePad app**.
-Everything here comes from the source on `main` (CodePad v1.6.0: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
+Everything here comes from the source on `main` (CodePad v1.7.0, which adds the **attachments** feature, §2.8: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
+Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works.
 If the code changes, re-check the files listed in [§9 Where things live](#9-where-things-live).
 
 > **The three rules that matter most**
 > 1. In a mix file, **put an explicit `@@ <language>` line above every block.** Use only the names in [§3.2](#32-accepted-block-names-aliases). `@@ bin` is **not** one of them; use `@@ binary`.
 > 2. A page (`.html`, or the HTML/CSS/JS blocks of a mix file) runs **offline, inside a sandbox**. Remote `<script src="https://…">`, `fetch`, `localStorage` and `eval` do not work there. Write everything inline.
 > 3. Python reaches a page **only through the `shared` object** (JSON). Python cannot touch the DOM.
+> 4. Images and other files the user uploads are **attachments** (§2.8). Refer to them by their exact, flat file name (`"photo.png"`, never `"images/photo.png"`). Never invent attachment names: ask the user for the names, or have the code list them (§2.8).
 
 ---
 
@@ -26,9 +28,10 @@ If the code changes, re-check the files listed in [§9 Where things live](#9-whe
   | Fullscreen panel | **تمام‌صفحه‌کردن پنل** |
   | Save page as standalone HTML | **ذخیره به‌صورت صفحهٔ مستقل (HTML)** |
   | Open file | **باز کردن فایل** |
+  | Attach image / file (menu → section **عکس‌ها و فایل‌های پیوست**) | **افزودن عکس یا فایل** |
 
 - Work is organised into **projects** that contain **files**. A file's language comes from its extension.
-- Everything is saved in the device's `localStorage` (key `jibcode-en`). There is no account and no cloud sync.
+- Code files and projects are saved in the device's `localStorage` (key `jibcode-en`). **Attachments** (images and other uploaded files, §2.8) are saved in IndexedDB, so they have no fixed size limit. There is no account and no cloud sync.
 - Everything runs on the device. Python (Pyodide) is bundled with the app, so no network connection is needed to run code.
 - Output is shown **when the program finishes**. It is not streamed line by line.
 
@@ -47,14 +50,16 @@ If the code changes, re-check the files listed in [§9 Where things live](#9-whe
 | CSS | `css` | `.css` | live preview on a fixed demo card | – | – |
 | HTML | `html` | `.html`, `.htm` | sandboxed iframe in the **صفحه** tab | – | – |
 
-Opening files from outside: you can use the open-file button, Android "Share → CodePad", or "Open with". The rules are:
-- The file must be **text** and **≤ 1 MB**.
-- Unknown extensions open as **mix**, and auto-detection decides the language of each chunk.
+Opening files from outside: you can use the open-file button, Android "Share → CodePad", or "Open with". Nothing is rejected any more. The rules are:
+- **Text files ≤ 1 MB** open as **code files**. Unknown extensions (e.g. `.txt`) open as **mix**, and auto-detection decides the language of each chunk.
+- **Everything else becomes an attachment** (§2.8): images, audio, video, fonts, PDFs, archives, any binary file, and any text file **larger than 1 MB**. There is no size or type limit for attachments.
+- To force a small text file (a `.csv`, a `.json`, even a `.py` used as data) to be an attachment instead of code, add it with **افزودن عکس یا فایل** in the menu.
 
 ### 2.1 Python (`.py`)
 - This is real CPython, but **only the standard library**. Pyodide's extra packages (numpy, pandas, matplotlib…) are **not installed**, and `micropip` cannot fetch them offline. `import numpy` → `ModuleNotFoundError`.
 - The first run takes a few seconds while Python boots. The app shows "پایتون در حال راه‌اندازی است…" ("Python is starting…").
 - There is no GUI from Python: no `tkinter`, no `turtle` window, no DOM. For graphics, use a mix file. Python computes values, puts them in `shared`, and an HTML/JS block draws them (see §5.2).
+- **Attachments are ordinary files in Python's working directory**: `open("data.csv", encoding="utf-8")`, `open("photo.png", "rb")`, `os.listdir(".")` (§2.8).
 - `time.sleep()` in a loop does **not** animate anything, because output only appears when the run ends.
 - `input()` and how re-running works are covered in §4.4.
 
@@ -130,6 +135,69 @@ To style your own markup, use an `.html` file. Either put the CSS inline, or lin
 - `console.log/warn/error` and uncaught errors from the page show up in the output panel.
 - `<link href="x.css">` and `<script src="x.js"></script>` that point to **files in the same project** (matched by file name) are inlined automatically. References to anything else stay as they are and are blocked by the sandbox (§4.2).
 - **ذخیره به‌صورت صفحهٔ مستقل (HTML)** downloads the page as a standalone file, without the sandbox CSP. CDN scripts work in that exported file when it is opened in a normal browser, but not inside CodePad.
+
+### 2.8 Attachments (images and files)
+The user can upload **any file** into the active project: images, CSV/JSON/text data, audio, video, fonts, PDFs. There is **no size limit and no type limit**. Files are stored on the device (IndexedDB), per project.
+
+**How the user adds them**
+- Menu (☰) → section **عکس‌ها و فایل‌های پیوست** → **افزودن عکس یا فایل**. Several files at once.
+- The open-file button, Android "Share → CodePad" and "Open with" send images, binary files and text files > 1 MB there automatically (§2).
+- The same menu section lists them (with a thumbnail for images), deletes them (trash button), and inserts a file's name into the code when its row is tapped.
+- Terminal commands: `ls` lists attachments after the code files, `rm <name>` deletes one.
+- Uploading a file with a name that already exists **replaces** it (so references in code keep working). Deleting a project deletes its attachments.
+
+**Naming rules for code you write**
+- A name is the plain file name, case-sensitive, with its extension: `photo.png`, `data.csv`, `my song.mp3`. There are **no folders**: write `"photo.png"`, not `"images/photo.png"` or `"./assets/photo.png"`.
+- You cannot know which files the user has. **Ask for the names**, or write code that adapts (`os.listdir(".")` in Python lists them).
+
+**Any file type works, like adding files to a project in PyCharm.** CodePad does not care about the extension: it stores the bytes and uses the plain file name. Unknown extensions (`.xyz`, `.dat`, no extension) work too; they are typed `application/octet-stream`. This was tested with `.png`, `.csv`, `.json`, `.txt` with a Persian name and a space, `.bin`, and `.xyz`.
+
+| Kind of file | In a page (HTML / CSS / page JS) | In Python |
+|---|---|---|
+| Image (`png jpg gif webp svg avif bmp ico`…) | `<img src="photo.png">`, `url(photo.png)` in CSS, `new Image(); img.src = "photo.png"` → canvas `drawImage` | `open("photo.png", "rb").read()` (raw bytes; no decoder, no Pillow) |
+| Text / data (`csv json txt md xml tsv yaml` …, any text) | `assetText("data.csv")` → string; `JSON.parse(assetText("info.json"))` | `open("data.csv", encoding="utf-8")`, `csv`, `json.load(open("info.json"))` |
+| Binary (`bin dat zip db pdf` …, any extension) | `assetBytes("model.bin")` → `Uint8Array` | `open("model.bin", "rb").read()`; `zipfile` and `struct` from the standard library |
+| Audio / video (`mp3 wav ogg m4a mp4 webm mov`) | `<audio controls src="song.mp3">`, `<video controls src="clip.mp4">`, `new Audio("beep.wav")` | bytes only |
+| Font (`woff2 woff ttf otf`) | `@font-face { src: url("my-font.woff2"); }` | bytes only |
+
+**Using them in a page (`.html`, or the HTML/CSS/JS blocks of a mix file)**
+- Write the name wherever a URL goes. CodePad replaces it with the file itself (a `data:` URL) before the page runs:
+  ```html
+  <img src="photo.png">
+  <audio controls src="song.mp3"></audio>
+  <video controls src="clip.mp4"></video>
+  <style>
+    body { background: url(photo.png) center / cover; }
+    @font-face { font-family: Mine; src: url("my-font.woff2"); }
+  </style>
+  <script>
+    const img = new Image(); img.src = "photo.png";           // also works for canvas drawImage
+    const text  = assetText("data.csv");                        // the file's text (UTF-8)
+    const bytes = assetBytes("data.bin");                       // a Uint8Array
+  </script>
+  ```
+- The replacement only happens when the name is **the whole string**: inside quotes (`"photo.png"`, `'photo.png'`, also `"./photo.png"`) or inside `url(photo.png)`. Backtick strings (`` `photo.png` ``) are **not** replaced, so use normal quotes. A name built at run time (`"photo" + n + ".png"`), or one hidden inside a longer string (`"images/photo.png"`), is **not** replaced. Write each name out in full, or keep a literal list (`const pics = ["a.png", "b.png"]`).
+- `assetText(...)` and `assetBytes(...)` take that same literal string (which has already become a `data:` URL). Use them, not `fetch`, to read a file's contents: `fetch` is blocked in pages (§4.2).
+- The replacement also applies to the `shared` object in a mix file: if Python puts `shared["pic"] = "photo.png"`, the page receives `shared.pic` as the image's `data:` URL.
+- Only attachments whose name appears in the page's HTML/CSS/JS (or in `shared`) are embedded. Linked `style.css` / `script.js` files from the same project count too.
+- **ذخیره به‌صورت صفحهٔ مستقل (HTML)** embeds the files in the exported page, so it works offline in any browser.
+- Very large files (tens of MB, e.g. video) make the page slow to build. Prefer small images and short clips when you have a choice.
+
+**Using them in Python (`.py`, or `@@ python` blocks)**
+- Every attachment of the active project is a file in Python's working directory:
+  ```python
+  import csv
+  rows = list(csv.DictReader(open("data.csv", encoding="utf-8")))
+  size = len(open("photo.png", "rb").read())
+  print(len(rows), "rows,", size, "bytes")
+  ```
+- Names with spaces or Persian letters work (`open("داده ها.csv")`).
+- Python **cannot** see the project's code files this way (only attachments), and anything it writes is lost when the app restarts. To show an image from Python, put its **name** in `shared` and draw it in a page block (§5.4).
+- There is no standard-library image decoder, so Python can read the bytes (`rb`) but not decode a PNG/JPEG into pixels (no Pillow). Let the page decode and draw images.
+
+**Not available**
+- JavaScript console files (`.js`), C/C++, Jib, Jib Farsi and the binary machine **cannot read attachments**. To use an attachment from JavaScript, put the code in an HTML page or an `@@ js` block that mentions `document` (§3.5).
+- A plain `.css` file previews on a fixed demo card; to see a background image, use an HTML page.
 
 ---
 
@@ -247,7 +315,7 @@ font-src data: https:; style-src 'unsafe-inline' https:; script-src 'unsafe-inli
 ```
 Consequences (the first three were checked in headless Chrome):
 - **Remote/CDN `<script src="https://…">` is blocked.** jQuery, Three.js, p5.js, confetti etc. from a CDN do not load. Inline the library code or write it yourself.
-- **`fetch`, `XMLHttpRequest`, `WebSocket` and `EventSource` are blocked.** There is no network access from the page.
+- **`fetch`, `XMLHttpRequest`, `WebSocket` and `EventSource` are blocked.** There is no network access from the page. Uploaded files (§2.8) are the exception only in the sense that CodePad embeds them: use `<img src="photo.png">` or `assetText("data.csv")`, not `fetch("data.csv")`.
 - **`localStorage`, `sessionStorage`, cookies and IndexedDB throw `SecurityError`.** Nothing persists between runs. Wrap any use in `try/catch`, or don't use it.
 - `eval()`, `new Function()`, `setTimeout("string")`, `<script src="blob:…">` and Web Workers from blob URLs are blocked, because the CSP has no `'unsafe-eval'` and no `blob:` for scripts.
 - `window.open`, popups and navigating the top window are not allowed.
@@ -259,6 +327,7 @@ Consequences (the first three were checked in headless Chrome):
   - `alert`/`confirm`/`prompt`, forms
   - **remote images, media, fonts and stylesheets over https** (e.g. Google Fonts CSS), when the phone is online
   - `data:` and `blob:` images
+  - the user's attachments, embedded as `data:` URLs (§2.8): images, audio, video, fonts and CSS backgrounds
 
 ### 4.3 Page lifecycle
 - **Switching between the خروجی (Output) and صفحه (Page) tabs restarts the page.** The iframe is re-created, so a running game or animation starts over and its state is lost. To watch a game, stay on **صفحه** and use the fullscreen button.
@@ -279,14 +348,14 @@ Consequences (the first three were checked in headless Chrome):
 
 ### 4.5 Runtime limits
 - Time limits: Python 25 s; JavaScript, C/C++ and Jib 2.5 s; binary 300 steps. An infinite loop is stopped with a timeout message, and the **توقف** button stops a run.
-- There are no files or file system for programs. Python's `open()` works only on Pyodide's temporary in-memory file system, which is wiped on every run. Programs cannot read the project's other files, except HTML `<link>`/`<script src>` inlining (§2.7).
+- There is no real file system for programs. Python's `open()` works on Pyodide's temporary in-memory file system; files a program writes are not saved. Programs **can** read the user's attachments (§2.8): Python through `open("name")`, pages through the file name in a URL or `assetText("name")`. Programs cannot read the project's code files, except HTML `<link>`/`<script src>` inlining (§2.7).
 - There is no network for programs: no pip, no HTTP requests from Python, no fetch from pages.
 - Python: standard library only. JS console: synchronous output only. C/C++: JSCPP subset.
-- Files you open from outside are limited to 1 MB of text.
+- Code files opened from outside are limited to 1 MB of text; anything larger or non-text is stored as an attachment instead (§2.8), which has no size limit.
 
 ---
 
-## 5. Worked examples (both tested in CodePad v1.6.0)
+## 5. Worked examples (tested in CodePad v1.7.0)
 
 ### 5.1 A simple HTML page (`index.html`)
 ```html
@@ -571,6 +640,30 @@ Why it works:
 - Python's `shared` values reach the page as `window.shared`.
 - No CDN, no `localStorage`, no `fetch`.
 
+### 5.4 Attachments: an image in a page and a CSV read by Python
+Assume the user has uploaded `photo.png` and `scores.csv` (columns `name,score`). Both are used by their plain names.
+```
+@@ python
+import csv
+rows = list(csv.DictReader(open("scores.csv", encoding="utf-8")))
+shared["rows"] = [{"name": r["name"], "score": int(r["score"])} for r in rows]
+shared["pic"] = "photo.png"          # the page receives this as the image itself
+print("rows:", len(rows))
+
+@@ html
+<img id="pic" alt="" style="width:96px;border-radius:12px">
+<ul id="list"></ul>
+
+@@ js
+document.getElementById("pic").src = shared.pic;
+for (const r of shared.rows) {
+  const li = document.createElement("li");
+  li.textContent = r.name + ": " + r.score;
+  document.getElementById("list").appendChild(li);
+}
+```
+Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` URL when the page is built, and Python reads `scores.csv` from its working directory. Remember to tell the user to upload the files first (menu → **افزودن عکس یا فایل**), otherwise `open()` raises `FileNotFoundError` and the image stays blank.
+
 ---
 
 ## 6. Checklist for an AI writing CodePad code
@@ -586,10 +679,12 @@ Why it works:
 7. C/C++: simple C-style code. Input comes from the **ورودی** box.
 8. Use a mobile layout: a viewport fitting about 360 px wide, touch/pointer events (`pointerdown`), and large buttons.
 9. Tell the user: press **اجرا**, then look at **صفحه** (graphics) or **خروجی** (text). Switching tabs restarts a page.
+10. If the program needs the user's images or files: ask for their exact names, use flat names in full literal strings (§2.8), read data in a page with `assetText(...)` (not `fetch`), read data in Python with `open(...)`, and tell the user to upload them first via **افزودن عکس یا فایل**.
 
 ## 7. Getting the Android app (APK)
 - Latest release: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest
-- Direct download, v1.6.0: https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.6.0/CodePad.apk (about 12.4 MB)
+- Direct download, v1.7.0 (adds attachments): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.7.0/CodePad.apk
+- Previous version, v1.6.0 (no attachments): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.6.0/CodePad.apk
 - Source: https://github.com/hoosein91hoosein91-arch/CodePad
 - Each APK is a **debug build** from GitHub Actions (`./gradlew assembleDebug`). It is not release-signed and is not on Google Play.
   - Android will ask you to allow **installing from unknown sources** for your browser or file manager.
@@ -609,11 +704,13 @@ Why it works:
 |---|---|
 | `src/labshell/types.ts` | language ids, labels, extensions (`LANG_META`) |
 | `src/labshell/mix.ts` | mix parser, aliases, auto-detection, `shared`, page assembly (`runMix`) |
-| `src/labshell/html-doc.ts` | page document builder, CSP, console bridge, `buildWebDoc` |
-| `src/labshell/runtime.ts` | Python/JS/C/Jib runners, time limits, the input re-run loop |
-| `src/labshell/py.worker.ts` | Pyodide worker, `input()` handling |
+| `src/labshell/html-doc.ts` | page document builder, CSP, console bridge, `buildWebDoc`, attachment embedding (`withAssets`) |
+| `src/labshell/runtime.ts` | Python/JS/C/Jib runners, time limits, the input re-run loop, sending attachments to the Python worker |
+| `src/labshell/py.worker.ts` | Pyodide worker, `input()` handling, writing attachments into Python's working directory |
 | `src/labshell/farsi.ts`, `english.ts` | Jib compiler (Farsi + English keywords) |
 | `src/labshell/binary.ts` | 8-bit machine |
-| `src/labshell/open-files.ts` | opening external files, extension map, 1 MB limit |
+| `src/labshell/open-files.ts` | opening external files, extension map, 1 MB code limit, routing everything else to attachments |
+| `src/labshell/assets.ts` | attachments: IndexedDB storage, add/remove, `data:` URLs for pages |
+| `src/labshell/asset-refs.ts` | pure helpers: finding and replacing attachment names in code, `assetText`/`assetBytes` page helpers |
 | `src/labshell/samples.ts` | built-in samples and project templates |
 | `src/components/lab-shell.tsx` | UI, Run button, tabs, sandboxed iframe |

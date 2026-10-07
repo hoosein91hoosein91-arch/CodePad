@@ -1,12 +1,14 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronDown, ChevronUp, Download, Eye, FolderOpen, Maximize2, Menu, Minimize2, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Eye, File as FileIcon, FolderOpen, Maximize2, Menu, Minimize2, Paperclip, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { APP_NAME } from "@/labshell/brand";
 import { compileFarsi, FARSI_BAR, type FarsiPage } from "@/labshell/farsi";
 import { compileEnglish, ENGLISH_BAR } from "@/labshell/english";
 import { BINARY_BAR, runBinary, type MachineSnap } from "@/labshell/binary";
 import { TEMPLATE_CHOICES } from "@/labshell/samples";
-import { buildHtmlDoc, buildWebDoc } from "@/labshell/html-doc";
+import { addAssets, assetUrlsFor, loadAssets, readAssetBlob, removeAsset, useAssets, type AssetMeta } from "@/labshell/assets";
+import { formatSize } from "@/labshell/asset-refs";
+import { buildHtmlDoc, buildWebDoc, webText, withAssets } from "@/labshell/html-doc";
 import { listenLaunchFiles, readOpened, takeSharedFiles } from "@/labshell/open-files";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
@@ -17,6 +19,7 @@ import { CodeEditor } from "@/components/code-editor";
 import { editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/editor-commands";
 import { ThemePanel } from "@/components/theme-panel";
 import { runShell } from "@/labshell/shell";
+import type { LabFile } from "@/labshell/types";
 import { MachineView } from "@/components/machine-view";
 
 const iconBtn =
@@ -69,6 +72,45 @@ const STREAM_CLASS: Record<TermStream, string> = {
   err: "text-coral",
 };
 
+// متنی که صفحهٔ html از آن ساخته می‌شود (خودش + css و js هم‌پروژه‌ای که داخلش گذاشته می‌شوند)؛ برای پیدا کردن نام پیوست‌ها
+function htmlSourceText(file: LabFile, files: LabFile[]): string {
+  return [file.content, ...files.filter((item) => item.lang === "css" || item.lang === "javascript").map((item) => item.content)].join("\n");
+}
+
+function AssetRow({ item, onInsert, onDelete }: { item: AssetMeta; onInsert: () => void; onDelete: () => void }) {
+  const [thumb, setThumb] = useState<string | null>(null);
+  useEffect(() => {
+    if (!item.type.startsWith("image/")) return;
+    let url = "";
+    let dead = false;
+    void readAssetBlob(item.projectId, item.name).then((blob) => {
+      if (!blob || dead) return;
+      url = URL.createObjectURL(blob);
+      setThumb(url);
+    });
+    return () => {
+      dead = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [item.projectId, item.name, item.stamp, item.type]);
+  return (
+    <div className="flex items-center gap-1">
+      <button type="button" className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-lab px-2 text-sm hover:bg-panel-2" aria-label={`Insert ${item.name} into code`} onClick={onInsert}>
+        <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded bg-ink text-mist">
+          {thumb ? <img src={thumb} alt="" className="size-full object-cover" /> : <FileIcon className="size-4" />}
+        </span>
+        <span className="flex min-w-0 flex-col items-start">
+          <span className="w-full truncate text-start" dir="ltr">{item.name}</span>
+          <span className="text-xs text-mist" dir="ltr">{formatSize(item.size)}</span>
+        </span>
+      </button>
+      <button type="button" className={iconBtn} aria-label={`Delete ${item.name}`} onClick={onDelete}>
+        <Trash2 className="size-5" />
+      </button>
+    </div>
+  );
+}
+
 export function LabShell() {
   const projects = useLab((state) => state.projects);
   const activeProjectId = useLab((state) => state.activeProjectId);
@@ -112,22 +154,36 @@ export function LabShell() {
   const splitRef = useRef<HTMLDivElement>(null);
   const showFrame = file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id);
   const pickRef = useRef<HTMLInputElement>(null);
+  const assetPickRef = useRef<HTMLInputElement>(null);
+  const assetItems = useAssets((state) => state.items);
+  const projectAssets = assetItems.filter((item) => item.projectId === project.id);
+
+  // پیوست کردن عکس و فایل به پروژهٔ فعال (بدون محدودیت اندازه یا نوع)
+  const attach = useCallback(async (files: File[]) => {
+    if (!files.length) return;
+    const state = useLab.getState();
+    const { added, replaced, failed } = await addAssets(state.activeProjectId, files);
+    if (added.length) state.pushLines([termLine("sys", `${added.length} پیوست ذخیره شد: ${added.join("، ")}`)]);
+    if (replaced.length) state.pushLines([termLine("sys", `جایگزین شد: ${replaced.join("، ")}`)]);
+    if (failed.length) state.pushLines([termLine("err", `ذخیره نشد: ${failed.join("، ")}`)]);
+  }, []);
 
   const bringIn = useCallback(async (files: File[]) => {
     if (!files.length) return;
-    const { opened, skipped } = await readOpened(files);
+    const { opened, assets } = await readOpened(files);
     const state = useLab.getState();
     if (opened.length) {
       state.importFiles(opened);
       state.pushLines([termLine("sys", `${opened.length} فایل باز شد: ${opened.map((item) => item.name).join("، ")}`)]);
     }
-    if (skipped.length) state.pushLines([termLine("err", `باز نشد: ${skipped.join("، ")}`)]);
-  }, []);
+    if (assets.length) await attach(assets);
+  }, [attach]);
   const scroller = useRef<HTMLDivElement>(null);
   const wantsInput = file.lang === "mix" || file.lang === "farsi" || file.lang === "english" || file.lang === "binary" || file.lang === "python" || file.lang === "c" || file.lang === "cpp";
 
   useEffect(() => {
     void Promise.resolve(useLab.persist.rehydrate()).then(() => setReady(true));
+    void loadAssets();
   }, []);
 
   useEffect(() => {
@@ -146,13 +202,21 @@ export function LabShell() {
 
   useEffect(() => {
     if (file.lang !== "html") return;
+    let cancelled = false;
     const timer = window.setTimeout(() => {
-      const fresh = Math.random().toString(36).slice(2);
-      htmlToken.current = fresh;
-      setHtmlDoc(buildHtmlDoc(file.content, project.files, fresh));
+      void assetUrlsFor(project.id, htmlSourceText(file, project.files)).then((urls) => {
+        if (cancelled) return;
+        const fresh = Math.random().toString(36).slice(2);
+        htmlToken.current = fresh;
+        setHtmlDoc(buildHtmlDoc(file.content, project.files, fresh, urls));
+      });
     }, 400);
-    return () => window.clearTimeout(timer);
-  }, [file.lang, file.content, project.files, reload]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file.lang, file.content, project.id, project.files, reload, assetItems]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -181,6 +245,7 @@ export function LabShell() {
     const mine = ++token.current;
     const state = useLab.getState();
     const current = activeFile(activeProject(state));
+    const projectId = state.activeProjectId;
     state.setRunning(true);
     state.setPanel(current.lang === "css" || current.lang === "html" || current.lang === "binary" ? "stage" : "out");
     const intro = [termLine("cmd", current.name)];
@@ -206,7 +271,7 @@ export function LabShell() {
         return { stdout: r.lines.join("\n"), stderr: "", aborted: false, machine: r.snap };
       };
       const result = await runMix(current.content, current.stdin, {
-        python: runPython,
+        python: (code, stdin) => runPython(code, stdin, projectId),
         javascript: runJavaScript,
         jib,
         c: runCpp,
@@ -220,9 +285,12 @@ export function LabShell() {
       if (!next.length) next.push(termLine("sys", "خروجی‌ای نبود."));
       if (result.machine) setMachine(result.machine);
       if (result.web) {
+        // نام پیوست‌هایی که در html/css/js یا shared آمده با خود فایل عوض می‌شود
+        const web = withAssets(result.web, await assetUrlsFor(projectId, webText(result.web)));
+        if (token.current !== mine) return;
         const fresh = Math.random().toString(36).slice(2);
         htmlToken.current = fresh;
-        setMixPage({ fileId: current.id, doc: buildWebDoc(result.web, fresh), web: result.web });
+        setMixPage({ fileId: current.id, doc: buildWebDoc(web, fresh), web });
       } else setMixPage(null);
       if (result.page) {
         setScene({ ...result.page, title: result.page.title || "جیب", text: result.page.text || "", mark: result.page.mark || "JIB", lines: [] });
@@ -296,7 +364,7 @@ export function LabShell() {
     }
     const result =
       current.lang === "python"
-        ? await runPython(current.content, current.stdin)
+        ? await runPython(current.content, current.stdin, projectId)
         : current.lang === "javascript"
           ? await runJavaScript(current.content)
           : await runCpp(current.content, current.stdin);
@@ -326,10 +394,10 @@ export function LabShell() {
   }
 
   // ذخیرهٔ صفحه به‌صورت یک فایل HTML مستقل (بدون پل کنسول)
-  function exportWeb() {
+  async function exportWeb() {
     const doc =
       file.lang === "html"
-        ? buildHtmlDoc(file.content, project.files, null)
+        ? buildHtmlDoc(file.content, project.files, null, await assetUrlsFor(project.id, htmlSourceText(file, project.files)))
         : file.lang === "mix" && mixPage?.fileId === file.id
           ? buildWebDoc(mixPage.web, null)
           : "";
@@ -500,6 +568,42 @@ export function LabShell() {
                     </button>
                   )}
                 </section>
+                <section className="flex flex-col gap-2">
+                  <h2 className="text-sm font-semibold text-mist">عکس‌ها و فایل‌های پیوست</h2>
+                  <p className="text-xs leading-relaxed text-pretty text-mist">
+                    هر عکس یا فایلی (بدون محدودیت اندازه). با نامش در صفحه یا پایتون استفاده می‌شود: «photo.png» در html، open("data.csv") در پایتون. روی یک پیوست بزنی نامش در کد گذاشته می‌شود.
+                  </p>
+                  {projectAssets.map((item) => (
+                    <AssetRow
+                      key={`${item.projectId}/${item.name}`}
+                      item={item}
+                      onInsert={() => {
+                        setMenu(false);
+                        window.setTimeout(() => insertAtCursor(item.name), 0);
+                      }}
+                      onDelete={() => void removeAsset(item.projectId, item.name)}
+                    />
+                  ))}
+                  <input
+                    ref={assetPickRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(event) => {
+                      const list = [...(event.target.files ?? [])];
+                      event.target.value = "";
+                      void attach(list);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="flex h-11 items-center justify-center gap-2 rounded-lab border border-line px-3 text-sm"
+                    onClick={() => assetPickRef.current?.click()}
+                  >
+                    <Paperclip className="size-4" />
+                    افزودن عکس یا فایل
+                  </button>
+                </section>
                 <p className="text-sm leading-relaxed text-pretty text-mist">
                   Jib can add, branch, loop, call functions, keep lists, and run an 8-bit machine block.
                   Python, JavaScript, C, C++, and CSS are still available as extra files. The machine is a
@@ -648,7 +752,7 @@ export function LabShell() {
               {copied ? "کپی شد" : "کپی"}
             </button>
             {file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id) ? (
-              <button type="button" className="grid size-10 place-items-center text-mist" aria-label="ذخیره به‌صورت صفحهٔ مستقل (HTML)" onClick={exportWeb}>
+              <button type="button" className="grid size-10 place-items-center text-mist" aria-label="ذخیره به‌صورت صفحهٔ مستقل (HTML)" onClick={() => void exportWeb()}>
                 <Download className="size-5" />
               </button>
             ) : null}

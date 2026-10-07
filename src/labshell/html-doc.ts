@@ -1,3 +1,4 @@
+import { PAGE_HELPERS, rewriteRefs } from "@/labshell/asset-refs";
 import type { LabFile } from "@/labshell/types";
 
 // ساخت سندی که داخل iframe اجرا می‌شود:
@@ -19,7 +20,7 @@ window.addEventListener("unhandledrejection",function(e){s("error",["Unhandled: 
 
 const noCloseTag = (text: string, tag: "script" | "style") => text.replace(new RegExp(`</${tag}`, "gi"), `<\\/${tag}`);
 
-export function buildHtmlDoc(html: string, files: LabFile[], token: string | null): string {
+export function buildHtmlDoc(html: string, files: LabFile[], token: string | null, assets?: Map<string, string>): string {
   const byName = new Map(files.map((item) => [item.name, item]));
   const find = (ref: string) => byName.get(ref.replace(/^\.?\//, ""));
 
@@ -32,19 +33,21 @@ export function buildHtmlDoc(html: string, files: LabFile[], token: string | nul
     return file && file.lang === "javascript" ? `<script>${noCloseTag(file.content, "script")}</script>` : tag;
   });
 
-  return finish(doc, token);
+  return finish(assets ? rewriteRefs(doc, assets) : doc, token);
 }
 
 // token === null → نسخهٔ خروجی بدون پل و CSP (برای ذخیره به‌عنوان برنامهٔ مستقل)
 function finish(doc: string, token: string | null): string {
-  const head = token === null ? "" : `<meta http-equiv="Content-Security-Policy" content="${CSP}">${bridge(token)}`;
-  if (token === null && /<html\b/i.test(doc)) return doc;
+  // assetText()/assetBytes() فقط وقتی لازم‌اند که صفحه صدایشان کرده باشد
+  const helpers = /\basset(Text|Bytes)\s*\(/.test(doc) ? PAGE_HELPERS : "";
+  const head = (token === null ? "" : `<meta http-equiv="Content-Security-Policy" content="${CSP}">${bridge(token)}`) + helpers;
+  if (token === null && !helpers && /<html\b/i.test(doc)) return doc;
   if (/<head\b[^>]*>/i.test(doc)) return doc.replace(/<head\b[^>]*>/i, (open) => `${open}${head}`);
   if (/<html\b[^>]*>/i.test(doc)) return doc.replace(/<html\b[^>]*>/i, (open) => `${open}<head>${head}</head>`);
   return `<!doctype html><html><head>${head}</head><body>${doc}</body></html>`;
 }
 
-export function buildWebDoc(parts: { html: string; css: string; js: string; data?: string }, token: string | null): string {
+export function buildWebDoc(parts: WebParts, token: string | null): string {
   // دادهٔ مشترک بلوک‌ها، اول از همه تعریف می‌شود تا هر اسکریپتی در صفحه به `shared` برسد
   const data = parts.data ? `<script>window.shared = ${parts.data};</script>` : "";
   const style = parts.css.trim() ? `<style>${noCloseTag(parts.css, "style")}</style>` : "";
@@ -58,4 +61,22 @@ export function buildWebDoc(parts: { html: string; css: string; js: string; data
     doc = /<\/body>/i.test(doc) ? doc.replace(/<\/body>/i, () => `${script}</body>`) : `${doc}${script}`;
   }
   return finish(doc, token);
+}
+
+export type WebParts = { html: string; css: string; js: string; data?: string };
+
+// متنی که برای پیدا کردن نام پیوست‌ها باید بررسی شود
+export function webText(parts: WebParts): string {
+  return [parts.html, parts.css, parts.js, parts.data ?? ""].join("\n");
+}
+
+// نام پیوست‌ها را در بخش‌های صفحهٔ ترکیبی با آدرس data: عوض می‌کند
+export function withAssets(parts: WebParts, urls: Map<string, string>): WebParts {
+  if (!urls.size) return parts;
+  return {
+    html: rewriteRefs(parts.html, urls),
+    css: rewriteRefs(parts.css, urls),
+    js: rewriteRefs(parts.js, urls),
+    data: parts.data === undefined ? undefined : rewriteRefs(parts.data, urls),
+  };
 }

@@ -15,24 +15,37 @@ export function langFromName(name: string): Lang {
   return EXT[ext] ?? "mix";
 }
 
-const MAX_BYTES = 1_000_000;
+// فایل متنیِ کد تا این اندازه داخل پروژه باز می‌شود (پروژه‌ها در localStorage ذخیره می‌شوند)؛ بزرگ‌تر یا غیرمتنی ← پیوست
+const MAX_CODE_BYTES = 1_000_000;
 
-export async function readOpened(files: File[]): Promise<{ opened: OpenedFile[]; skipped: string[] }> {
+const MEDIA_EXT = new Set([
+  "png", "jpg", "jpeg", "gif", "webp", "avif", "bmp", "ico", "svg", "heic",
+  "mp3", "wav", "ogg", "m4a", "aac", "flac", "mp4", "webm", "mov", "mkv",
+  "woff", "woff2", "ttf", "otf", "pdf", "zip", "gz", "tar", "7z", "rar", "db", "sqlite", "xlsx", "docx", "pptx",
+]);
+
+async function looksBinary(file: File): Promise<boolean> {
+  const head = new Uint8Array(await file.slice(0, 8192).arrayBuffer());
+  return head.includes(0);
+}
+
+export type OpenResult = { opened: OpenedFile[]; assets: File[] };
+
+// دکمهٔ «باز کردن فایل»: کد (متنی و ≤ ۱ مگابایت) به فایل پروژه تبدیل می‌شود؛ عکس و هر چیز دیگر پیوست می‌شود. چیزی رد نمی‌شود.
+export async function readOpened(files: File[]): Promise<OpenResult> {
   const opened: OpenedFile[] = [];
-  const skipped: string[] = [];
+  const assets: File[] = [];
   for (const file of files) {
-    if (file.size > MAX_BYTES) {
-      skipped.push(`${file.name} (بزرگ‌تر از ۱ مگابایت)`);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const media = file.type.startsWith("image/") || file.type.startsWith("audio/") || file.type.startsWith("video/") || MEDIA_EXT.has(ext);
+    if (media || file.size > MAX_CODE_BYTES || (await looksBinary(file))) {
+      assets.push(file);
       continue;
     }
     const content = (await file.text()).replace(/\r\n?/g, "\n");
-    if (content.includes("\u0000")) {
-      skipped.push(`${file.name} (فایل متنی نیست)`);
-      continue;
-    }
     opened.push({ name: file.name || "file.txt", lang: langFromName(file.name), content });
   }
-  return { opened, skipped };
+  return { opened, assets };
 }
 
 // اگر نام تکراری بود، قبل از پسوند شماره می‌گذارد: main.py ← main (2).py

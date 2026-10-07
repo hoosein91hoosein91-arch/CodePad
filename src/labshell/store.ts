@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { removeProjectAssets } from "@/labshell/assets";
 import { freshName } from "@/labshell/open-files";
 import { createFile, createProject, SEED_PROJECT, uid } from "@/labshell/samples";
 import type { LabFile, Lang, Project, TemplateKind, TermLine } from "@/labshell/types";
@@ -170,6 +171,7 @@ export const useLab = create<LabState>()(
         set((state) => {
           if (state.projects.length <= 1) return state;
           const projects = state.projects.filter((project) => project.id !== id);
+          void removeProjectAssets(id); // پیوست‌های پروژهٔ حذف‌شده هم پاک می‌شوند
           const activeProjectId = state.activeProjectId === id ? (projects[0]?.id ?? "") : state.activeProjectId;
           return { projects, activeProjectId };
         }),

@@ -1,6 +1,30 @@
 type Pyodide = {
   runPython: (code: string) => unknown;
+  FS: { writeFile: (path: string, data: Uint8Array) => void; unlink: (path: string) => void };
 };
+
+type PyAsset = { name: string; stamp: string; buf?: ArrayBuffer };
+
+// پیوست‌های پروژه در پوشهٔ کاری پایتون؛ فقط فایل‌های تازه یا عوض‌شده نوشته می‌شوند
+const mounted = new Map<string, string>();
+
+function syncAssets(py: Pyodide, list: PyAsset[]) {
+  const names = new Set(list.map((asset) => asset.name));
+  for (const name of [...mounted.keys()]) {
+    if (names.has(name)) continue;
+    try {
+      py.FS.unlink(name);
+    } catch {
+      /* برنامه خودش پاکش کرده بود */
+    }
+    mounted.delete(name);
+  }
+  for (const asset of list) {
+    if (!asset.buf) continue;
+    py.FS.writeFile(asset.name, new Uint8Array(asset.buf));
+    mounted.set(asset.name, asset.stamp);
+  }
+}
 
 type PyModule = {
   loadPyodide: (options: { indexURL: string }) => Promise<Pyodide>;
@@ -25,10 +49,11 @@ function textOf(value: unknown): string {
   return "";
 }
 
-self.onmessage = async (event: MessageEvent<{ id: number; code: string; stdin: string }>) => {
-  const { id, code, stdin } = event.data;
+self.onmessage = async (event: MessageEvent<{ id: number; code: string; stdin: string; assets?: PyAsset[] }>) => {
+  const { id, code, stdin, assets } = event.data;
   try {
     const py = await boot();
+    syncAssets(py, assets ?? []);
     const source = stdin.endsWith("\n") ? stdin : `${stdin}\n`;
     const answers = stdin === "" ? [] : stdin.replace(/\n$/, "").split("\n");
     py.runPython(`
