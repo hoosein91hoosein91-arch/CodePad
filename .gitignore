@@ -1,0 +1,7 @@
+node_modules/
+dist/
+android/
+.tanstack/
+.output/
+.vercel/
+.node_modules.lock

@@ -1,0 +1,6 @@
+{
+  "appId": "com.hoosein.codepad",
+  "appName": "CodePad",
+  "webDir": "dist/client",
+  "server": { "androidScheme": "https" }
+}
