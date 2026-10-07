@@ -2,6 +2,7 @@ import { runBinary } from "../src/labshell/binary.ts";
 import { compileEnglish } from "../src/labshell/english.ts";
 import { compileFarsi } from "../src/labshell/farsi.ts";
 import { SAMPLES } from "../src/labshell/samples.ts";
+import { detectKind, parseMix, runMix } from "../src/labshell/mix.ts";
 
 type Page = { title: string; text: string; mark: string; css: string };
 type Snap = { a: number; bits: string; pc: number; steps: number; gloss: string };
@@ -156,6 +157,19 @@ if (!readMachine.ok) {
   process.exit(1);
 }
 must("machine read", run(readMachine.js, "4").logs[0] === "5");
+
+// اچ‌تی‌ام‌ال در فایل ترکیبی: نام، تشخیص خودکار، و ساخت صفحه با shared و سی‌اس‌اس
+must("html alias", parseMix("@@ html\n<p>hi</p>\n").blocks[0]?.kind === "html");
+must("html alias fa", parseMix("@@ اچ‌تی‌ام‌ال\n<p>hi</p>\n").blocks[0]?.kind === "html");
+must("html detect", detectKind('<div class="x">\n  <b>hi</b>\n</div>') === "html");
+must("html detect doc", detectKind("<!doctype html>\n<html><body></body></html>") === "html");
+must("not html: c include", detectKind("#include <stdio.h>\nint main() { return 0; }") === "c");
+must("not html: jib compare", detectKind("let a = 1\nif a < 2 { print(a) }") !== "html");
+const noop = async () => ({ stdout: "", stderr: "", aborted: false });
+const mixed = await runMix('@@ html\n<h1 id="t">x</h1>\n@@ css\nh1 { color: red; }\n<p>auto</p>\n', "", {
+  python: noop, javascript: async () => ({ stdout: '\u0001SHARED:{"n":3}', stderr: "", aborted: false }), jib: noop, c: noop, cpp: noop, binary: noop,
+});
+must("mix html page", !!mixed.html && mixed.html.body.includes('<h1 id="t">') && mixed.html.css.includes("color: red"));
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log("ALL PASSED");

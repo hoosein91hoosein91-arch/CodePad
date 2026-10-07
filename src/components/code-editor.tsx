@@ -1,6 +1,7 @@
 import { acceptCompletion, autocompletion, closeBrackets, snippetCompletion, type Completion, type CompletionContext } from "@codemirror/autocomplete";
 import { cpp } from "@codemirror/lang-cpp";
 import { css } from "@codemirror/lang-css";
+import { html } from "@codemirror/lang-html";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import {
@@ -15,18 +16,7 @@ import {
 } from "@codemirror/language";
 import { highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, drawSelection, EditorView } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
-import {
-  cursorCharLeft,
-  cursorCharRight,
-  cursorLineDown,
-  cursorLineUp,
-  defaultKeymap,
-  history,
-  historyKeymap,
-  indentWithTab,
-  redo,
-  undo,
-} from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { tags } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
 import { FARSI_KEYWORDS } from "@/labshell/farsi";
@@ -34,6 +24,7 @@ import { ENGLISH_KEYWORDS } from "@/labshell/english";
 import type { Lang } from "@/labshell/types";
 import { detectKind, kindOf } from "@/labshell/mix";
 import { useTheme } from "@/labshell/theme";
+import { clearActiveView, hotkeys, setActiveView } from "@/components/editor-commands";
 
 const highlight = HighlightStyle.define([
   { tag: tags.keyword, color: "var(--color-lime)" },
@@ -49,42 +40,6 @@ const highlight = HighlightStyle.define([
 ]);
 
 const farsiWords = new Set<string>(FARSI_KEYWORDS);
-
-const htmlLanguage = StreamLanguage.define<{ inTag: boolean }>({
-  startState: () => ({ inTag: false }),
-  token(stream, state) {
-    if (stream.match("<!--")) {
-      stream.skipTo("-->") ? stream.match("-->") : stream.skipToEnd();
-      return "comment";
-    }
-    if (state.inTag) {
-      if (stream.eatSpace()) return null;
-      if (stream.match(/"[^"]*"?/) || stream.match(/'[^']*'?/)) return "string";
-      if (stream.match(/\/?>/)) {
-        state.inTag = false;
-        return "keyword";
-      }
-      if (stream.match(/[\w:-]+/)) return "variableName";
-      stream.next();
-      return "operator";
-    }
-    if (stream.match(/<\/?[A-Za-z!][\w:-]*/)) {
-      state.inTag = true;
-      return "keyword";
-    }
-    if (stream.match(/&[#\w]+;/)) return "number";
-    stream.next();
-    return null;
-  },
-  tokenTable: {
-    comment: tags.comment,
-    string: tags.string,
-    number: tags.number,
-    keyword: tags.keyword,
-    variableName: tags.variableName,
-    operator: tags.operator,
-  },
-});
 
 const farsiLanguage = StreamLanguage.define({
   token(stream) {
@@ -204,7 +159,7 @@ function languageOf(lang: Lang) {
   if (lang === "python") return python();
   if (lang === "javascript") return javascript();
   if (lang === "css") return css();
-  if (lang === "html") return new LanguageSupport(htmlLanguage);
+  if (lang === "html") return html();
   return cpp();
 }
 
@@ -262,45 +217,6 @@ function completer(lang: Lang) {
     (ctx.state.doc.toString().match(/[\w\u0600-\u06FF\u200c]{3,}/g) ?? []).forEach((label) => add({ label, type: "variable" }));
     return { from: w ? w.from : ctx.pos, options, validFor: re };
   };
-}
-
-export function pressTab() {
-  if (view && !acceptCompletion(view)) insertAtCursor("  ");
-  else view?.focus();
-}
-
-let view: EditorView | null = null;
-
-export const hotkeys = {
-  run: () => {},
-};
-
-export function insertAtCursor(text: string) {
-  if (!view) return;
-  const range = view.state.selection.main;
-  view.dispatch({
-    changes: { from: range.from, to: range.to, insert: text },
-    selection: { anchor: range.from + text.length },
-  });
-  view.focus();
-}
-
-export function moveCursor(direction: "left" | "right" | "up" | "down") {
-  if (!view) return;
-  const command = {
-    left: cursorCharLeft,
-    right: cursorCharRight,
-    up: cursorLineUp,
-    down: cursorLineDown,
-  }[direction];
-  command(view);
-  view.focus();
-}
-
-export function editHistory(action: "undo" | "redo") {
-  if (!view) return;
-  (action === "undo" ? undo : redo)(view);
-  view.focus();
 }
 
 export function CodeEditor({
@@ -370,10 +286,10 @@ export function CodeEditor({
         ],
       }),
     });
-    view = next;
+    setActiveView(next);
     return () => {
       next.destroy();
-      if (view === next) view = null;
+      clearActiveView(next);
     };
   }, [fileId, lang, ac]);
 

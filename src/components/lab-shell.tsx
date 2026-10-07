@@ -1,18 +1,19 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronDown, ChevronUp, Download, Eye, Maximize2, Menu, Minimize2, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
-import { APP_KICKER, APP_NAME } from "@/labshell/brand";
+import { APP_NAME } from "@/labshell/brand";
 import { compileFarsi, FARSI_BAR, type FarsiPage } from "@/labshell/farsi";
 import { compileEnglish, ENGLISH_BAR } from "@/labshell/english";
 import { BINARY_BAR, runBinary, type MachineSnap } from "@/labshell/binary";
 import { TEMPLATE_CHOICES } from "@/labshell/samples";
-import { buildHtmlDoc, buildWebDoc } from "@/labshell/html-doc";
+import { buildHtmlDoc, buildMixHtmlDoc } from "@/labshell/html-doc";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
 import { isPythonWarm, runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
 import { LANG_META, LANG_ORDER, type Lang, type TermLine, type TermStream } from "@/labshell/types";
-import { CodeEditor, editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/code-editor";
+import { CodeEditor } from "@/components/code-editor";
+import { editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/editor-commands";
 import { ThemePanel } from "@/components/theme-panel";
 import { runShell } from "@/labshell/shell";
 import { MachineView } from "@/components/machine-view";
@@ -26,6 +27,7 @@ const MIX_BAR = [
   { label: "@@ جیب", insert: "\n@@ جیب\n" },
   { label: "@@ سی", insert: "\n@@ سی\n" },
   { label: "@@ ماشین", insert: "\n@@ ماشین\n" },
+  { label: "@@ html", insert: "\n@@ html\n" },
 ];
 
 const KEYS: { label: string; insert?: string; move?: "left" | "right" | "up" | "down" }[] = [
@@ -101,11 +103,13 @@ export function LabShell() {
   const htmlToken = useRef("");
   const [reload, setReload] = useState(0);
   const [htmlDoc, setHtmlDoc] = useState("");
-  const [mixDoc, setMixDoc] = useState("");
-  const [mixWeb, setMixWeb] = useState<{ html: string; css: string; js: string } | null>(null);
+  // صفحهٔ ساخته‌شده از بلوک‌های @@ html در آخرین اجرای فایل ترکیبی
+  const [mixPage, setMixPage] = useState<{ fileId: string; doc: string; page: NonNullable<RunResult["html"]> } | null>(null);
+  // اندازهٔ پنل‌ها روی گوشی: سهم ویرایشگر (کشیدنی) و حالت تمام‌صفحهٔ خروجی
   const [split, setSplit] = useState(0.58);
   const [full, setFull] = useState(false);
   const splitRef = useRef<HTMLDivElement>(null);
+  const showFrame = file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id);
   const scroller = useRef<HTMLDivElement>(null);
   const wantsInput = file.lang === "mix" || file.lang === "farsi" || file.lang === "english" || file.lang === "binary" || file.lang === "python" || file.lang === "c" || file.lang === "cpp";
 
@@ -165,7 +169,7 @@ export function LabShell() {
       intro.push(termLine("sys", "پایتون در حال راه‌اندازی است. اجرای اول چند ثانیه طول می‌کشد."));
     }
     if (current.lang === "javascript" && /\b(document|window)\b/.test(current.content)) {
-      intro.push(termLine("sys", "این اجرا کنسول است نه صفحه. برای صفحه از page { } در جیب استفاده کن."));
+      intro.push(termLine("sys", "این اجرا کنسول است نه صفحه. برای صفحه از فایل html یا page { } در جیب استفاده کن."));
     }
     state.pushLines(intro);
     if (current.lang === "mix") {
@@ -193,20 +197,16 @@ export function LabShell() {
       for (const line of result.stderr.replace(/\s+$/, "").split("\n")) if (line) next.push(termLine("err", line));
       if (!next.length) next.push(termLine("sys", "خروجی‌ای نبود."));
       if (result.machine) setMachine(result.machine);
+      if (result.html) {
+        const fresh = Math.random().toString(36).slice(2);
+        htmlToken.current = fresh;
+        setMixPage({ fileId: current.id, doc: buildMixHtmlDoc(result.html, activeProject(useLab.getState()).files, fresh), page: result.html });
+      } else setMixPage(null);
       if (result.page) {
         setScene({ ...result.page, title: result.page.title || "جیب", text: result.page.text || "", mark: result.page.mark || "JIB", lines: [] });
       }
-      if (result.web) {
-        const fresh = Math.random().toString(36).slice(2);
-        htmlToken.current = fresh;
-        setMixWeb(result.web);
-        setMixDoc(buildWebDoc(result.web, fresh));
-      } else {
-        setMixWeb(null);
-        setMixDoc("");
-      }
       useLab.getState().pushLines(next);
-      useLab.getState().setPanel(result.page || result.machine || result.web ? "stage" : "out");
+      useLab.getState().setPanel(result.html || result.page || result.machine ? "stage" : "out");
       useLab.getState().setRunning(false);
       return;
     }
@@ -303,8 +303,14 @@ export function LabShell() {
     setPanel(lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out");
   }
 
+  // ذخیرهٔ صفحه به‌صورت یک فایل HTML مستقل (بدون پل کنسول)
   function exportWeb() {
-    const doc = file.lang === "html" ? buildHtmlDoc(file.content, project.files, null) : mixWeb ? buildWebDoc(mixWeb, null) : "";
+    const doc =
+      file.lang === "html"
+        ? buildHtmlDoc(file.content, project.files, null)
+        : file.lang === "mix" && mixPage?.fileId === file.id
+          ? buildMixHtmlDoc(mixPage.page, project.files, null)
+          : "";
     if (!doc) return;
     const url = URL.createObjectURL(new Blob([doc], { type: "text/html;charset=utf-8" }));
     const link = document.createElement("a");
@@ -605,7 +611,7 @@ export function LabShell() {
             <button type="button" className="h-10 px-2 text-sm text-mist" onClick={() => void copyOutput()}>
               {copied ? "کپی شد" : "کپی"}
             </button>
-            {file.lang === "html" || (file.lang === "mix" && mixWeb) ? (
+            {file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id) ? (
               <button type="button" className="grid size-10 place-items-center text-mist" aria-label="ذخیره به‌صورت صفحهٔ مستقل (HTML)" onClick={exportWeb}>
                 <Download className="size-5" />
               </button>
@@ -650,13 +656,13 @@ export function LabShell() {
           {panel === "stage" ? (
             file.lang === "binary" ? (
               <MachineView snap={machine} />
-            ) : file.lang === "html" || (file.lang === "mix" && mixDoc !== "") ? (
+            ) : showFrame ? (
               <iframe
                 ref={frameRef}
                 title="پیش‌نمایش صفحه"
                 sandbox="allow-scripts allow-modals allow-forms"
                 className="min-h-0 w-full flex-1 border-0 bg-white"
-                srcDoc={file.lang === "html" ? htmlDoc : mixDoc}
+                srcDoc={file.lang === "html" ? htmlDoc : mixPage?.doc}
               />
             ) : (
               <div className="flex min-h-0 flex-1 flex-col">
