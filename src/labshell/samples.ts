@@ -1,4 +1,4 @@
-import { LANG_META, LANG_ORDER, type LabFile, type Lang, type Project, type TemplateKind } from "@/labshell/types";
+import { LANG_META, type LabFile, type Lang, type Project, type TemplateKind } from "@/labshell/types";
 
 const FARSI = `# دماسنج — خود کد فارسی است
 # متغیر، اگر، چاپ، تابع، برای، بخوان، صفحه

@@ -1,7 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Eye, Menu, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, Menu, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { APP_KICKER, APP_NAME } from "@/labshell/brand";
+import { APP_NAME } from "@/labshell/brand";
 import { compileFarsi, FARSI_BAR, type FarsiPage } from "@/labshell/farsi";
 import { compileEnglish, ENGLISH_BAR } from "@/labshell/english";
 import { BINARY_BAR, runBinary, type MachineSnap } from "@/labshell/binary";
@@ -11,13 +11,14 @@ import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
 import { isPythonWarm, runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
 import { LANG_META, LANG_ORDER, type Lang, type TermLine, type TermStream } from "@/labshell/types";
-import { CodeEditor, editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/code-editor";
+import { CodeEditor } from "@/components/code-editor";
+import { editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/editor-commands";
 import { ThemePanel } from "@/components/theme-panel";
 import { runShell } from "@/labshell/shell";
 import { MachineView } from "@/components/machine-view";
 
 const iconBtn =
-  "grid size-11 shrink-0 place-items-center rounded-lab text-paper outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-lime disabled:opacity-40";
+  "grid size-10 shrink-0 place-items-center rounded-lab text-paper outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-lime disabled:opacity-40";
 
 const MIX_BAR = [
   { label: "@@ پایتون", insert: "\n@@ پایتون\n" },
@@ -91,6 +92,7 @@ export function LabShell() {
   const [composer, setComposer] = useState<"file" | "project" | null>(null);
   const [copied, setCopied] = useState(false);
   const [shellInput, setShellInput] = useState("");
+  const [outOpen, setOutOpen] = useState(true);
   const [liveCss, setLiveCss] = useState(cssFile?.content ?? "");
   const [scene, setScene] = useState<(FarsiPage & { lines: string[] }) | null>(null);
   const [machine, setMachine] = useState<MachineSnap | null>(null);
@@ -270,9 +272,9 @@ export function LabShell() {
   }
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-ink text-paper">
-      <div className="h-1 shrink-0 bg-lime" />
-      <header className="flex h-14 shrink-0 items-center gap-1 border-b border-line pe-2 ps-1">
+    <main className="flex h-dvh flex-col overflow-hidden bg-ink pt-[env(safe-area-inset-top)] text-paper">
+      <div className="h-0.5 shrink-0 bg-lime" />
+      <header className="flex h-12 shrink-0 items-center gap-0.5 border-b border-line bg-panel pe-1.5 ps-1">
         <Dialog.Root
           open={menu}
           onOpenChange={(open) => {
@@ -422,11 +424,11 @@ export function LabShell() {
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-xs tracking-widest text-lime" dir="ltr">
-            {APP_KICKER}
-          </p>
+        <div className="min-w-0 flex-1 px-1">
           <p className="truncate text-sm font-semibold leading-tight">{project.name}</p>
+          <p className="truncate font-mono text-[11px] leading-tight text-mist" dir="ltr">
+            {file.name}
+          </p>
         </div>
         <ThemePanel />
         <button type="button" className={iconBtn} aria-label="بازگردانی" onClick={() => editHistory("undo")}>
@@ -437,19 +439,22 @@ export function LabShell() {
         </button>
         <button
           type="button"
-          className={`inline-flex h-11 shrink-0 items-center gap-1 rounded-lab px-3 text-sm font-semibold outline-none focus-visible:outline-2 focus-visible:outline-lime ${
+          className={`inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-4 text-sm font-semibold outline-none focus-visible:outline-2 focus-visible:outline-lime ${
             running ? "bg-coral text-ink" : "bg-lime text-lime-ink"
           }`}
           onClick={() => {
             if (running) stop();
-            else void runActive();
+            else {
+              setOutOpen(true);
+              void runActive();
+            }
           }}
         >
           {running ? <Square className="size-4" /> : <Play className="size-4" />}
           {running ? "توقف" : "اجرا"}
         </button>
       </header>
-      <div className="flex min-w-0 shrink-0 items-center gap-1 overflow-x-auto border-b border-line px-2 py-1">
+      <div className="flex min-w-0 shrink-0 items-center overflow-x-auto border-b border-line bg-panel/60 px-1">
         {project.files.map((item) => {
           const current = item.id === file.id;
           return (
@@ -458,8 +463,8 @@ export function LabShell() {
               type="button"
               aria-current={current ? "true" : undefined}
               dir="ltr"
-              className={`flex h-11 shrink-0 items-center gap-2 rounded-lab px-3 font-mono text-sm ${
-                current ? "bg-panel-2 text-paper" : "text-mist"
+              className={`flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[13px] ${
+                current ? "border-lime text-paper" : "border-transparent text-mist"
               }`}
               onClick={() => openFile(item.id, item.lang)}
             >
@@ -480,8 +485,8 @@ export function LabShell() {
           <Plus className="size-5" />
         </button>
       </div>
-      <div className="grid min-h-0 flex-1 grid-rows-5 lg:grid-cols-3 lg:grid-rows-1">
-        <section className="row-span-3 min-h-0 min-w-0 overflow-hidden lg:col-span-2 lg:row-span-1" dir="ltr">
+      <div className={`grid min-h-0 flex-1 lg:grid-cols-3 lg:grid-rows-1 ${outOpen ? "grid-rows-[3fr_2fr]" : "grid-rows-[1fr_auto]"}`}>
+        <section className="min-h-0 min-w-0 overflow-hidden lg:col-span-2" dir="ltr">
           {ready ? (
             <CodeEditor fileId={file.id} lang={file.lang} content={file.content} onChange={updateContent} />
           ) : (
@@ -490,12 +495,12 @@ export function LabShell() {
             </pre>
           )}
         </section>
-        <section className="row-span-2 flex min-h-0 min-w-0 flex-col overflow-hidden border-t border-line lg:col-span-1 lg:row-span-1 lg:border-s lg:border-t-0">
+        <section className={`flex min-h-0 min-w-0 flex-col overflow-hidden border-t border-line bg-panel/40 lg:col-span-1 lg:border-s lg:border-t-0 ${outOpen ? "" : "max-h-10 lg:max-h-none"}`}>
           <div className="flex shrink-0 items-center gap-1 px-2">
             <button
               type="button"
               aria-pressed={panel === "out"}
-              className={`inline-flex h-11 items-center gap-1 rounded-lab px-3 text-sm ${
+              className={`inline-flex h-10 items-center gap-1 rounded-lab px-3 text-sm ${
                 panel === "out" ? "bg-panel-2 text-paper" : "text-mist"
               }`}
               onClick={() => setPanel("out")}
@@ -506,7 +511,7 @@ export function LabShell() {
             <button
               type="button"
               aria-pressed={panel === "stage"}
-              className={`inline-flex h-11 items-center gap-1 rounded-lab px-3 text-sm ${
+              className={`inline-flex h-10 items-center gap-1 rounded-lab px-3 text-sm ${
                 panel === "stage" ? "bg-panel-2 text-paper" : "text-mist"
               }`}
               onClick={() => setPanel("stage")}
@@ -515,11 +520,19 @@ export function LabShell() {
               {file.lang === "binary" ? "ماشین" : "صفحه"}
             </button>
             <span className="flex-1" />
-            <button type="button" className="h-11 px-2 text-sm text-mist" onClick={clearLines}>
+            <button type="button" className="h-10 px-2 text-sm text-mist" onClick={clearLines}>
               پاک‌کردن
             </button>
-            <button type="button" className="h-11 px-2 text-sm text-mist" onClick={() => void copyOutput()}>
+            <button type="button" className="h-10 px-2 text-sm text-mist" onClick={() => void copyOutput()}>
               {copied ? "کپی شد" : "کپی"}
+            </button>
+            <button
+              type="button"
+              className="grid size-10 place-items-center text-mist lg:hidden"
+              aria-label={outOpen ? "کوچک‌کردن خروجی" : "باز‌کردن خروجی"}
+              onClick={() => setOutOpen((open) => !open)}
+            >
+              {outOpen ? <ChevronDown className="size-5" /> : <ChevronUp className="size-5" />}
             </button>
           </div>
           {wantsInput ? (
@@ -594,7 +607,7 @@ export function LabShell() {
                 autoCapitalize="off"
                 autoCorrect="off"
                 aria-label="ترمینال"
-                className="h-11 min-w-0 flex-1 bg-transparent font-mono text-sm text-paper outline-none"
+                className="h-10 min-w-0 flex-1 bg-transparent font-mono text-sm text-paper outline-none"
               />
             </form>
           ) : null}
@@ -605,7 +618,7 @@ export function LabShell() {
           <button
             key={`${file.lang}-${key.label}`}
             type="button"
-            className={`h-11 shrink-0 rounded-lab bg-panel-2 px-3 text-sm text-paper ${/[\u0600-\u06FF]/.test(key.label) ? "font-sans" : "min-w-11 font-mono"}`}
+            className={`h-10 shrink-0 rounded-lab bg-panel-2 px-3 text-sm text-paper ${/[\u0600-\u06FF]/.test(key.label) ? "font-sans" : "min-w-11 font-mono"}`}
             onClick={() => {
               if (key.label === "Tab") pressTab();
               else if ("move" in key && key.move) moveCursor(key.move);

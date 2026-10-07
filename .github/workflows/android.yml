@@ -11,20 +11,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
       - name: Install deps
         run: npm ci --no-audit --no-fund
-      - name: Build web (SPA)
-        run: npx vite build -c vite.mobile.config.ts
-        env:
-          VITE_AUTH_ENABLED: "false"
-      - name: Add Capacitor Android
+      - name: Build web (static SPA)
+        run: npm run build:mobile
+      - name: Generate Android project
         run: |
-          npm install --no-save --no-audit --no-fund @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
           npx cap add android
+          npm run android:prepare
           npx cap sync android
       - name: Build debug APK
         working-directory: android

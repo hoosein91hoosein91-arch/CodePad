@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { NativeBridge } from "@/components/native-bridge";
 import { APP_NAME } from "@/labshell/brand";
 import appCss from "../styles.css?url";
 
@@ -34,10 +35,11 @@ export const Route = createRootRoute({
       </head>
       <body>
         <PreviewHostBridge />
+        <NativeBridge />
         <AuthProvider>
           <Outlet />
         </AuthProvider>
-        <script dangerouslySetInnerHTML={{ __html: "if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "if('serviceWorker' in navigator&&!window.Capacitor){addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}" }} />
         <Scripts />
       </body>
     </html>

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export const THEME_DEFAULTS = { text: "#e7f0e4", bg: "#101410", accent: "#c6f135", image: "", dim: 80, fontSize: 16, autocomplete: true };
+export const THEME_DEFAULTS = { text: "#e7f0e4", bg: "#101410", accent: "#c6f135", image: "", dim: 80, fontSize: 15, autocomplete: true };
 type Values = typeof THEME_DEFAULTS;
 type ThemeState = Values & { set: (patch: Partial<Values>) => void; reset: () => void };
 

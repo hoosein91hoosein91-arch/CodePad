@@ -3,7 +3,7 @@ import { Palette, X } from "lucide-react";
 import { useEffect } from "react";
 import { applyTheme, useTheme } from "@/labshell/theme";
 
-const btn = "grid size-11 shrink-0 place-items-center rounded-lab text-paper outline-none hover:bg-panel-2";
+const btn = "grid size-10 shrink-0 place-items-center rounded-lab text-paper outline-none hover:bg-panel-2";
 const row = "flex items-center justify-between gap-3 text-sm";
 
 // عکس را کوچک می‌کند تا در حافظهٔ مرورگر جا شود.

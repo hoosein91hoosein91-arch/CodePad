@@ -15,18 +15,7 @@ import {
 } from "@codemirror/language";
 import { highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, drawSelection, EditorView } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
-import {
-  cursorCharLeft,
-  cursorCharRight,
-  cursorLineDown,
-  cursorLineUp,
-  defaultKeymap,
-  history,
-  historyKeymap,
-  indentWithTab,
-  redo,
-  undo,
-} from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { tags } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
 import { FARSI_KEYWORDS } from "@/labshell/farsi";
@@ -34,6 +23,7 @@ import { ENGLISH_KEYWORDS } from "@/labshell/english";
 import type { Lang } from "@/labshell/types";
 import { detectKind, kindOf } from "@/labshell/mix";
 import { useTheme } from "@/labshell/theme";
+import { clearActiveView, hotkeys, setActiveView } from "@/components/editor-commands";
 
 const highlight = HighlightStyle.define([
   { tag: tags.keyword, color: "var(--color-lime)" },
@@ -90,7 +80,7 @@ function themeFor(rtl: boolean) {
       overflow: "auto",
       fontFamily: rtl ? 'Vazirmatn, "JetBrains Mono", ui-monospace, monospace' : "var(--font-mono)",
       fontSize: "var(--editor-font-size, 16px)",
-      lineHeight: rtl ? "1.75" : "1.55",
+      lineHeight: rtl ? "1.65" : "1.5",
     },
     ".cm-content": { padding: "0.75rem 0" },
     ".cm-gutters": {
@@ -226,45 +216,6 @@ function completer(lang: Lang) {
   };
 }
 
-export function pressTab() {
-  if (view && !acceptCompletion(view)) insertAtCursor("  ");
-  else view?.focus();
-}
-
-let view: EditorView | null = null;
-
-export const hotkeys = {
-  run: () => {},
-};
-
-export function insertAtCursor(text: string) {
-  if (!view) return;
-  const range = view.state.selection.main;
-  view.dispatch({
-    changes: { from: range.from, to: range.to, insert: text },
-    selection: { anchor: range.from + text.length },
-  });
-  view.focus();
-}
-
-export function moveCursor(direction: "left" | "right" | "up" | "down") {
-  if (!view) return;
-  const command = {
-    left: cursorCharLeft,
-    right: cursorCharRight,
-    up: cursorLineUp,
-    down: cursorLineDown,
-  }[direction];
-  command(view);
-  view.focus();
-}
-
-export function editHistory(action: "undo" | "redo") {
-  if (!view) return;
-  (action === "undo" ? undo : redo)(view);
-  view.focus();
-}
-
 export function CodeEditor({
   fileId,
   lang,
@@ -332,10 +283,10 @@ export function CodeEditor({
         ],
       }),
     });
-    view = next;
+    setActiveView(next);
     return () => {
       next.destroy();
-      if (view === next) view = null;
+      clearActiveView(next);
     };
   }, [fileId, lang, ac]);
 
