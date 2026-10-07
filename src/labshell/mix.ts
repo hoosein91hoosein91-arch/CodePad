@@ -1,10 +1,8 @@
 // زبان ترکیبی: چند زبان در یک فایل. هر بلوک با «@@ نام‌زبان» شروع می‌شود.
 // بلوک‌ها به ترتیب اجرا می‌شوند. پایتون و جاوااسکریپت از طریق متغیر مشترک `shared` داده رد و بدل می‌کنند.
-// بلوک‌های اچ‌تی‌ام‌ال (و سی‌اس‌اس) کنار هم یک صفحه می‌سازند که در زبانهٔ «صفحه» نشان داده می‌شود؛
-// داخل آن صفحه هم `shared` (دادهٔ نهایی بلوک‌ها) در دسترس است.
 import type { RunResult } from "@/labshell/runtime";
 
-export type MixKind = "python" | "javascript" | "jib" | "farsi" | "c" | "cpp" | "binary" | "css" | "html";
+export type MixKind = "python" | "javascript" | "jib" | "farsi" | "c" | "cpp" | "binary" | "css";
 
 export type MixBlock = { kind: MixKind; code: string; line: number; auto?: boolean };
 
@@ -17,7 +15,6 @@ export const MIX_NAMES: Record<MixKind, string> = {
   cpp: "سی‌پلاس‌پلاس",
   binary: "ماشین صفر و یک",
   css: "سی‌اس‌اس",
-  html: "اچ‌تی‌ام‌ال",
 };
 
 const ALIASES: Record<string, MixKind> = {
@@ -29,7 +26,6 @@ const ALIASES: Record<string, MixKind> = {
   cpp: "cpp", "c++": "cpp", "سی‌پلاس": "cpp", "سی_پلاس": "cpp", "سی‌پلاس‌پلاس": "cpp",
   bit: "binary", binary: "binary", machine: "binary", "ماشین": "binary", "صفرویک": "binary", "صفر_و_یک": "binary",
   css: "css", "سی‌اس‌اس": "css", "استایل": "css",
-  html: "html", htm: "html", "اچ‌تی‌ام‌ال": "html", "اچ_تی_ام_ال": "html", "وب": "html",
 };
 
 export function kindOf(word: string): MixKind | null {
@@ -43,7 +39,6 @@ export function detectKind(code: string): MixKind {
   const src = code.replace(/^\s*(#|\/\/).*$/gm, "").trim();
   if (!src) return "jib";
   if (/^[01\s]+$/.test(src)) return "binary";
-  if (/^<(!doctype\s+html|[a-z][\w-]*)(\s[^<>]*)?\/?>/i.test(src) && /<\/[a-z][\w-]*\s*>|\/>/i.test(src)) return "html";
   if (/^\s*#\s*include\b/m.test(code)) return /iostream|std::|\bcout\b|\bclass\b|using\s+namespace/.test(code) ? "cpp" : "c";
   if (!/^\s*(page|صفحه)\b/m.test(src) && /^[^\n{};]+\{\s*[a-z-]+\s*:[^{}]*;/m.test(src) && !/\b(let|fn|function|const|var)\b/.test(src)) return "css";
   if (/^\s*(def |class |import |from \S+ import |elif\b)|^\s*(if|for|while|else|try|except|with)\b[^\n{]*:\s*$/m.test(src)) return "python";
@@ -142,8 +137,6 @@ export async function runMix(
   let shared: Record<string, unknown> = {};
   const out: string[] = [];
   const result: RunResult = { stdout: "", stderr: "", aborted: false };
-  const htmlParts: string[] = [];
-  const cssParts: string[] = [];
   for (const block of parsed.blocks) {
     const title = `── ${MIX_NAMES[block.kind]}${block.auto ? " · تشخیص خودکار" : ""} (خط ${block.line}) ──`;
     onBlock?.(title);
@@ -155,13 +148,8 @@ export async function runMix(
     else if (block.kind === "c") r = await runners.c(block.code, stdin);
     else if (block.kind === "cpp") r = await runners.cpp(block.code, stdin);
     else if (block.kind === "binary") r = await runners.binary(block.code, stdin);
-    else if (block.kind === "html") {
-      htmlParts.push(block.code);
-      out.push("(اچ‌تی‌ام‌ال در زبانهٔ «صفحه» نشان داده می‌شود)");
-      continue;
-    } else {
-      cssParts.push(block.code);
-      out.push("(سی‌اس‌اس روی صفحهٔ اچ‌تی‌ام‌ال یا صفحهٔ جیب اعمال می‌شود)");
+    else {
+      out.push("(سی‌اس‌اس روی صفحهٔ زنده اعمال می‌شود)");
       continue;
     }
     const taken = takeShared(r.stdout, shared);
@@ -178,9 +166,6 @@ export async function runMix(
       break;
     }
   }
-  const css = cssParts.join("\n").trim();
-  if (htmlParts.length) result.html = { body: htmlParts.join("\n"), css, shared };
-  else if (css && result.page) result.page = { ...result.page, css: [result.page.css, css].filter(Boolean).join("\n") };
   if (Object.keys(shared).length) out.push(`── داده مشترک ──\n${JSON.stringify(shared)}`);
   result.stdout = out.join("\n");
   return result;

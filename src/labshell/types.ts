@@ -1,4 +1,4 @@
-export type Lang = "mix" | "farsi" | "english" | "binary" | "python" | "javascript" | "c" | "cpp" | "css" | "html";
+export type Lang = "mix" | "farsi" | "english" | "binary" | "python" | "javascript" | "c" | "cpp" | "css";
 
 export type LabFile = {
   id: string;
@@ -25,7 +25,7 @@ export type TermLine = {
 
 export type TemplateKind = "mix" | Lang;
 
-export const LANG_ORDER: Lang[] = ["mix", "farsi", "english", "binary", "python", "javascript", "c", "cpp", "css", "html"];
+export const LANG_ORDER: Lang[] = ["mix", "farsi", "english", "binary", "python", "javascript", "c", "cpp", "css"];
 
 export const LANG_META: Record<Lang, { label: string; ext: string; short: string }> = {
   mix: { label: "ترکیبی", ext: "mix", short: "MIX" },
@@ -37,5 +37,4 @@ export const LANG_META: Record<Lang, { label: string; ext: string; short: string
   c: { label: "سی", ext: "c", short: "C" },
   cpp: { label: "سی‌پلاس‌پلاس", ext: "cpp", short: "C++" },
   css: { label: "سی‌اس‌اس", ext: "css", short: "CSS" },
-  html: { label: "اچ‌تی‌ام‌ال", ext: "html", short: "HTML" },
 };

@@ -47,8 +47,7 @@ function isFile(value: unknown): value is LabFile {
       file.lang === "javascript" ||
       file.lang === "c" ||
       file.lang === "cpp" ||
-      file.lang === "css" ||
-      file.lang === "html")
+      file.lang === "css")
   );
 }
 
@@ -123,7 +122,7 @@ export const useLab = create<LabState>()(
             );
             return { ...project, files: [...project.files, file], activeFileId: file.id };
           }),
-          panel: lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out",
+          panel: lang === "css" || lang === "binary" ? "stage" : "out",
         })),
       removeFile: (id) =>
         set((state) => ({
@@ -143,7 +142,7 @@ export const useLab = create<LabState>()(
           return {
             projects: [...state.projects, project],
             activeProjectId: project.id,
-            panel: project.files[0]?.lang === "css" || project.files[0]?.lang === "html" || project.files[0]?.lang === "binary" ? "stage" : "out",
+            panel: project.files[0]?.lang === "css" || project.files[0]?.lang === "binary" ? "stage" : "out",
           };
         }),
       removeProject: (id) =>

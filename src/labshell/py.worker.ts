@@ -38,13 +38,11 @@ sys.stdin = StringIO(${JSON.stringify(source)})
 _ans = ${JSON.stringify(answers)}
 _pos = [0]
 _need = [""]
-_asked = [False]
 class _NeedInput(BaseException):
     pass
 def _input(prompt=""):
     if _pos[0] >= len(_ans):
         _need[0] = str(prompt)
-        _asked[0] = True
         raise _NeedInput()
     v = _ans[_pos[0]]
     _pos[0] += 1
@@ -62,9 +60,7 @@ sys.stderr = _jib_err
     } catch (error) {
       failure = error instanceof Error ? error.message : String(error);
     }
-    // Pyodide does not always rethrow a BaseException to JS (it may only print the
-    // traceback to sys.stderr), so check the flag set by _input instead of the message.
-    if (failure.includes("_NeedInput") || py.runPython("_asked[0]") === true) {
+    if (failure.includes("_NeedInput")) {
       // برنامه ورودی خواست و جوابش را ندارد: به صفحه خبر بده تا بپرسد و دوباره اجرا کند
       const need = textOf(py.runPython("_need[0]"));
       self.postMessage({ id, stdout: "", stderr: "@@NEED_INPUT@@" + encodeURIComponent(need) });

@@ -1,3 +1,6 @@
+// Build shim: lab-shell.tsx in this version imports buildHtmlDoc/buildWebDoc but the file was
+// missing from the zip. Restored from the previous version (HTML preview) + buildWebDoc.
+// token = null builds a standalone page (no console bridge), used by the export button.
 import type { LabFile } from "@/labshell/types";
 
 // ساخت سندی که داخل iframe اجرا می‌شود:
@@ -19,7 +22,7 @@ window.addEventListener("unhandledrejection",function(e){s("error",["Unhandled: 
 
 const noCloseTag = (text: string, tag: "script" | "style") => text.replace(new RegExp(`</${tag}`, "gi"), `<\\/${tag}`);
 
-export function buildHtmlDoc(html: string, files: LabFile[], token: string, extraHead = ""): string {
+export function buildHtmlDoc(html: string, files: LabFile[], token: string | null): string {
   const byName = new Map(files.map((item) => [item.name, item]));
   const find = (ref: string) => byName.get(ref.replace(/^\.?\//, ""));
 
@@ -32,15 +35,14 @@ export function buildHtmlDoc(html: string, files: LabFile[], token: string, extr
     return file && file.lang === "javascript" ? `<script>${noCloseTag(file.content, "script")}</script>` : tag;
   });
 
-  const head = `<meta http-equiv="Content-Security-Policy" content="${CSP}">${bridge(token)}${extraHead}`;
+  const head = `<meta http-equiv="Content-Security-Policy" content="${CSP}">${token ? bridge(token) : ""}`;
   if (/<head\b[^>]*>/i.test(doc)) return doc.replace(/<head\b[^>]*>/i, (open) => `${open}${head}`);
   if (/<html\b[^>]*>/i.test(doc)) return doc.replace(/<html\b[^>]*>/i, (open) => `${open}<head>${head}</head>`);
   return `<!doctype html><html><head>${head}</head><body>${doc}</body></html>`;
 }
 
-// صفحهٔ فایل ترکیبی: بلوک‌های @@ html کنار هم، سی‌اس‌اس بلوک‌های @@ css و دادهٔ مشترک `shared`.
-export function buildMixHtmlDoc(page: { body: string; css: string; shared: Record<string, unknown> }, files: LabFile[], token: string): string {
-  const data = JSON.stringify(page.shared).replace(/</g, "\\u003c");
-  const extra = `<script>window.shared=${data};</script>${page.css ? `<style>${noCloseTag(page.css, "style")}</style>` : ""}`;
-  return buildHtmlDoc(page.body, files, token, extra);
+export function buildWebDoc(web: { html: string; css: string; js: string }, token: string | null): string {
+  const css = web.css ? `<style>${noCloseTag(web.css, "style")}</style>` : "";
+  const js = web.js ? `<script>${noCloseTag(web.js, "script")}</script>` : "";
+  return buildHtmlDoc(`${css}${web.html}${js}`, [], token);
 }
