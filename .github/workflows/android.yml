@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,6 +20,10 @@ jobs:
           java-version: 21
       - name: Install deps
         run: npm ci --no-audit --no-fund
+      - name: Verify Nava and launcher
+        run: |
+          npm run typecheck
+          npm run test:launcher
       - name: Build web (static SPA)
         run: npm run build:mobile
       - name: Generate Android project
@@ -34,3 +40,19 @@ jobs:
         with:
           name: CodePad-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Publish CodePad 2.5.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk CodePad.apk
+          cat > release-notes.md <<'NOTES'
+          Nava Studio 0.6 adds Latin defaults, packed instructions with |, frame animation, torus/cylinder/cone, material controls, fog, lighting and touch orbit.
+          The launcher now runs the selected edited project file and retains its entry in backups and exported packs.
+          Debug Android APK. Back up your projects before replacing a build signed with a different debug key.
+          NOTES
+          if gh release view v2.5.0 >/dev/null 2>&1; then
+            gh release upload v2.5.0 CodePad.apk --clobber
+          else
+            gh release create v2.5.0 CodePad.apk --target "$GITHUB_SHA" --title "CodePad 2.5.0 · Nava Studio" --notes-file release-notes.md
+          fi
