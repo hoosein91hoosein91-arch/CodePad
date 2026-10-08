@@ -153,19 +153,13 @@ const HTML = `<!doctype html>
 </html>
 `;
 
-const NAVA = `# نوا؛ هر خط یک دستور ساده است — «اجرا» را بزن
-برنامه "شمارندهٔ من"
-رنگ #c6f135
-عنوان "سلام! 👋"
-متن "با چند خط کوتاه یک برنامهٔ واقعی بساز. راهنما: NAVA-GUIDE.md"
-عدد شمارنده = ۰
-ذخیره شمارنده
-نمایش "تعداد کلیک: {شمارنده}"
-نمایش "🎉 به ده رسیدی!" اگر شمارنده >= ۱۰
-ردیف
-  دکمه "یکی اضافه کن": شمارنده += ۱؛ صدا ۶۶۰، ۶۰
-  دکمه "از اول": شمارنده = ۰
-پایان
+const NAVA = `// Nava Studio: press Run. Drag to orbit; pinch or scroll to zoom.
+Ap "Nava Studio" | G9 | Scene N360,N480
+Ball Orb "#47f2cb" | Torus Ring "#b0a9ff" | Floor Base "#182331"
+Shift Base N0,-N1d2,N0 | Scale Orb N0d6 | Mat Orb N0d14,N0d65,N0d6
+Rotate Ring N65,N0,N0 | Mat Ring N0d16,N0d7,N0d15
+Camera N6,N18,N0 | Orbit Tr | Fog "#070b14",N9,N28
+Frame | Rotate Ring N0,N22 * Dt,N9 * Dt | End
 `;
 
 const CSS = `body {
@@ -336,7 +330,7 @@ console.log("جاوااسکریپت میانگین را حساب کرد:", share
 `;
 
 export const SAMPLES: Record<Lang, { name: string; stdin: string; content: string }> = {
-  nava: { name: "شروع.nava", stdin: "", content: NAVA },
+  nava: { name: "studio.nava", stdin: "", content: NAVA },
   mix: { name: "ترکیبی.mix", stdin: "", content: MIX },
   farsi: { name: "دماسنج.فا", stdin: "38.2", content: FARSI },
   english: { name: "calculator.jib", stdin: "12\n30", content: ENGLISH },
@@ -410,7 +404,7 @@ export function createFile(lang: Lang, takenNames: string[]): LabFile {
 }
 
 export const TEMPLATE_CHOICES: { kind: TemplateKind; title: string; detail: string }[] = [
-  { kind: "nava", title: "نوا", detail: "زبان سادهٔ فارسی: شرط، حلقه، کنش، زمان‌سنج، بوم، سه‌بعدی، ذخیره و هوش مصنوعی" },
+  { kind: "nava", title: "نوا", detail: "دستورهای کوتاه لاتین، چند دستور در یک خط، سه‌بعدی و هوش مصنوعی" },
   { kind: "mix", title: "آزمایشگاه کامل", detail: "فایل ترکیبی، جیب، جیب فارسی و ماشین" },
   { kind: "english", title: "جیب", detail: "برنامه، لیست و ماشین ۰ و ۱" },
   { kind: "binary", title: "ماشین ۰ و ۱", detail: "دستورهای هشت‌بیتی و لامپ‌ها" },

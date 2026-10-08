@@ -35,7 +35,7 @@ export function castVoxelRay(world: Uint8Array, size: number, origin: number[], 
   return null;
 }
 
-function mountVoxel(id: string, config: { size: number; seed: number; materials: { name: string; color: string }[] }, create: typeof createVoxelWorld, cast: typeof castVoxelRay) {
+function mountVoxel(id: string, config: { size: number; seed: number; materials: { name: string; color: string }[]; quality: "low" | "ultra" }, create: typeof createVoxelWorld, cast: typeof castVoxelRay) {
   const root = document.getElementById(id)!;
   const canvas = root.querySelector<HTMLCanvasElement>("canvas")!;
   const ctx = canvas.getContext("2d", { alpha: false })!;
@@ -75,7 +75,8 @@ function mountVoxel(id: string, config: { size: number; seed: number; materials:
   canvas.addEventListener("pointerdown", (event) => { canvas.setPointerCapture(event.pointerId); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; root.focus({ preventScroll: true }); });
   canvas.addEventListener("pointermove", (event) => { if (!drag || drag.id !== event.pointerId) return; yaw += (event.clientX - drag.x) * .009; pitch = Math.max(-1.4, Math.min(1.4, pitch - (event.clientY - drag.y) * .009)); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; });
   canvas.addEventListener("pointerup", () => { drag = null; }); canvas.addEventListener("pointercancel", () => { drag = null; });
-  canvas.width = 120; canvas.height = 90;
+  const resolution = config.quality === "low" ? 72 : 120;
+  canvas.width = resolution; canvas.height = Math.round(resolution * 3 / 4);
   const image = ctx.createImageData(canvas.width, canvas.height);
   let last = 0;
   const frame = (time: number) => {
@@ -112,10 +113,10 @@ function mountVoxel(id: string, config: { size: number; seed: number; materials:
   requestAnimationFrame(frame);
 }
 
-export function voxelKit(id: string, size: number, seed: number, materials: { name: string; color: string }[]) {
+export function voxelKit(id: string, size: number, seed: number, materials: { name: string; color: string }[], quality: "low" | "ultra" = "ultra") {
   return {
     html: `<section id="${id}" class="nv-voxel" tabindex="0"><div class="nv-voxel-view"><canvas aria-label="دنیای بلوکی سه‌بعدی"></canvas><div class="nv-cross">+</div><span class="nv-world-badge">دنیای بلوکی · پرواز آزاد</span></div><p class="nv-voxel-hint">روی تصویر بکش تا نگاه کنی. WASD حرکت و Q/E پایین و بالا.</p><select aria-label="بلوک انتخابی"></select><div class="nv-voxel-actions"><button data-voxel="break">شکستن</button><button data-voxel="place">گذاشتن</button><button data-voxel="export">خروجی جهان</button></div><div class="nv-moves" dir="ltr"><button data-move="a">←</button><button data-move="w">↑</button><button data-move="d">→</button><button data-move="q">پایین</button><button data-move="s">↓</button><button data-move="e">بالا</button></div></section>`,
     css: `.nv-voxel{outline:none}.nv-voxel-view{position:relative;border-radius:18px;overflow:hidden;border:1px solid #ffffff25}.nv-voxel canvas{display:block;width:100%;aspect-ratio:4/3;image-rendering:pixelated;touch-action:none}.nv-cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-shadow:0 1px 2px #000;font:22px monospace;pointer-events:none}.nv-world-badge{position:absolute;top:10px;right:10px;padding:5px 9px;background:#0b1519aa;border-radius:8px;font-size:10px}.nv-voxel-hint{font-size:11px;line-height:1.8;color:#b8c6ba}.nv-voxel select{width:100%;height:40px;border:1px solid #ffffff25;background:#25342b;color:white;border-radius:10px;font:inherit}.nv-voxel-actions,.nv-moves{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.nv-voxel button{border:1px solid #ffffff20;background:#25342b;color:#e7f0e4;border-radius:12px;min-height:45px;font:inherit;cursor:pointer;touch-action:none}.nv-moves button{font-size:18px}.nv-moves button:active{background:#5b7536}`,
-    js: `(${mountVoxel.toString()})(${JSON.stringify(id)},${JSON.stringify({ size, seed, materials }).replace(/</g, "\\u003c")},${createVoxelWorld.toString()},${castVoxelRay.toString()});`,
+    js: `(${mountVoxel.toString()})(${JSON.stringify(id)},${JSON.stringify({ size, seed, materials, quality }).replace(/</g, "\\u003c")},${createVoxelWorld.toString()},${castVoxelRay.toString()});`,
   };
 }

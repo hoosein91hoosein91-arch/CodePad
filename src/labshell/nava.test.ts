@@ -11,7 +11,7 @@ import { APPEARANCE_CSS, NAVA_PALETTE, parseAppearance } from "./nava-appearance
 import { compactNavaSource, normalizeNavaLine, NAVA_SHORT_WORDS } from "./nava-short.ts";
 
 // موتور نوا را بدون مرورگر اجرا می‌کند: همهٔ کارهای بیرونی (صدا، نقاشی، حافظه…) فقط ثبت می‌شوند
-async function run(source: string, opts: { saved?: unknown; ask?: (p: string) => Promise<string>; random?: number } = {}) {
+async function run(source: string, opts: { saved?: unknown; ask?: (p: string) => Promise<string>; random?: number; now?: () => number } = {}) {
   const parsed = parseNava(source);
   if (!parsed.program) throw new Error(parsed.error);
   const log: unknown[][] = [];
@@ -21,7 +21,7 @@ async function run(source: string, opts: { saved?: unknown; ask?: (p: string) =>
   let saved: unknown = opts.saved ?? null;
   let renders = 0;
   const io = {
-    now: () => 1000,
+    now: opts.now ?? (() => 1000),
     random: () => opts.random ?? 0.5,
     setInterval: (fn: () => void, ms: number) => timers.push({ fn, ms, live: true }),
     clearInterval: (id: number) => { const t = timers[id - 1]; if (t) t.live = false; },
@@ -282,7 +282,7 @@ test("all built-in Nava sample packs compile", () => {
 
 test("every example in NAVA-GUIDE.md compiles, and the guide's canvas loop + function runs", async () => {
   const guide = readFileSync(new URL("../../NAVA-GUIDE.md", import.meta.url), "utf8");
-  const blocks = [...guide.matchAll(/```\n([\s\S]*?)```/g)].map((m) => m[1]!);
+  const blocks = [...guide.matchAll(/```(?:nava)?[ \t]*\n([\s\S]*?)```/g)].map((m) => m[1]!);
   assert.ok(blocks.length >= 3);
   for (const b of blocks) assert.equal(compileNava(b).error, undefined, `${b.split("\n")[0]}: ${compileNava(b).error}`);
   const paint = blocks.find((b) => b.includes("رنگ‌شماره"))!;
@@ -440,6 +440,85 @@ test("packed buttons reject malformed sizes, palettes and injected styles", () =
   }
 });
 
+test("capital-led Nava glyph source compiles with tagged numbers and optional appearance details", () => {
+  const source = `Pg "Counter"
+Num Total = N0
+Out "Score: {Total}"
+Bt "Add" (Ru160Rn56Rr): Total = Total + N1`;
+  const result = compileNava(source);
+  assert.ok(result.web, result.error);
+  assert.match(result.web.html, /data-nava-size="160x56"/);
+  assert.match(result.web.html, /data-nava-relief="true"/);
+  assert.match(result.web.html, /data-nava-graphics="ultra"/);
+  assert.equal(compileNava(source).web?.html, result.web.html);
+  assert.ok(compileNava(`Pg "Simple"
+Bt "Go" (Ru180Rn60): Sy "Ready"`).web);
+  const decimal = compileNava(`Pg "Fraction"
+Num Ratio = N0d5
+Tx "Ready"`);
+  assert.ok(decimal.web, decimal.error);
+  assert.match(decimal.web.js, /0\.5/);
+});
+
+test("glyph mode rejects lower-case atoms and untagged numeric literals but preserves quoted text", () => {
+  assert.match(compileNava(`Pg "Hello"
+tx "English words stay readable"`).error ?? "", /با حرف بزرگ/u);
+  assert.match(compileNava(`Pg "Hello"
+Bt "Plus": Total = Total + 1`).error ?? "", /عدد آزاد/u);
+  assert.match(compileNava(`Pg "Hello"
+متن "x"`).error ?? "", /کد لاتین/u);
+  assert.ok(compileNava(`Pg "Hello"
+Tx "تو باختی 1"`).web);
+  assert.ok(compileNava(`# note 1
+Pg "Hello"
+Tx "Ready"`).web);
+});
+
+test("graphics quality has exactly low and ultra presets and reaches voxel rendering", () => {
+  const low = compileNava(`Pg "World"
+G1
+Vx Sz N12 Sd N7`);
+  const ultra = compileNava(`Pg "World"
+G9
+Vx Sz N12 Sd N7`);
+  assert.ok(low.web, low.error); assert.ok(ultra.web, ultra.error);
+  assert.match(low.web.html, /data-nava-graphics="low"/);
+  assert.match(ultra.web.html, /data-nava-graphics="ultra"/);
+  assert.match(low.web.js, /quality":"low"/);
+  assert.match(ultra.web.js, /quality":"ultra"/);
+  assert.doesNotMatch(low.web.html + ultra.web.html, /data-nava-graphics="medium"/);
+});
+
+test("Neon Rift touch controls, collision, scoring and restart work without UI buttons", async () => {
+  const source = readFileSync(new URL("../../examples/neon-rift.nava", import.meta.url), "utf8");
+  const web = compileNava(source);
+  assert.ok(web.web, web.error);
+  assert.match(web.web.html, /nv-game/);
+  assert.doesNotMatch(web.web.html, /<button/);
+  let now = 1000;
+  const r = await run(source, { now: () => now, random: 0 });
+  const advance = (frames = 1) => { for (let i = 0; i < frames; i++) { now += 30; r.timers[0]!.fn(); } };
+  r.api.touch(20, 300); advance(20);
+  assert.ok(r.S.Px < -1.3, "left third moves the player left");
+  r.api.touch(340, 300); advance(20);
+  assert.ok(r.S.Px > 1.3, "right third moves the player right");
+  r.S.Auto = false;
+  const cross = (lane: number) => { r.S.Depth = 1.08; r.S.EnemyLane = lane; advance(); };
+  cross(1); assert.equal(r.S.Lives, 2);
+  cross(-1); assert.equal(r.S.Score, 1); assert.equal(r.S.Lives, 2);
+  cross(1); cross(1); assert.equal(r.S.Lives, 0); assert.equal(r.S.Live, false);
+  r.api.touch(180, 300); advance();
+  assert.equal(r.S.Lives, 3); assert.equal(r.S.Score, 0); assert.equal(r.S.Live, true);
+  assert.ok(r.S.Depth < -5); assert.deepEqual(r.errors, []);
+  r.S.Auto = true;
+  r.S.Px = r.S.Target = 1.4;
+  r.S.Depth = 1.08; r.S.EnemyLane = 1;
+  advance();
+  assert.equal(r.S.Px, 0, "automatic dodge teleports to a safe lane before contact");
+  assert.equal(r.S.Target, 0, "smoothing must not pull the player back into danger");
+  assert.equal(r.S.Lives, 3); assert.equal(r.S.Score, 1);
+});
+
 test("one-line button includes appearance, colon-bearing label and a working message", async () => {
   const src = 'دکمه "پیام: سلام" (ru240rn64yGi65G72): بگو "<img src=x onerror=bad()>"';
   const result = compileNava(src);
@@ -565,4 +644,47 @@ test("generated voxel runtime draws a scene and responds to camera movement", ()
   assert.ok(colors.size > 30, "scene should contain shaded terrain and sky");
   const first = pixels.slice(); keys.keydown({ key: "a", preventDefault() {} }); nextFrame(200);
   assert.notDeepEqual(pixels, first, "left movement should change the rendered view");
+});
+
+test("packed physical lines preserve strings, inline actions, logical or and original error lines", async () => {
+  const { packNavaSource } = await import("./nava-lines.ts");
+  const source = 'Pg "A | B"\nNum Total = N0\nOut "Score: {Total}"\nBt "Add": Total += N1; Msg "A | B"\nIf Tr || Fl\nTotal += N2\nEnd';
+  const packed = packNavaSource(source);
+  assert.equal(packed.split("\n").length, 1);
+  const structure = (text: string) => JSON.stringify(parseNava(text).program).replace(/"line":\d+/g, '"line":0');
+  assert.equal(structure(packed), structure(source));
+  const a = await run(source), b = await run(packed);
+  a.api.click(0); b.api.click(0);
+  assert.equal(a.S.Total, 3); assert.equal(b.S.Total, 3);
+  assert.deepEqual(a.log, b.log);
+  assert.ok(compileNava('Pg "A" | Cal | Cnt').web);
+  assert.match(parseNava('Pg "A" | Num Xyz = N0\nScene N360,N480 | Mat Missing N0,N0,N0').error!, /^خط 2:/);
+  const commented = 'Pg "A" # keep | comment\nCal\n// preserve\nCnt';
+  assert.ok(compileNava(packNavaSource(commented)).web);
+  assert.match(packNavaSource(commented), /# keep \| comment\nCal\n\/\/ preserve\nCnt/);
+});
+
+test("3D materials, new primitives and packed frame syntax compile and validate", () => {
+  const source = 'Ap "Studio" | G9 | Scene N360,N480 | Torus Ring "#67f5a5" | Cylinder Stand | Cone Tip | Floor Ground | Mat Ring N0d2,N0d8,N1 | Scale Stand N1,N2,N1 | Tint Tip "red" | Camera N6,N18,N30 | Light N1,N2,N3,N2 | Ambient N0d2 | Fog "#070b14",N9,N25 | Orbit Tr | Frame | Rotate Ring N0,N40 * Dt,N0 | End';
+  const parsed = parseNava(source);
+  assert.equal(parsed.error, undefined);
+  assert.equal(parsed.program?.shapes.length, 4);
+  assert.equal(parsed.program?.onFrame?.[0]?.k, "obj");
+  const web = compileNava(source).web!;
+  assert.ok(web); new vm.Script(web.js);
+  assert.match(web.js, /uniform mat3 nm/);
+  assert.match(parseNava('Scene | Cube Box | Mat Box N1').error!, /Mat takes/);
+  assert.match(parseNava('Scene | Cube Box | Scale Box N1,N2').error!, /Scale takes/);
+});
+
+test("Frame uses real delta, clamps background jumps and stops without duplicate loops", async () => {
+  const P = parseNava('Canvas | Num Travel = N0 | Frame | Travel += Dt | End').program!;
+  const queue = new Map<number, (time: number) => void>(); let nextId = 0;
+  const api = navaEngine(P, { now: () => 0, render: () => {}, error: assert.fail,
+    requestFrame: (fn: (time: number) => void) => { queue.set(++nextId, fn); return nextId; }, cancelFrame: (id: number) => queue.delete(id) });
+  await api.start();
+  const frame = (time: number) => { const [id, fn] = [...queue][0]!; queue.delete(id); fn(time); };
+  frame(0); frame(16); frame(1016);
+  assert.equal(api.S.Travel, .066); assert.equal(queue.size, 1);
+  api.stop(); assert.equal(queue.size, 0); assert.equal(api.running, false);
 });

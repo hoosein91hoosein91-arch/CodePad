@@ -1,0 +1,3 @@
+@@@ jibpack 1 استودیو سه‌بعدی
+@@@ file main.nava
+Ap "Nava Studio" | G9 | Sc N360,N480 | Sp Orb "#47f2cb" | Rg Ring "#b0a9ff" | Floor Base "#182331" | Ps Base N0,-N1d2,N0 | Sl Orb N0d6 | Mt Orb N0d14,N0d65,N0d6 | Rt Ring N65,N0,N0 | Mt Ring N0d16,N0d7,N0d15 | Cm N6,N18,N0 | Ob Tr | Fz "#070b14",N9,N28 | Fr | Rt Ring N0,N22 * Dt,N9 * Dt | End

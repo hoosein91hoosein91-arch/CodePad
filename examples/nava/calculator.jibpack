@@ -1,5 +1,3 @@
 @@@ jibpack 1 ماشین‌حساب
 @@@ file main.nava
-pg "ماشین‌حساب"
-fg #67f5a5
-cal mb
+Pg "Calculator" | Fg #67f5a5 | Cal Mb

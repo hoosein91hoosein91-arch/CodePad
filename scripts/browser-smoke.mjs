@@ -92,7 +92,8 @@ let browser = null;
 try {
   browser = await chromium.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
+    executablePath: process.env.BROWSER_EXECUTABLE_PATH || undefined,
+    args: ["--no-sandbox", "--disable-dev-shm-usage", ...(process.env.BROWSER_SOFTWARE_GL === "true" ? ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] : [])],
   });
 
   const viewports = {};

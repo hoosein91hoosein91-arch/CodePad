@@ -12,7 +12,7 @@ import { cleanAssetName, mimeFor } from "@/labshell/asset-refs";
 
 export type PackFile = { name: string; content: string };
 export type PackAsset = { name: string; bytes: Uint8Array<ArrayBuffer> };
-export type Pack = { name: string; files: PackFile[]; assets: PackAsset[]; problems: string[] };
+export type Pack = { name: string; entryFile?: string; files: PackFile[]; assets: PackAsset[]; problems: string[] };
 
 const MAGIC = /^\s*@@@\s*jibpack\b[ \t]*(\d+)?[ \t]*(.*)$/i;
 const SECTION = /^@@@\s*(file|asset)\s+(.+?)\s*$/i;
@@ -57,6 +57,8 @@ export function parsePack(source: string): Pack | null {
     body = [];
   };
   for (const row of rows.slice(start + 1)) {
+    const entry = /^@@@\s*entry\s+(.+?)\s*$/i.exec(row);
+    if (entry) { flush(); pack.entryFile = cleanAssetName(entry[1]); continue; }
     const section = row.match(SECTION);
     if (section) {
       flush();

@@ -21,6 +21,7 @@ import { tags } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
 import { FARSI_KEYWORDS } from "@/labshell/farsi";
 import { NAVA_FUNCTIONS, NAVA_KEYWORDS } from "@/labshell/nava";
+import { NAVA_GLYPH_WORDS } from "@/labshell/nava-glyph";
 import { NAVA_SHORT_WORDS } from "@/labshell/nava-short";
 import { navaCodeDirection } from "@/labshell/nava-direction";
 import { ENGLISH_KEYWORDS } from "@/labshell/english";
@@ -154,7 +155,7 @@ const mixLanguage = StreamLanguage.define({
   },
 });
 
-const navaWords = new Set<string>([...NAVA_KEYWORDS, ...NAVA_SHORT_WORDS.map((word) => word.short), "جهان", "بلوکی", "بذر"]);
+const navaWords = new Set<string>([...Object.keys(NAVA_GLYPH_WORDS), ...NAVA_KEYWORDS, ...NAVA_SHORT_WORDS.map((word) => word.short), "جهان", "بلوکی", "بذر"]);
 const navaFns = new Set(NAVA_FUNCTIONS);
 const navaLanguage = StreamLanguage.define({
   token(stream) {
@@ -167,6 +168,7 @@ const navaLanguage = StreamLanguage.define({
     // کپسول ظاهر دکمه: (ru240rn64yGi65G72)
     if (stream.match(/^\(ru[0-9۰-۹]+rn[0-9۰-۹]+y[A-Z][a-z]?[0-9۰-۹]{2}[A-Z][a-z]?[0-9۰-۹]{2}\)/)) return "number";
     if (stream.match(/^#[0-9a-fA-F]{3,8}\b/)) return "number";
+    if (stream.match(/^N[0-9]+(?:d[0-9]+)?\b/)) return "number";
     if (stream.match(/^[0-9۰-۹٠-٩]+(?:[.٫][0-9۰-۹٠-٩]+)?/)) return "number";
     if (stream.match(/^[\p{L}_][\p{L}\p{N}_\u200c]*/u)) {
       const word = stream.current();
@@ -200,7 +202,7 @@ const WORDS: Record<string, string[]> = {
   css: split("color background background-color font-size font-family margin padding border border-radius display flex grid align-items justify-content width height position top left right bottom opacity transform transition animation box-shadow text-align gap"),
   html: split("div span p a img ul ol li h1 h2 h3 button input form label section header footer main nav script style link meta title body head html class id href src type onclick"),
   farsi: [...FARSI_KEYWORDS],
-  nava: [...NAVA_KEYWORDS, ...NAVA_FUNCTIONS],
+  nava: Object.keys(NAVA_GLYPH_WORDS),
   english: [...ENGLISH_KEYWORDS],
 };
 const SNIPPETS: Record<string, Completion[]> = {
@@ -215,21 +217,18 @@ const SNIPPETS: Record<string, Completion[]> = {
     snippetCompletion("برای ${i} از ${1} تا ${10} {\n  ${}\n}", { label: "برای", detail: "حلقه", boost: 3 }),
   ],
   nava: [
-    snippetCompletion("اگر ${شرط}\n  ${}\nپایان", { label: "اگر", detail: "شرط", boost: 3 }),
-    snippetCompletion("تکرار ${۳}\n  ${}\nپایان", { label: "تکرار", detail: "حلقه", boost: 3 }),
-    snippetCompletion("برای هر ${x} در ${لیست}\n  ${}\nپایان", { label: "برای هر", detail: "حلقه روی لیست", boost: 3 }),
-    snippetCompletion("کنش ${نام}\n  ${}\nپایان", { label: "کنش", detail: "کار چندمرحله‌ای", boost: 3 }),
-    snippetCompletion("هر ${۱} ثانیه\n  ${}\nپایان", { label: "هر ثانیه", detail: "زمان‌سنج", boost: 3 }),
-    snippetCompletion("دکمه \"${متن}\"\n  ${}\nپایان", { label: "دکمه", detail: "دکمه با چند کار", boost: 3 }),
-    // مخفف‌های نوا ۰٫۴ (pg، bt، cal، …) — هر کدام همان دستور کامل است
-    ...NAVA_SHORT_WORDS.filter((word) => !["bt", "pg", "num", "df", "cal", "vx", "tm"].includes(word.short)).map((word) => ({ label: word.short, detail: `${word.long} · ${word.meaning}`, type: "keyword", boost: 1 })),
-    snippetCompletion('bt "${شروع}" (ru${240}rn${64}yGi65G72): sy "${آفرین}"', { label: "bt", detail: "دکمه: اندازه، رنگ و کار در یک خط", boost: 2 }),
-    snippetCompletion('pg "${برنامهٔ من}"', { label: "pg", detail: "صفحه (نام + عنوان)", boost: 2 }),
-    snippetCompletion("num ${امتیاز} = ${0}", { label: "num", detail: "متغیر عددی", boost: 2 }),
-    snippetCompletion('df "${ابزار من}"\n${cal}\nend\nus "${ابزار من}"', { label: "df", detail: "تعریف بسته و استفاده", boost: 2 }),
-    snippetCompletion("cal mb", { label: "cal", detail: "ماشین‌حساب آماده", boost: 2 }),
-    snippetCompletion("vx sz ${24} sd ${7}", { label: "vx", detail: "دنیای بلوکی سه‌بعدی", boost: 2 }),
-    snippetCompletion("tm ${60}", { label: "tm", detail: "تایمر ثانیه‌ای", boost: 2 }),
+    snippetCompletion('Pg "${App}" | G9 | Scene N360,N480 | Ball ${Orb} "#67f5a5" | Orbit Tr', { label: "Scene", detail: "3D scene", boost: 3 }),
+    snippetCompletion('Frame | Rotate ${Orb} N0,N30 * Dt,N0 | End', { label: "Frame", detail: "Animation per frame", boost: 3 }),
+    snippetCompletion('Mat ${Orb} N0d2,N0d7,N0', { label: "Mat", detail: "Roughness, metal, emission", boost: 3 }),
+    snippetCompletion('If ${Score} > N10\n  ${}\nEnd', { label: "If", detail: "Condition", boost: 3 }),
+    snippetCompletion('Repeat N3\n  ${}\nEnd', { label: "Repeat", detail: "Loop", boost: 3 }),
+    snippetCompletion('Each ${Item} Pos ${Items}\n  ${}\nEnd', { label: "Each", detail: "List loop", boost: 3 }),
+    snippetCompletion('Act ${Run}\n  ${}\nEnd', { label: "Act", detail: "Action", boost: 3 }),
+    snippetCompletion('Every N1 Sec\n  ${}\nEnd', { label: "Every", detail: "Timer", boost: 3 }),
+    snippetCompletion('Bt "${Start}" (Ru180Rn56Rr): Sy "${Done}"', { label: "Bt", detail: "Button", boost: 3 }),
+    snippetCompletion('Num ${Score} = N0', { label: "Num", detail: "Number", boost: 3 }),
+    snippetCompletion('Cal Mb', { label: "Cal", detail: "Calculator", boost: 3 }),
+    snippetCompletion('Vx Sz N24 Sd N7', { label: "Vx", detail: "Voxel world", boost: 3 }),
   ],
   python: [snippetCompletion("def ${name}(${args}):\n    ${}", { label: "def", detail: "function", boost: 3 }), snippetCompletion("for ${i} in range(${10}):\n    ${}", { label: "for", detail: "loop", boost: 3 })],
   javascript: [snippetCompletion("function ${name}(${args}) {\n  ${}\n}", { label: "function", detail: "function", boost: 3 })],

@@ -19,7 +19,7 @@ import { applyTheme, useTheme } from "@/labshell/theme";
 
 export const Route = createFileRoute("/launcher")({ component: Launcher });
 
-const JIBOS_VERSION = "2.4.0";
+const JIBOS_VERSION = "2.5.0";
 
 let audio: AudioContext | null = null;
 function beep(freq = 880, ms = 140) {

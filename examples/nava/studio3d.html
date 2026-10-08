@@ -1,4 +1,4 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>دنیای بلوکی</title><style>:root{--nava-accent:#c6f135}
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>استودیو سه‌بعدی</title><style>:root{--nava-accent:#c6f135}
 :root{color-scheme:dark}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%;background:#101410;color:#edf4ed;font-family:Vazirmatn,Tahoma,sans-serif}body{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,color-mix(in srgb,#c6f135 15%,#101410),#101410 65%)}.nv-app{min-height:100vh;display:grid;place-items:center;padding:20px}.nv-card{width:min(100%,460px);padding:24px;border:1px solid #ffffff20;border-radius:28px;background:#171e19ef;box-shadow:0 24px 80px #0008;display:flex;flex-direction:column;gap:14px}.nv-app[data-nava-graphics="low"] .nv-card{box-shadow:0 12px 32px #0007}.nv-app[data-nava-graphics="ultra"] .nv-card{border-color:#ffffff35;box-shadow:0 24px 80px #0008,0 0 36px color-mix(in srgb,#c6f135 12%,transparent)}.nv-brand{color:#c6f135;font-size:12px;letter-spacing:.08em}h1{font-size:26px;line-height:1.4;margin:0}.nv-copy{color:#b8c6ba;line-height:1.9;margin:0;white-space:pre-wrap}.nv-value{font-size:22px;font-weight:700;margin:2px 0;white-space:pre-wrap;line-height:1.7}.nv-input{width:100%;padding:13px 15px;border:1px solid #ffffff25;border-radius:14px;background:#0e130f;color:#fff;font:inherit;outline:none;resize:vertical}.nv-input:focus{border-color:#c6f135;box-shadow:0 0 0 3px color-mix(in srgb,#c6f135 22%,transparent)}.nv-button{min-height:48px;padding:11px 16px;border:0;border-radius:14px;background:#c6f135;color:#11170e;font:inherit;font-weight:700;cursor:pointer;transition:transform .15s,filter .15s;touch-action:manipulation}.nv-button:active{transform:scale(.97);filter:brightness(.9)}.nv-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.nv-row>*{flex:1 1 0;min-width:0}.nv-image{width:100%;max-height:260px;object-fit:cover;border-radius:18px}.nv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.nv-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0e130f;border:1px solid #ffffff14}.nv-list li span{flex:1;overflow-wrap:anywhere}.nv-list .nv-empty{color:#7f8f82;justify-content:center}.nv-del{border:0;background:#ff6a7a22;color:#ff8f9b;border-radius:10px;width:32px;height:32px;font:inherit;cursor:pointer}.nv-canvas{display:block;width:100%;margin:0 auto;border-radius:18px;background:#05090699;border:1px solid #ffffff18;touch-action:none}.nv-scene{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,#c6f135 18%,#0b1220),#05070d)}.nv-error{padding:12px 14px;border-radius:14px;background:#3a1016;color:#ffb3bc;font-size:14px;line-height:1.8}.nv-toast{position:fixed;inset-inline:0;bottom:28px;margin:auto;width:max-content;max-width:86vw;padding:10px 16px;border-radius:14px;background:#000d;color:#c6f135;border:1px solid color-mix(in srgb,#c6f135 50%,transparent);font-weight:700;box-shadow:0 10px 40px #0009}
 
 .nv-button.nv-packed{position:relative;isolation:isolate;overflow:hidden;align-self:center;width:min(100%,max(64px,var(--nv-width)));max-width:100%;min-width:0;aspect-ratio:var(--nv-ratio);height:auto;min-height:44px;flex-shrink:0;padding:12px 20px;border:2px solid var(--nv-second);border-radius:var(--nv-radius);background:var(--nv-first);color:var(--nv-ink);filter:none;transition:transform .15s}
@@ -14,11 +14,9 @@
 @media(max-width:360px){.nv-app{padding:12px}.nv-card{padding:18px}}
 @media(prefers-reduced-motion:reduce){.nv-button{transition:none}.nv-button:active{transform:none}}
 
-.nv-voxel{outline:none}.nv-voxel-view{position:relative;border-radius:18px;overflow:hidden;border:1px solid #ffffff25}.nv-voxel canvas{display:block;width:100%;aspect-ratio:4/3;image-rendering:pixelated;touch-action:none}.nv-cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-shadow:0 1px 2px #000;font:22px monospace;pointer-events:none}.nv-world-badge{position:absolute;top:10px;right:10px;padding:5px 9px;background:#0b1519aa;border-radius:8px;font-size:10px}.nv-voxel-hint{font-size:11px;line-height:1.8;color:#b8c6ba}.nv-voxel select{width:100%;height:40px;border:1px solid #ffffff25;background:#25342b;color:white;border-radius:10px;font:inherit}.nv-voxel-actions,.nv-moves{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.nv-voxel button{border:1px solid #ffffff20;background:#25342b;color:#e7f0e4;border-radius:12px;min-height:45px;font:inherit;cursor:pointer;touch-action:none}.nv-moves button{font-size:18px}.nv-moves button:active{background:#5b7536}
-</style></head><body><main class="nv-app" data-nava-graphics="ultra"><div class="nv-card"><div class="nv-brand">My world</div>
-<h1>My world</h1>
-<section id="nava-kit-0" class="nv-voxel" tabindex="0"><div class="nv-voxel-view"><canvas aria-label="دنیای بلوکی سه‌بعدی"></canvas><div class="nv-cross">+</div><span class="nv-world-badge">دنیای بلوکی · پرواز آزاد</span></div><p class="nv-voxel-hint">روی تصویر بکش تا نگاه کنی. WASD حرکت و Q/E پایین و بالا.</p><select aria-label="بلوک انتخابی"></select><div class="nv-voxel-actions"><button data-voxel="break">شکستن</button><button data-voxel="place">گذاشتن</button><button data-voxel="export">خروجی جهان</button></div><div class="nv-moves" dir="ltr"><button data-move="a">←</button><button data-move="w">↑</button><button data-move="d">→</button><button data-move="q">پایین</button><button data-move="s">↓</button><button data-move="e">بالا</button></div></section>
-<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main><script>(()=>{const P={"title":"My world","accent":"#c6f135","vars":[],"persist":[],"actions":{},"start":[],"timers":[],"onTouch":null,"onKey":null,"onFrame":null,"graphics":"ultra","buttons":[],"shows":[],"lists":[],"shapes":[],"canvas":null,"scene":null,"images":[]};const navaEngine=(function navaEngine(P     , io     )      {
+</style></head><body><main class="nv-app" data-nava-graphics="ultra"><div class="nv-card"><div class="nv-brand">Nava Studio</div>
+<canvas id="nv-scene" class="nv-canvas nv-scene" style="aspect-ratio:360/480;max-width:720px" aria-label="صحنهٔ سه‌بعدی"></canvas>
+<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main><script>(()=>{const P={"title":"Nava Studio","accent":"#c6f135","vars":[],"persist":[],"actions":{},"start":[{"k":"obj","line":1,"op":"جابجا","n":"Base","a":[{"k":"v","v":0},{"k":"u","op":"-","a":{"k":"v","v":1.2}},{"k":"v","v":0}]},{"k":"obj","line":1,"op":"اندازه","n":"Orb","a":[{"k":"v","v":0.6}]},{"k":"obj","line":1,"op":"متریال","n":"Orb","a":[{"k":"v","v":0.14},{"k":"v","v":0.65},{"k":"v","v":0.6}]},{"k":"obj","line":1,"op":"بچرخان","n":"Ring","a":[{"k":"v","v":65},{"k":"v","v":0},{"k":"v","v":0}]},{"k":"obj","line":1,"op":"متریال","n":"Ring","a":[{"k":"v","v":0.16},{"k":"v","v":0.7},{"k":"v","v":0.15}]},{"k":"cam","line":1,"e":{"k":"v","v":6},"a":[{"k":"v","v":6},{"k":"v","v":18},{"k":"v","v":0}]},{"k":"scene","line":1,"op":"مدار","a":[{"k":"v","v":true}]},{"k":"scene","line":1,"op":"مه","a":[{"k":"v","v":"#070b14"},{"k":"v","v":9},{"k":"v","v":28}]}],"timers":[],"onTouch":null,"onKey":null,"onFrame":[{"k":"obj","line":1,"op":"بچرخان","n":"Ring","a":[{"k":"v","v":0},{"k":"b","op":"*","a":{"k":"v","v":22},"b":{"k":"n","n":"دلتا"}},{"k":"b","op":"*","a":{"k":"v","v":9},"b":{"k":"n","n":"دلتا"}}]}],"graphics":"ultra","buttons":[],"shows":[],"lists":[],"shapes":[{"n":"Orb","kind":"کره","color":"#47f2cb","line":1},{"n":"Ring","kind":"حلقه","color":"#b0a9ff","line":1},{"n":"Base","kind":"زمین","color":"#182331","line":1}],"canvas":null,"scene":{"w":360,"h":480},"images":[]};const navaEngine=(function navaEngine(P     , io     )      {
   const S      = Object.create(null);
   const MAXLOOP = 100000;
   const MAXSTEPS = 3000000;
@@ -710,114 +708,4 @@
   initialize(); requestDraw();
   if (!gl) report("WebGL is unavailable. The 3D scene cannot render on this device.");
   return api;
-}));})();
-(function mountVoxel(id        , config                                                                                                        , create                         , cast                     ) {
-  const root = document.getElementById(id) ;
-  const canvas = root.querySelector                   ("canvas") ;
-  const ctx = canvas.getContext("2d", { alpha: false }) ;
-  const world = create(config.size, config.seed);
-  const materials = [null, { name: "چمن", color: "#68a94b" }, { name: "خاک", color: "#957353" }, { name: "سنگ", color: "#8e9da5" }, { name: "چوب", color: "#795133" }, { name: "برگ", color: "#427d40" }, ...config.materials];
-  const palette = materials.map((m) => m ? [1, 3, 5].map((end) => parseInt(m.color.slice(end, end + 2), 16)) : [0, 0, 0]);
-  const select = root.querySelector                   ("select") ;
-  for (let i = 1; i < materials.length; i++) { const option = document.createElement("option"); option.value = String(i); option.textContent = materials[i] .name; select.append(option); }
-  let x = config.size / 2 + .5, z = config.size / 2 + .5, y = 19, yaw = .55, pitch = -.25;
-  while (y > 0 && !world[(y * config.size + Math.floor(z)) * config.size + Math.floor(x)]) y--;
-  y = Math.min(18.5, y + 4);
-  const pressed = new Set        ();
-  const forward = () => [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
-  const edit = (remove         ) => {
-    const hit = cast(world, config.size, [x, y, z], forward(), 12);
-    if (!hit) return;
-    const cell = remove ? [hit.x, hit.y, hit.z] : hit.previous;
-    const [a, b, c] = cell;
-    if (b <= 0 || a < 0 || a >= config.size || c < 0 || c >= config.size || b >= 20) return;
-    world[(b * config.size + c) * config.size + a] = remove ? 0 : Number(select.value || 1);
-  };
-  root.querySelector('[data-voxel="break"]') .addEventListener("click", () => edit(true));
-  root.querySelector('[data-voxel="place"]') .addEventListener("click", () => edit(false));
-  root.querySelector('[data-voxel="export"]') .addEventListener("click", () => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify({ format: "nava-world-1", ...config, blocks: Array.from(world) })], { type: "application/json" }));
-    const link = document.createElement("a"); link.href = url; link.download = "nava-world.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
-  root.querySelectorAll             ("[data-move]").forEach((button) => {
-    button.addEventListener("pointerdown", (event) => { event.preventDefault(); button.setPointerCapture(event.pointerId); pressed.add(button.dataset.move ); root.focus({ preventScroll: true }); });
-    const release = () => pressed.delete(button.dataset.move );
-    button.addEventListener("pointerup", release); button.addEventListener("pointercancel", release); button.addEventListener("lostpointercapture", release);
-  });
-  root.addEventListener("keydown", (event) => { const key = event.key.toLowerCase(); if (["w", "a", "s", "d", "q", "e"].includes(key)) { event.preventDefault(); pressed.add(key); } });
-  root.addEventListener("keyup", (event) => pressed.delete(event.key.toLowerCase()));
-  window.addEventListener("blur", () => pressed.clear());
-  let drag                                              = null;
-  canvas.addEventListener("pointerdown", (event) => { canvas.setPointerCapture(event.pointerId); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; root.focus({ preventScroll: true }); });
-  canvas.addEventListener("pointermove", (event) => { if (!drag || drag.id !== event.pointerId) return; yaw += (event.clientX - drag.x) * .009; pitch = Math.max(-1.4, Math.min(1.4, pitch - (event.clientY - drag.y) * .009)); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; });
-  canvas.addEventListener("pointerup", () => { drag = null; }); canvas.addEventListener("pointercancel", () => { drag = null; });
-  const resolution = config.quality === "low" ? 72 : 120;
-  canvas.width = resolution; canvas.height = Math.round(resolution * 3 / 4);
-  const image = ctx.createImageData(canvas.width, canvas.height);
-  let last = 0;
-  const frame = (time        ) => {
-    requestAnimationFrame(frame);
-    if (document.hidden || time - last < 75) return;
-    const dt = Math.min(.12, (time - last) / 1000); last = time;
-    const move = (pressed.has("w") ? 1 : 0) - (pressed.has("s") ? 1 : 0), side = (pressed.has("d") ? 1 : 0) - (pressed.has("a") ? 1 : 0);
-    const speed = 4 * dt / (move && side ? Math.SQRT2 : 1);
-    x = Math.max(.1, Math.min(config.size - .1, x + (Math.sin(yaw) * move + Math.cos(yaw) * side) * speed));
-    z = Math.max(.1, Math.min(config.size - .1, z + (Math.cos(yaw) * move - Math.sin(yaw) * side) * speed));
-    y = Math.max(.5, Math.min(19.5, y + ((pressed.has("e") ? 1 : 0) - (pressed.has("q") ? 1 : 0)) * speed));
-    const front = forward(), right = [Math.cos(yaw), 0, -Math.sin(yaw)], up = [-Math.sin(yaw) * Math.sin(pitch), Math.cos(pitch), -Math.cos(yaw) * Math.sin(pitch)];
-    for (let py = 0; py < canvas.height; py++) for (let px = 0; px < canvas.width; px++) {
-      const sx = (px / canvas.width - .5) * 1.4, sy = (.5 - py / canvas.height) * 1.05;
-      const direction = front.map((v, axis) => v + right[axis] * sx + up[axis] * sy);
-      const norm = Math.hypot(...direction); for (let i = 0; i < 3; i++) direction[i] /= norm;
-      const hit = cast(world, config.size, [x, y, z], direction, 28);
-      const offset = (py * canvas.width + px) * 4;
-      const sky = [106 + 50 * py / canvas.height, 175 + 28 * py / canvas.height, 210 + 10 * py / canvas.height];
-      if (hit) {
-        const shade = hit.face === 1 ? 1 : hit.face === 0 ? .78 : .9, fog = Math.min(.85, hit.distance / 35);
-        const hx = x + direction[0] * hit.distance, hy = y + direction[1] * hit.distance, hz = z + direction[2] * hit.distance;
-        const fract = (n        ) => n - Math.floor(n);
-        const u = fract(hit.face === 0 ? hz : hx), v = fract(hit.face === 1 ? hz : hy);
-        const grain = 1 + (((Math.floor(u * 12) * 17 ^ Math.floor(v * 12) * 31 ^ hit.x * 13 ^ hit.z * 7) & 15) - 7) * .018;
-        const edge = u < .025 || u > .975 || v < .025 || v > .975 ? .88 : 1;
-        const color = hit.id === 1 && hit.face !== 1 && fract(hy) < .82 ? [144, 108, 72] : palette[hit.id];
-        for (let i = 0; i < 3; i++) image.data[offset + i] = color[i] * shade * grain * edge * (1 - fog) + sky[i] * fog;
-      } else for (let i = 0; i < 3; i++) image.data[offset + i] = sky[i];
-      image.data[offset + 3] = 255;
-    }
-    ctx.putImageData(image, 0, 0);
-  };
-  requestAnimationFrame(frame);
-})("nava-kit-0",{"size":24,"seed":7,"materials":[{"name":"Ruby","color":"#dc477b"}],"quality":"ultra"},function createVoxelWorld(size        , seed        )             {
-  const world = new Uint8Array(size * size * 20);
-  const put = (x        , y        , z        , value        ) => { if (x >= 0 && x < size && z >= 0 && z < size && y >= 0 && y < 20) world[(y * size + z) * size + x] = value; };
-  let randomSeed = seed >>> 0;
-  const random = () => { randomSeed = (Math.imul(randomSeed, 1664525) + 1013904223) >>> 0; return randomSeed / 4294967296; };
-  for (let x = 0; x < size; x++) for (let z = 0; z < size; z++) {
-    const height = 4 + Math.floor(1.8 * Math.sin((x + seed % 37) * .26) + 1.4 * Math.cos(z * .31));
-    for (let y = 0; y <= height; y++) put(x, y, z, y === height ? 1 : y > height - 3 ? 2 : 3);
-    if (random() < .045 && Math.abs(x - size / 2) + Math.abs(z - size / 2) > 5) {
-      for (let y = height + 1; y <= height + 4; y++) put(x, y, z, 4);
-      for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (let dy = 3; dy <= 5; dy++) {
-        if (Math.abs(dx) + Math.abs(dz) < 4) put(x + dx, height + dy, z + dz, 5);
-      }
-    }
-  }
-  return world;
-},function castVoxelRay(world            , size        , origin          , direction          , max        ) {
-  let [x, y, z] = origin.map(Math.floor);
-  const [dx, dy, dz] = direction;
-  const step = [dx < 0 ? -1 : 1, dy < 0 ? -1 : 1, dz < 0 ? -1 : 1];
-  const delta = direction.map((value) => value === 0 ? Infinity : Math.abs(1 / value));
-  const next = [x, y, z].map((value, axis) => direction[axis] === 0 ? Infinity : ((value + (step[axis] > 0 ? 1 : 0)) - origin[axis]) / direction[axis]);
-  let distance = 0, face = 1, previous = [x, y, z];
-  for (let n = 0; n < 180 && distance <= max; n++) {
-    if (x < 0 || x >= size || z < 0 || z >= size || y < 0 || y >= 20) return null;
-    const id = world[(y * size + z) * size + x];
-    if (id) return { x, y, z, id, distance, face, previous };
-    previous = [x, y, z];
-    if (next[0] < next[1] && next[0] < next[2]) { distance = next[0]; next[0] += delta[0]; x += step[0]; face = 0; }
-    else if (next[1] < next[2]) { distance = next[1]; next[1] += delta[1]; y += step[1]; face = 1; }
-    else { distance = next[2]; next[2] += delta[2]; z += step[2]; face = 2; }
-  }
-  return null;
-});</script></body></html>
+}));})();</script></body></html>

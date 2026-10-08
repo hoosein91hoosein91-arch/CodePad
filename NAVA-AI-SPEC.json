@@ -1,9 +1,9 @@
 {
   "language": "Nava",
-  "version": "0.5",
+  "version": "0.6",
   "extension": ".nava",
   "caseSensitive": true,
-  "oneInstructionPerLine": true,
+  "oneInstructionPerLine": false,
   "components": [
     {
       "id": "calculator",
@@ -75,6 +75,37 @@
       "code": "pg \"امتیاز من\"\ncnt\n"
     }
   ],
+  "glyphSyntax": {
+    "enabledBy": "A capital-led Latin alias outside strings, comments and appearance capsules",
+    "caseRule": "Every code atom and identifier starts with an uppercase ASCII letter; later letters may be lowercase",
+    "persianCodeTokens": false,
+    "quotedTextAndComments": "Preserved without case or language restrictions",
+    "numbers": {
+      "integer": "N12 means 12",
+      "decimal": "N0d5 means 0.5; d separates integer and fractional digits",
+      "negative": "-N3 means -3",
+      "untagged": "Rejected"
+    },
+    "graphics": {
+      "low": "G1",
+      "ultra": "G9",
+      "default": "ultra",
+      "medium": false
+    },
+    "buttonAppearance": {
+      "base": "(RuWIDTHRnHEIGHT)",
+      "optionalPalette": "Y followed by two different fixed palette codes",
+      "optionalRelief": "Rr",
+      "qualityRules": "Fixed deterministic details, bounded proportions, no blended capsule colors"
+    },
+    "examples": [
+      "Pg \"Counter\"",
+      "Num Total = N0",
+      "Out \"Score: {Total}\"",
+      "Bt \"Add\" (Ru160Rn56Rr): Total = Total + N1"
+    ],
+    "aliases": "src/labshell/nava-glyph.ts"
+  },
   "primitives": [
     "pg \"title\"",
     "ap \"name\"",
@@ -184,7 +215,7 @@
       "omitted = no action"
     ]
   },
-  "defaultSyntax": "abbreviated",
+  "defaultSyntax": "capital-led Latin",
   "backwardCompatible": true,
   "keywordRegistry": [
     {
@@ -522,5 +553,44 @@
     ],
     "blocks": "Lines that open a block (اگر، تکرار، برای، تا وقتی، کنش، تابع، هر … ثانیه، بعد از … ثانیه، وقتی لمس/کلید، ردیف، دکمه without a one-line body) close with پایان (or end). Recipes (df … end) may contain such blocks.",
     "guide": "NAVA-GUIDE.md"
+  },
+  "statementSeparator": "|",
+  "legacyPersianVisibleByDefault": false,
+  "graphics3d": {
+    "engine": "offline WebGL",
+    "primitives": [
+      "Cu",
+      "Sp",
+      "Pyramid",
+      "Floor",
+      "Rg",
+      "Cy",
+      "Cn"
+    ],
+    "commands": [
+      "Sc",
+      "Mt",
+      "Tint",
+      "Rt",
+      "Mv",
+      "Ps",
+      "Sl",
+      "Cm",
+      "Ob",
+      "Lt",
+      "Am",
+      "Fz",
+      "Fr"
+    ],
+    "delta": "Dt: seconds, capped at 0.05",
+    "quality": [
+      "G1",
+      "G9"
+    ],
+    "maxObjects": 512,
+    "limitations": [
+      "No mesh import or physics engine",
+      "Soft contact shadows approximate, up to 8 shapes on horizontal floors"
+    ]
   }
 }

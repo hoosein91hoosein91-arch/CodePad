@@ -1,0 +1,76 @@
+Ap "NEON RIFT"
+Game
+G9
+Bg #070912
+Fg #72f2dc
+Num Score = N0
+Num Lives = N3
+Num Px = N0
+Num Target = N0
+Num EnemyLane = N1
+Num Depth = -N6
+Num Previous = Time()
+Num Delta = N0
+Num Speed = N2
+Var Auto = Tr
+Var Live = Fl
+Var Note = "برای شروع روی مسیر بزن؛ چپ، وسط یا راست"
+Out "NEON RIFT   •   امتیاز {Score}   •   جان {Lives}\n{Note}"
+Scene N360,N600
+Floor Road "#141c2c" Pos N0,-N0d5,-N2d5
+Ball Pilot "#72f2dc" Pos N0,N0,N1d1
+Pyramid Hazard "#ff597d" Pos N1d4,N0,-N6
+Pyramid RailA "#8e87c8" Pos -N2d5,N0,-N1
+Pyramid RailB "#8e87c8" Pos N2d5,N0,-N1
+Pyramid RailC "#8e87c8" Pos -N2d5,N0,-N4
+Pyramid RailD "#8e87c8" Pos N2d5,N0,-N4
+Scale Pilot N0d34
+Scale Hazard N0d5
+Scale RailA N0d35
+Scale RailB N0d35
+Scale RailC N0d35
+Scale RailD N0d35
+Camera N7
+Touch
+  If Lives <= N0
+    Score = N0
+    Lives = N3
+    Depth = -N6
+    EnemyLane = Rand(-N1,N1)
+  End
+  Target = (Min(N2,Max(N0,Int(X / N120))) - N1) * N1d4
+  Live = Tr
+  Note = "از کریستال سرخابی دور شو"
+End
+Every N0d016 Sec
+  Delta = Min(N0d05,Max(N0,Time() - Previous))
+  Previous = Time()
+  Px += (Target - Px) * Min(N1,Delta * N14)
+  If Live
+    Speed = N2 * Pow(N2,Int(Score / N5))
+    If Auto && Abs(Px - EnemyLane * N1d4) < N0d65 && Depth + Speed * (Delta + N0d01) >= N1d1
+      Target = N0
+      If EnemyLane = N0: Target = N1d4
+      Px = Target
+    End
+    Depth += Speed * Delta
+    If Depth >= N1d1
+      If Abs(Px - EnemyLane * N1d4) < N0d65
+        Lives -= N1
+        Tone N120,N90
+      Else
+        Score += N1
+        Tone N700,N35
+      End
+      Depth = -N6
+      EnemyLane = Rand(-N1,N1)
+    End
+    If Lives <= N0
+      Live = Fl
+      Note = "بازی تمام شد؛ برای تکرار روی مسیر بزن"
+    End
+  End
+  Shift Pilot Px,Sin(Time() * N160) * N0d05,N1d1
+  Shift Hazard EnemyLane * N1d4,N0,Depth
+  Rotate Hazard N0,Delta * N100,N0
+End
