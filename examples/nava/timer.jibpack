@@ -1,4 +1,3 @@
 @@@ jibpack 1 تایمر
 @@@ file main.nava
-pg "یک دقیقه"
-tm ۶۰
+Pg "One minute" | Tm N60

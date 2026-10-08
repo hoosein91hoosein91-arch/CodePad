@@ -1,5 +1,3 @@
 @@@ jibpack 1 دنیای بلوکی
 @@@ file main.nava
-pg "دنیای من"
-vx sz ۲۴ sd ۷
-bl "یاقوت" #dc477b
+Pg "My world" | Vx Sz N24 Sd N7 | Bl "Ruby" #dc477b
