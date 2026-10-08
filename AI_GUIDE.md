@@ -1,8 +1,8 @@
 # CodePad (جیب‌کد) — Guide for AI assistants
 
 This file is for an AI assistant (or a human) **writing programs that run inside the CodePad app**.
-Everything here comes from the source on `main` (CodePad v2.1.0: **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0, **JibOS launcher upgrade** §2.11 since v2.0.0, and **v2.1.0 additions** §2.12 — terminal shell over a virtual filesystem, private browser, multi-page home + export, net-security samples, Termux hand-off: `src/labshell/*`, `src/lib/termux-bridge.ts`, `src/components/launcher/*`) and from tests run in headless Chrome at phone size.
-Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later. Everything in §2.11 (Gemini, `window.jibos`, developer mode, wallpapers, custom icons, security samples) needs v2.0.0 or later. Everything in §2.12 (terminal shell/virtual filesystem, private browser, multi-page home + export, simulated nmap/port-scan samples, Termux hand-off) needs v2.1.0 or later.
+Everything here comes from the source on `main` (CodePad v2.2.0: **Nava language** §2.13 since v2.2.0, **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0, **JibOS launcher upgrade** §2.11 since v2.0.0, and **v2.1.0 additions** §2.12 — terminal shell over a virtual filesystem, private browser, multi-page home + export, net-security samples, Termux hand-off: `src/labshell/*`, `src/lib/termux-bridge.ts`, `src/components/launcher/*`) and from tests run in headless Chrome at phone size.
+Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later. Everything in §2.11 (Gemini, `window.jibos`, developer mode, wallpapers, custom icons, security samples) needs v2.0.0 or later. Everything in §2.12 (terminal shell/virtual filesystem, private browser, multi-page home + export, simulated nmap/port-scan samples, Termux hand-off) needs v2.1.0 or later. The Nava language (§2.13, `.nava`) needs v2.2.0 or later.
 If the code changes, re-check the files listed in [§9 Where things live](#9-where-things-live).
 
 > **The three rules that matter most**
@@ -39,6 +39,7 @@ If the code changes, re-check the files listed in [§9 Where things live](#9-whe
 
 | Language | Internal id | File extension(s) | Engine | Input (stdin) | Time limit |
 |---|---|---|---|---|---|
+| **Nava (نوا)** — Persian one-line commands → full web app | `nava` | `.nava` | compiled to a JSON program + a small embedded interpreter (no `eval`), shown in the **صفحه** tab; see §2.13 and [NAVA-GUIDE.md](NAVA-GUIDE.md) | `ورودی` boxes in the page | 100 000 loop turns, 3 M steps per event |
 | Mix (several languages in one file) | `mix` | `.mix` (and any unknown extension, e.g. `.txt`) | per block, see §3 | per block | per block |
 | Python | `python` | `.py` | Pyodide (CPython 3.14 compiled to WebAssembly) in a Web Worker | `input()` opens a popup; or pre-fill the **ورودی** box | 25 s |
 | JavaScript (console) | `javascript` | `.js`, `.mjs` | Web Worker, `"use strict"`, **no DOM** | none | 2.5 s |
@@ -303,7 +304,7 @@ Pyodide in CodePad has **no OpenSSL**: `hashlib.md5/sha1/sha256/sha512/blake2`, 
 All calls except `beep/melody/play` are async and go through `postMessage` with a random per-window token; the launcher answers only its own frame. A developer-mode call made while developer mode is off rejects with an error.
 Audio: Web Audio and `<audio>` work inside installed apps after a tap (autoplay rules). Background audio after leaving the app, microphone, camera, Bluetooth, notifications and widgets are **not** available.
 
-**Developer mode** (**ظاهر** → **حالت توسعه‌دهنده**, or tap **JibOS 2.1.0** seven times, or `dev on` in the console)
+**Developer mode** (**ظاهر** → **حالت توسعه‌دهنده**, or tap **JibOS 2.2.0** seven times, or `dev on` in the console)
 - This is **in-app** control only. It is **not** Android root and cannot root the phone; no normal app can.
 - Unlocks: editing any installed app's files (and adding files) from the launcher; a launcher configuration editor (JSON); custom CSS for the launcher; a JavaScript **boot script** that runs when the launcher opens with an `api` object (`apps()`, `launch(name)`, `prefs()`, `setPrefs({…})`, `toast(msg)`, `beep(hz, ms)`, `install(name, html)`, `uninstall(name)`, `gemini(prompt)`); the list of all apps with export to `.jibpack`, copy and delete; full JSON backup/restore (attachments are not in the JSON — export a `.jibpack` for those); reset; the developer-only `window.jibos` calls; and the console's `js` command.
 - Escape hatch: open `/launcher?safe=1` to skip custom CSS and the boot script.
@@ -336,6 +337,52 @@ All of this runs inside the app's Android WebView. Honest limits are spelled out
 | امنیت: دمو اسکن پورت (تعاملی) | `index.html` | an interactive **simulated** scan with a progress bar over deterministic mock data |
 
 ---
+
+### 2.13 Nava (نوا, `.nava`, v2.2.0+): a tiny Persian language for apps, games, 2D/3D and AI
+Nava is a Persian-first language built from HTML/CSS/JS ideas: **one short Persian command per line**, compiled to a complete, styled, phone-sized web page. The full reference with examples is **[NAVA-GUIDE.md](NAVA-GUIDE.md)** (Persian). Source: `src/labshell/nava.ts` (parser/compiler, checker, page builder) and `src/labshell/nava-runtime.ts` (`navaEngine` = DOM-free interpreter, tested in node; `navaDom` = page, canvas, WebGL, audio, storage, AI).
+- **How it runs:** the source becomes a JSON AST that is embedded in the page with a small interpreter. No user text ever becomes JavaScript (no `eval`/`new Function`). Loops are capped (100 000 turns per loop, 3 000 000 steps per event, call depth 200). Errors are Persian with a line number (`خط 12: …`), at compile time and at runtime; a runtime error stops the timers.
+- **Where:** editor (☰ → فایل تازه → **نوا**, or a project template), launcher (install sheet → **نوا** quick-create, or the five Nava samples), and **download as standalone HTML**. In the launcher a project whose files include a `.nava` runs it as the entry (preferred over `index.html`).
+- **Old commands still work:** `برنامه`, `رنگ`, `عنوان`, `متن`, `عدد`, `ورودی`, `نمایش`, `دکمه … وقتی زده شد:`, `پیام`.
+
+Command set (short):
+| Group | Commands |
+|---|---|
+| settings | `برنامه "name"`, `رنگ #hex`, `پس‌زمینه #hex` |
+| variables | `عدد x = 0`, `متغیر x = …`, `لیست L [= [..]]`, `ذخیره a، b` (persist), `x = / += / -=`, `L[i] = …` (index from 1, negative from the end); inside blocks these make locals |
+| UI | `عنوان`, `متن` (live with `{expr}`), `عکس "f.png" [توضیح "…"]`, `ورودی x "hint" [عدد\|رمز\|چندخطی]`, `نمایش "…{expr}…" [اگر cond]`, `دکمه "label": a؛ b` or a block ending in `پایان`, `فهرست L [با حذف]`, `ردیف … پایان`, `بوم w، h` (2D canvas), `صحنه w، h` (3D WebGL) |
+| 3D | `مکعب/کره/هرم/زمین name "#color" [در x، y، z]`, `بچرخان name dx، dy، dz` (degrees, cumulative), `جابجا name x، y، z`, `حرکت name dx، dy، dz`, `اندازه name s`, `دوربین distance` |
+| control | `اگر / وگرنه اگر / وگرنه / پایان`, inline `اگر cond: stmt`, `تکرار N [بار] [با i]`, `برای هر x در L`, `برای i از a تا b`, `تا وقتی cond`, `کنش name [با a، b]`, `تابع name با a … نتیجه expr`, call with `اجرا name args`, bare `name args` or `name(args)` in expressions, `برگرد` |
+| events/time | `هر N ثانیه`, `بعد از N ثانیه`, `وقتی لمس` (`ایکس`, `ایگرگ`), `وقتی کلید` (`کلید` = بالا/پایین/چپ/راست/فاصله/اینتر; swipes on the canvas too), `توقف`, `ادامه` |
+| lists | `افزودن x به [اول] L`, `حذف x از L`, `حذف اول/آخر از L`, `حذف شماره i از L`, `خالی L` |
+| output | `پیام` (toast), `صدا hz، ms` or `صدا "file.mp3"`, `آهنگ f1، f2…`, `بگو` (speech synthesis), `بپرس x = prompt` (Gemini) |
+| canvas | `پاک [color]`, `دایره x، y، r، color`, `مستطیل x، y، w، h، color`, `خط x1، y1، x2، y2، color، width`, `نوشته text، x، y، color، size`, `تصویر "f.png"، x، y، [w، h]` |
+| built-ins | `تصادفی طول گرد صحیح قدرمطلق جذر توان حداقل حداکثر جمع سینوس کسینوس فاصله عدد متن زمان ساعت تاریخ شامل جای جدا چسب خطوط برعکس مرتب بخش فایل` |
+| expressions | `+ - * / %` (`× ÷`), `= == != < > <= >=`, `و یا نه` (`&& \|\| !`), lists `[1، 2]`, templates `"{expr}"`, strings in `"…"`, `'…'` or `«…»`, Persian digits, comments `#` / `//` |
+
+Example (a persistent counter game with a canvas, a function, a loop and a timer — 16 lines):
+```
+برنامه "شمارنده"
+عدد امتیاز = ۰
+ذخیره امتیاز
+بوم ۳۰۰، ۸۰
+نمایش "امتیاز: {امتیاز}"
+نمایش "🎉 عالی!" اگر امتیاز >= ۱۰
+دکمه "+۱": امتیاز += ۱
+تابع رنگ‌من با i
+  اگر i <= امتیاز: نتیجه "#67f5a5"
+  نتیجه "#333333"
+پایان
+هر ۰.۵ ثانیه
+  پاک
+  برای i از ۱ تا ۱۰: دایره i * ۲۸، ۴۰، ۱۰، رنگ‌من(i)
+پایان
+```
+
+- **Storage (`ذخیره`)**: launcher → per-app `jibos.storage`; editor → per-project storage via the editor's own bridge; standalone HTML → `localStorage` (`nava:<program name>`), falling back to memory. Saves only when a value changes.
+- **Attachments**: refer by flat name (`عکس "cat.png"`, `تصویر "ship.png"، …`, `صدا "win.mp3"`, `فایل("words.txt")`) exactly as in §2.8.
+- **AI (`بپرس`)**: goes through the `window.jibos` bridge command `ai` → `appAsk` in `src/labshell/gemini.ts`, using the user's own Gemini key (**ظاهر → اتصال Gemini**). It asks the user's permission once per app, is limited to 12 requests per minute per app and 4000 characters per prompt, needs internet, and has a 120 s timeout. While waiting the variable shows «… در حال فکر کردن»; errors come back as readable Persian text. Not available in a standalone HTML export.
+- **Honest limits:** 3D is a **lightweight raw-WebGL renderer** (cube, sphere, pyramid, plane, one directional light, a perspective camera) — no model files (glTF/OBJ), textures, shadows, physics or AAA graphics; tens of shapes, not thousands. AI is **only a call to the hosted Gemini model** — no on-device model and **no model training** (that needs servers/GPUs). No classes/objects/dictionaries/modules/arbitrary network. Nava apps are web pages: no SMS, calls, phone files, Bluetooth or background execution. "500 Python lines → 50 Nava lines" holds for UI apps and small games, not for heavy algorithms.
+- Built-in samples (`src/labshell/packs/nava-*.jibpack`): **نوا: کارهای من** (35 lines), **نوا: معدن طلا** (clicker, 41), **نوا: مار** (snake on canvas, 52), **نوا: صحنهٔ سه‌بعدی** (WebGL, 27), **نوا: دستیار هوشمند** (Gemini, 17).
 
 ## 3. Mix files (`.mix`) — full format
 
@@ -837,7 +884,8 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 
 ## 7. Getting the Android app (APK)
 - Latest release: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest
-- Direct download, **v2.1.0** (adds terminal shell over a virtual filesystem, private browser, multi-page home + export/backup, simulated nmap/port-scan samples, optional Termux hand-off): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.1.0/CodePad.apk
+- Direct download, **v2.2.0** (adds the **Nava** language: Persian one-line commands for apps, games, 2D canvas, lightweight WebGL 3D, storage and Gemini `بپرس`; five Nava samples): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.2.0/CodePad.apk
+- v2.1.0 (adds terminal shell over a virtual filesystem, private browser, multi-page home + export/backup, simulated nmap/port-scan samples, optional Termux hand-off): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.1.0/CodePad.apk
 - v2.0.0 (JibOS launcher: neon-terminal theme, wallpapers, custom icons, Gemini, `window.jibos`, developer mode, security samples): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.0.0/CodePad.apk
 - v1.9.0 (adds the launcher): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.9.0/CodePad.apk
 - v1.8.0 (packs and the built-in image snake sample): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.8.0/CodePad.apk
@@ -861,6 +909,7 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 | File | What it does |
 |---|---|
 | `src/labshell/types.ts` | language ids, labels, extensions (`LANG_META`) |
+| `src/labshell/nava.ts`, `src/labshell/nava-runtime.ts`, `NAVA-GUIDE.md` | Nava parser/checker/page builder; embedded interpreter (`navaEngine`) and page/canvas/WebGL/audio/storage/AI layer (`navaDom`); full Persian reference |
 | `src/labshell/mix.ts` | mix parser, aliases, auto-detection, `shared`, page assembly (`runMix`) |
 | `src/labshell/html-doc.ts` | page document builder, CSP, console bridge, `buildWebDoc`, attachment embedding (`withAssets`) |
 | `src/labshell/runtime.ts` | Python/JS/C/Jib runners, time limits, the input re-run loop, sending attachments to the Python worker |
@@ -870,7 +919,7 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 | `src/labshell/open-files.ts` | opening external files, extension map, 1 MB code limit, routing everything else to attachments |
 | `src/labshell/assets.ts` | attachments: IndexedDB storage, add/remove, `data:` URLs for pages |
 | `src/labshell/pack.ts` | `.jibpack` parser: code files + base64 attachments in one text file |
-| `src/labshell/pack-samples.ts`, `src/labshell/packs/*.jibpack` | built-in pack samples shown under **پروژهٔ تازه** and in the launcher (snake, piano, five security samples) |
+| `src/labshell/pack-samples.ts`, `src/labshell/packs/*.jibpack` | built-in pack samples shown under **پروژهٔ تازه** and in the launcher (snake, piano, security samples, five Nava samples) |
 | `scripts/make-pack.mjs` | builds a `.jibpack` from a folder |
 | `src/routes/launcher.tsx`, `src/labshell/launcher.ts`, `src/components/launcher-button.tsx` | launcher home screen, installed-apps store, editor toolbar button |
 | `src/components/launcher/*` | JibOS UI: app window + `jibos` bridge handler (`app-window.tsx`), settings, Gemini, app customize/editor/install sheets, developer mode (`dev-sheet.tsx`), console (`terminal.tsx`), matrix rain |

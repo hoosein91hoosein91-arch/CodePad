@@ -5,12 +5,12 @@ import { createFile, createProject } from "@/labshell/samples";
 import { activeFile, activeProject, useLab } from "@/labshell/store";
 import type { Lang, Project } from "@/labshell/types";
 
-const EXT: Record<string, Lang> = { mix: "mix", fa: "farsi", jib: "english", bit: "binary", py: "python", js: "javascript", c: "c", cpp: "cpp", css: "css", html: "html", htm: "html" };
+const EXT: Record<string, Lang> = { nava: "nava", mix: "mix", fa: "farsi", jib: "english", bit: "binary", py: "python", js: "javascript", c: "c", cpp: "cpp", css: "css", html: "html", htm: "html" };
 
 const HELP = [
   "help                 این راهنما",
   "ls / pwd             فهرست فایل‌ها و پیوست‌ها / مسیر",
-  "cat f / touch f / rm f   خواندن / ساختن / حذف فایل (پسوند: mix fa jib bit py js c cpp css html)",
+  "cat f / touch f / rm f   خواندن / ساختن / حذف فایل (پسوند: nava mix fa jib bit py js c cpp css html)",
   "run [f]  (python f، node f)   اجرای فایل",
   "venv create|ls|activate|deactivate <name>   محیط مجازی جدا",
   "pkg list             زبان‌ها و موتورهای موجود",

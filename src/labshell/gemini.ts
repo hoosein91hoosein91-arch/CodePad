@@ -130,3 +130,29 @@ export function extractCode(text: string, prefer = "html"): string | null {
   const doc = text.match(/<!doctype html[\s\S]*<\/html>/i) ?? text.match(/<html[\s\S]*<\/html>/i);
   return doc ? doc[0] + "\n" : null;
 }
+
+/** دستور سیستمی برای پرسش‌هایی که خودِ برنامه‌ها (مثلاً «بپرس» در نوا) می‌فرستند */
+export const APP_AI_SYSTEM =
+  "You answer questions sent by a small user-made app (Nava language) running in CodePad on a phone. Reply in the language of the question (usually Persian), in short plain text without Markdown or code fences, at most about 120 words unless asked for more.";
+
+const appAllowed = new Set<string>();
+const appRecent = new Map<string, number[]>();
+
+/** پرسش یک برنامه از Gemini: اولین بار برای هر برنامه اجازه گرفته می‌شود و تعداد درخواست در دقیقه محدود است */
+export async function appAsk(appName: string, prompt: string, opts: { confirm?: (message: string) => boolean; fetcher?: Fetcher; settings?: GeminiSettings } = {}): Promise<string> {
+  const settings = opts.settings ?? loadGemini();
+  if (!settings.key.trim()) throw new Error("Gemini وصل نیست: در لانچر «اتصال Gemini» را باز کن و کلید API خودت را ذخیره کن.");
+  if (!appAllowed.has(appName)) {
+    const ask = opts.confirm ?? ((message: string) => window.confirm(message));
+    if (!ask(`برنامهٔ «${appName}» می‌خواهد با کلید Gemini تو از هوش مصنوعی سؤال کند (سهمیه یا هزینهٔ حساب Google تو مصرف می‌شود). اجازه می‌دهی؟`)) {
+      throw new Error("اجازهٔ استفاده از هوش مصنوعی داده نشد.");
+    }
+    appAllowed.add(appName);
+  }
+  const now = Date.now();
+  const recent = (appRecent.get(appName) ?? []).filter((t) => now - t < 60_000);
+  if (recent.length >= 12) throw new Error("درخواست‌های هوش مصنوعی این برنامه زیاد شد؛ یک دقیقه صبر کن.");
+  recent.push(now);
+  appRecent.set(appName, recent);
+  return askGemini(settings, String(prompt).slice(0, 4000), { system: APP_AI_SYSTEM, fetcher: opts.fetcher });
+}

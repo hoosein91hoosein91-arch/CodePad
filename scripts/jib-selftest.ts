@@ -5,7 +5,9 @@ import { SAMPLES } from "../src/labshell/samples.ts";
 import { detectKind, parseMix, runMix } from "../src/labshell/mix.ts";
 import { parsePack } from "../src/labshell/pack.ts";
 import { readFileSync } from "node:fs";
-import { askGemini, extractCode, geminiRequest, generateText } from "../src/labshell/gemini.ts";
+import { appAsk, askGemini, extractCode, geminiRequest, generateText } from "../src/labshell/gemini.ts";
+import { compileNava } from "../src/labshell/nava.ts";
+import { JIBOS_OPEN } from "../src/labshell/jibos.ts";
 import { caesar, entropyBits, fromB64, fromHex, sha, toB64, toHex, xorHex } from "../src/labshell/crypto-utils.ts";
 import { formatScan, simulateScan } from "../src/labshell/netsim.ts";
 import { buildTree, lookup, newVfs, resolvePath } from "../src/labshell/vfs.ts";
@@ -227,5 +229,29 @@ await askGemini({ key: "K", model: "m" }, "q", { fetcher: async () => new Respon
 must("gemini bad key", badKey.includes("نامعتبر"));
 must("extract code", extractCode("hi\n```html\n<p>x</p>\n```") === "<p>x</p>\n");
 must("jibos inject", injectHead("<html><head><title>t</title></head></html>", jibosClient("n1", "app")).indexOf("window.jibos") < injectHead("<html><head><title>t</title></head></html>", jibosClient("n1", "app")).indexOf("<title>"));
+
+// ── نسخهٔ ۲.۲: زبان نوا ──
+must("nava starter sample", !!compileNava(SAMPLES.nava.content).web);
+for (const id of ["nava-todo", "nava-clicker", "nava-snake", "nava-cube3d", "nava-ai"]) {
+  const p = parsePack(readFileSync(new URL(`../src/labshell/packs/${id}.jibpack`, import.meta.url), "utf8"));
+  must(`pack ${id} parses`, !!p && p.problems.length === 0 && p.files.length === 1 && p.files[0]!.name === "main.nava");
+  const res = compileNava(p?.files[0]?.content ?? "");
+  must(`pack ${id} compiles (${res.error ?? "ok"})`, !!res.web);
+}
+must("jibos ai command open", JIBOS_OPEN.has("ai") && jibosClient("n", "a").includes('c==="ai"?120000'));
+const okFetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "جواب" }] } }] }), { status: 200 });
+let denied = "";
+await appAsk("app-deny", "q", { settings: { key: "K", model: "m" }, confirm: () => false, fetcher: okFetch }).catch((e: Error) => { denied = e.message; });
+must("nava ai asks permission (denied)", denied.includes("اجازه"));
+let asked = 0;
+const first = await appAsk("app-ok", "q", { settings: { key: "K", model: "m" }, confirm: () => { asked++; return true; }, fetcher: okFetch });
+await appAsk("app-ok", "q2", { settings: { key: "K", model: "m" }, confirm: () => { asked++; return true; }, fetcher: okFetch });
+must("nava ai answer + permission once per app", first === "جواب" && asked === 1);
+let limited = "";
+for (let i = 0; i < 12; i++) await appAsk("app-ok", "q", { settings: { key: "K", model: "m" }, fetcher: okFetch }).catch((e: Error) => { limited = e.message; });
+must("nava ai rate limit", limited.includes("دقیقه"));
+let noKeyApp = "";
+await appAsk("app-x", "q", { settings: { key: "", model: "m" } }).catch((e: Error) => { noKeyApp = e.message; });
+must("nava ai needs key", noKeyApp.includes("Gemini وصل نیست"));
 if (process.exitCode) process.exit(process.exitCode);
 console.log("ALL PASSED");

@@ -15,6 +15,9 @@ import { PACK_SAMPLES } from "@/labshell/pack-samples";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
+import { compileNava } from "@/labshell/nava";
+import { injectHead, jibosClient, readAppStore, writeAppStore } from "@/labshell/jibos";
+import { appAsk } from "@/labshell/gemini";
 import { isPythonWarm, runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
 import { LANG_META, LANG_ORDER, type Lang, type TermLine, type TermStream } from "@/labshell/types";
 import { CodeEditor } from "@/components/code-editor";
@@ -35,6 +38,25 @@ const MIX_BAR = [
   { label: "@@ سی", insert: "\n@@ سی\n" },
   { label: "@@ ماشین", insert: "\n@@ ماشین\n" },
   { label: "@@ html", insert: "\n@@ html\n" },
+];
+
+const NAVA_BAR = [
+  { label: "عنوان", insert: 'عنوان ""\n' },
+  { label: "متن", insert: 'متن ""\n' },
+  { label: "عدد", insert: "عدد امتیاز = ۰\n" },
+  { label: "لیست", insert: "لیست کارها\n" },
+  { label: "نمایش", insert: 'نمایش "امتیاز: {امتیاز}"\n' },
+  { label: "دکمه", insert: 'دکمه "افزایش": امتیاز += ۱\n' },
+  { label: "ورودی", insert: 'ورودی نام "نامت را بنویس"\n' },
+  { label: "اگر", insert: "اگر امتیاز > ۱۰\n  \nپایان\n" },
+  { label: "تکرار", insert: "تکرار ۳\n  \nپایان\n" },
+  { label: "کنش", insert: "کنش نام\n  \nپایان\n" },
+  { label: "هر ثانیه", insert: "هر ۱ ثانیه\n  \nپایان\n" },
+  { label: "بوم", insert: "بوم ۳۲۰، ۳۲۰\n" },
+  { label: "صحنه", insert: 'صحنه ۳۲۰، ۳۲۰\nمکعب جعبه "#67f5a5"\n' },
+  { label: "ذخیره", insert: "ذخیره امتیاز\n" },
+  { label: "بپرس", insert: "بپرس جواب = سوال\n" },
+  { label: "پایان", insert: "پایان\n" },
 ];
 
 const KEYS: { label: string; insert?: string; move?: "left" | "right" | "up" | "down" }[] = [
@@ -155,7 +177,9 @@ export function LabShell() {
   const [split, setSplit] = useState(0.58);
   const [full, setFull] = useState(false);
   const splitRef = useRef<HTMLDivElement>(null);
-  const showFrame = file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id);
+  const showFrame = file.lang === "html" || ((file.lang === "mix" || file.lang === "nava") && mixPage?.fileId === file.id);
+  // رمز یک‌بارمصرف پل jibos برای پیش‌نمایش برنامه‌های نوا (حافظه، پیام، هوش مصنوعی)
+  const navaNonce = useRef("");
   const pickRef = useRef<HTMLInputElement>(null);
   const assetPickRef = useRef<HTMLInputElement>(null);
   const assetItems = useAssets((state) => state.items);
@@ -249,8 +273,39 @@ export function LabShell() {
       if (event.source !== frameRef.current?.contentWindow) return;
       useLab.getState().pushLines([termLine(data.k === "error" || data.k === "warn" ? "err" : "out", data.t.slice(0, 2000))]);
     };
+    // پل jibos برای پیش‌نمایش نوا: فقط پیام همین قاب و با همین رمز؛ فقط حافظه، پیام کوتاه و پرسش از Gemini
+    const onJibos = (event: MessageEvent) => {
+      const d = event.data as { jibos?: string; id?: number; cmd?: string; args?: unknown } | null;
+      const win = frameRef.current?.contentWindow;
+      if (!d || typeof d !== "object" || !navaNonce.current || d.jibos !== navaNonce.current || !win || event.source !== win || typeof d.cmd !== "string") return;
+      const reply = (ok: boolean, value?: unknown, error?: string) => win.postMessage({ jibosReply: navaNonce.current, id: d.id, ok, value, error }, "*");
+      const state = useLab.getState();
+      const storeName = `editor:${activeProject(state).name}`;
+      const list = Array.isArray(d.args) ? d.args : [];
+      (async () => {
+        switch (d.cmd) {
+          case "storage.get": return readAppStore(storeName)[String(d.args)] ?? null;
+          case "storage.set": { const store = readAppStore(storeName); store[String(list[0])] = list[1]; writeAppStore(storeName, store); return true; }
+          case "storage.remove": { const store = readAppStore(storeName); delete store[String(d.args)]; writeAppStore(storeName, store); return true; }
+          case "storage.keys": return Object.keys(readAppStore(storeName));
+          case "toast": state.pushLines([termLine("sys", `پیام برنامه: ${String(d.args).slice(0, 200)}`)]); return true;
+          case "ai": {
+            state.pushLines([termLine("sys", "برنامه از Gemini سؤال کرد…")]);
+            return appAsk(activeProject(state).name, String(d.args ?? ""));
+          }
+          default: throw new Error(`فرمان «${d.cmd}» در پیش‌نمایش ویرایشگر در دسترس نیست؛ برنامه را در لانچر نصب کن.`);
+        }
+      })().then(
+        (value) => reply(true, value),
+        (err) => reply(false, undefined, err instanceof Error ? err.message : String(err)),
+      );
+    };
+    window.addEventListener("message", onJibos);
     window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("message", onJibos);
+    };
   }, []);
 
   useEffect(() => {
@@ -271,7 +326,7 @@ export function LabShell() {
     const current = activeFile(activeProject(state));
     const projectId = state.activeProjectId;
     state.setRunning(true);
-    state.setPanel(current.lang === "css" || current.lang === "html" || current.lang === "binary" ? "stage" : "out");
+    state.setPanel(current.lang === "nava" || current.lang === "css" || current.lang === "html" || current.lang === "binary" ? "stage" : "out");
     const intro = [termLine("cmd", current.name)];
     if (current.lang === "farsi") intro.push(termLine("sys", "در حال خواندن جیب فارسی…"));
     if (current.lang === "english") intro.push(termLine("sys", "در حال اجرای جیب…"));
@@ -283,6 +338,27 @@ export function LabShell() {
       intro.push(termLine("sys", "این اجرا کنسول است نه صفحه. برای صفحه از فایل html یا page { } در جیب استفاده کن."));
     }
     state.pushLines(intro);
+    if (current.lang === "nava") {
+      const compiled = compileNava(current.content);
+      if (!compiled.web) {
+        setMixPage(null);
+        state.pushLines([termLine("err", compiled.error ?? "برنامهٔ نوا ساخته نشد.")]);
+        state.setPanel("out");
+        state.setRunning(false);
+        return;
+      }
+      const web = withAssets(compiled.web, await assetUrlsFor(projectId, webText(compiled.web)));
+      if (token.current !== mine) return;
+      const fresh = Math.random().toString(36).slice(2);
+      htmlToken.current = fresh;
+      const nonce = crypto.getRandomValues(new Uint32Array(4)).join("-");
+      navaNonce.current = nonce;
+      setMixPage({ fileId: current.id, doc: injectHead(buildWebDoc(web, fresh), jibosClient(nonce, activeProject(state).name)), web });
+      state.pushLines([termLine("sys", "برنامهٔ نوا ساخته شد؛ نتیجه در «صفحه» است.")]);
+      state.setPanel("stage");
+      state.setRunning(false);
+      return;
+    }
     if (current.lang === "mix") {
       const jib = async (code: string, stdin: string, farsi: boolean): Promise<RunResult> => {
         const compiled = farsi ? compileFarsi(code) : compileEnglish(code);
@@ -414,7 +490,7 @@ export function LabShell() {
 
   function openFile(id: string, lang: Lang) {
     setActiveFile(id);
-    setPanel(lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out");
+    setPanel(lang === "nava" || lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out");
   }
 
   // ذخیرهٔ صفحه به‌صورت یک فایل HTML مستقل (بدون پل کنسول)
@@ -422,7 +498,7 @@ export function LabShell() {
     const doc =
       file.lang === "html"
         ? buildHtmlDoc(file.content, project.files, null, await assetUrlsFor(project.id, htmlSourceText(file, project.files)))
-        : file.lang === "mix" && mixPage?.fileId === file.id
+        : (file.lang === "mix" || file.lang === "nava") && mixPage?.fileId === file.id
           ? buildWebDoc(mixPage.web, null)
           : "";
     if (!doc) return;
@@ -792,7 +868,7 @@ export function LabShell() {
             <button type="button" className="h-10 px-2 text-sm text-mist" onClick={() => void copyOutput()}>
               {copied ? "کپی شد" : "کپی"}
             </button>
-            {file.lang === "html" || (file.lang === "mix" && mixPage?.fileId === file.id) ? (
+            {file.lang === "html" || ((file.lang === "mix" || file.lang === "nava") && mixPage?.fileId === file.id) ? (
               <button type="button" className="grid size-10 place-items-center text-mist" aria-label="ذخیره به‌صورت صفحهٔ مستقل (HTML)" onClick={() => void exportWeb()}>
                 <Download className="size-5" />
               </button>
@@ -904,7 +980,7 @@ export function LabShell() {
         </section>
       </div>
       <div className="pb-safe flex min-w-0 shrink-0 gap-1 overflow-x-auto border-t border-line bg-panel px-2 py-1">
-        {[...(file.lang === "mix" ? MIX_BAR : file.lang === "farsi" ? FARSI_BAR : file.lang === "english" ? ENGLISH_BAR : file.lang === "binary" ? BINARY_BAR : []), ...KEYS].map((key) => (
+        {[...(file.lang === "nava" ? NAVA_BAR : file.lang === "mix" ? MIX_BAR : file.lang === "farsi" ? FARSI_BAR : file.lang === "english" ? ENGLISH_BAR : file.lang === "binary" ? BINARY_BAR : []), ...KEYS].map((key) => (
           <button
             key={`${file.lang}-${key.label}`}
             type="button"

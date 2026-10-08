@@ -4,6 +4,7 @@ import type { Lang } from "@/labshell/types";
 // باز کردن فایل از بیرون برنامه: انتخاب‌گر فایل، «اشتراک‌گذاری ← جیب‌کد» (share target) و «باز کردن با» (file handler)
 
 const EXT: Record<string, Lang> = {
+  nava: "nava",
   mix: "mix", fa: "farsi", jib: "english", bit: "binary", py: "python", js: "javascript", mjs: "javascript",
   c: "c", h: "c", cpp: "cpp", cc: "cpp", hpp: "cpp", css: "css", html: "html", htm: "html",
 };

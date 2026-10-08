@@ -1,4 +1,4 @@
-export type Lang = "mix" | "farsi" | "english" | "binary" | "python" | "javascript" | "c" | "cpp" | "css" | "html";
+export type Lang = "nava" | "mix" | "farsi" | "english" | "binary" | "python" | "javascript" | "c" | "cpp" | "css" | "html";
 
 export type LabFile = {
   id: string;
@@ -25,9 +25,10 @@ export type TermLine = {
 
 export type TemplateKind = "mix" | Lang;
 
-export const LANG_ORDER: Lang[] = ["mix", "farsi", "english", "binary", "python", "javascript", "c", "cpp", "css", "html"];
+export const LANG_ORDER: Lang[] = ["nava", "mix", "farsi", "english", "binary", "python", "javascript", "c", "cpp", "css", "html"];
 
 export const LANG_META: Record<Lang, { label: string; ext: string; short: string }> = {
+  nava: { label: "نوا", ext: "nava", short: "NAVA" },
   mix: { label: "ترکیبی", ext: "mix", short: "MIX" },
   farsi: { label: "جیب فارسی", ext: "fa", short: "FA" },
   english: { label: "جیب", ext: "jib", short: "JIB" },

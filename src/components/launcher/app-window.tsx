@@ -8,6 +8,8 @@ import { buildHtmlDoc, buildWebDoc, webText, withAssets } from "@/labshell/html-
 import { injectHead, jibosClient, JIBOS_DEV, JIBOS_OPEN, readAppStore, writeAppStore } from "@/labshell/jibos";
 import { assetKey, type App } from "@/labshell/launcher";
 import { runMix } from "@/labshell/mix";
+import { compileNava } from "@/labshell/nava";
+import { appAsk } from "@/labshell/gemini";
 import { langFromName } from "@/labshell/open-files";
 import { runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
 import { stageSrcDoc } from "@/labshell/stage-doc";
@@ -20,7 +22,7 @@ const KIND: Partial<Record<Lang, string>> = { python: "python", javascript: "jav
 
 function entryOf(app: App) {
   const by = (test: (n: string, l: Lang) => boolean) => app.files.find((f) => test(f.name, langFromName(f.name)));
-  return by((n) => /^main\./i.test(n)) ?? by((_, l) => l === "mix") ?? by((_, l) => l === "html") ?? by((_, l) => l !== "css");
+  return by((n) => /^main\./i.test(n)) ?? by((_, l) => l === "nava") ?? by((_, l) => l === "mix") ?? by((_, l) => l === "html") ?? by((_, l) => l !== "css");
 }
 
 type View = { kind: "busy" } | { kind: "web"; doc: string } | { kind: "page"; doc: string } | { kind: "text"; out: string; err: string };
@@ -72,6 +74,8 @@ async function handle(cmd: string, args: unknown, app: App, host: BridgeHost): P
     }
     case "storage.keys":
       return Object.keys(readAppStore(app.name));
+    case "ai":
+      return appAsk(app.name, String(args ?? ""));
     case "clipboard":
       await navigator.clipboard.writeText(String(args));
       return true;
@@ -142,6 +146,12 @@ export function AppWindow({ app, host, accent, onClose }: { app: App; host: Brid
         const files = app.files.map((f) => ({ id: f.name, name: f.name, lang: langFromName(f.name), content: f.content, stdin: "" }));
         const urls = await assetUrlsFor(key, files.map((f) => f.content).join("\n"));
         return show({ kind: "web", doc: bridge(buildHtmlDoc(entry.content, files, null, urls)) });
+      }
+      if (lang === "nava") {
+        const compiled = compileNava(entry.content);
+        if (!compiled.web) return show({ kind: "text", out: "", err: compiled.error ?? "برنامهٔ نوا ساخته نشد." });
+        const web = withAssets(compiled.web, await assetUrlsFor(key, webText(compiled.web)));
+        return show({ kind: "web", doc: bridge(buildWebDoc(web, null)) });
       }
       const source = lang === "mix" ? entry.content : `@@ ${KIND[lang] ?? "jib"}\n${entry.content}`;
       const result = await runMix(source, "", {

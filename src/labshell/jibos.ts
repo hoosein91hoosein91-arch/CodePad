@@ -4,7 +4,8 @@
 // هیچ‌کدام دسترسی سیستم‌عامل اندروید نیست؛ همه در حد WebView و خود لانچر است.
 
 /** فرمان‌هایی که بدون حالت توسعه‌دهنده هم مجازند */
-export const JIBOS_OPEN = new Set(["toast", "info", "vibrate", "speak", "storage.get", "storage.set", "storage.remove", "storage.keys"]);
+export const JIBOS_OPEN = new Set(["toast", "info", "vibrate", "speak", "storage.get", "storage.set", "storage.remove", "storage.keys", "ai"]);
+/** «ai»: پرسش از Gemini با کلید خود کاربر؛ میزبان قبل از اولین استفادهٔ هر برنامه از کاربر اجازه می‌گیرد */
 /** فرمان‌هایی که «حالت توسعه‌دهنده»ٔ لانچر لازم دارند */
 export const JIBOS_DEV = new Set(["clipboard", "apps", "launch", "wallpaper", "accent"]);
 
@@ -12,7 +13,7 @@ const safeJson = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c");
 
 export function jibosClient(nonce: string, appName: string): string {
   return `<script>(function(){var N=${safeJson(nonce)},q={},n=0;
-function call(c,a){return new Promise(function(res,rej){var id=++n;q[id]=[res,rej];try{parent.postMessage({jibos:N,id:id,cmd:c,args:a===undefined?null:a},"*")}catch(e){delete q[id];rej(e);return}setTimeout(function(){if(q[id]){delete q[id];rej(new Error("jibos: no answer"))}},20000)})}
+function call(c,a){return new Promise(function(res,rej){var id=++n;q[id]=[res,rej];try{parent.postMessage({jibos:N,id:id,cmd:c,args:a===undefined?null:a},"*")}catch(e){delete q[id];rej(e);return}setTimeout(function(){if(q[id]){delete q[id];rej(new Error("jibos: no answer"))}},c==="ai"?120000:20000)})}
 addEventListener("message",function(e){var d=e.data;if(!d||d.jibosReply!==N||!q[d.id])return;var p=q[d.id];delete q[d.id];if(d.ok)p[0](d.value);else p[1](new Error(d.error))});
 var ac=null;function ctx(){var A=window.AudioContext||window.webkitAudioContext;if(!A)return null;if(!ac)ac=new A();if(ac.state==="suspended")ac.resume();return ac}
 function tone(f,ms,type,vol){ms=ms||150;var c=ctx();if(!c)return Promise.resolve(false);var o=c.createOscillator(),g=c.createGain(),t=c.currentTime;o.type=type||"square";o.frequency.value=f||880;g.gain.setValueAtTime(vol==null?0.15:vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+ms/1000);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+ms/1000+0.03);return new Promise(function(r){setTimeout(function(){r(true)},ms)})}
@@ -26,6 +27,7 @@ storage:{get:function(k){return call("storage.get",String(k))},set:function(k,v)
 vibrate:function(p){return call("vibrate",p==null?200:p)},
 clipboard:function(t){return call("clipboard",String(t))},
 speak:function(t,lang){return call("speak",[String(t),lang||""])},
+ask:function(t){return call("ai",String(t))},
 apps:function(){return call("apps")},
 launch:function(name){return call("launch",String(name))},
 setWallpaper:function(v){return call("wallpaper",String(v))},

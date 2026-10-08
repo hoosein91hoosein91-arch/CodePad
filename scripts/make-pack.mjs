@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ساخت «بستهٔ جیب» (.jibpack) از یک پوشه:  node scripts/make-pack.mjs <پوشه> [نام پروژه] > game.jibpack
-// فایل‌های کد (mix fa jib bit py js c h cpp cc hpp css html htm) داخل بسته می‌شوند به‌صورت متن؛ هر فایل دیگر (عکس و ...) به‌صورت base64 پیوست می‌شود.
+// فایل‌های کد (nava mix fa jib bit py js c h cpp cc hpp css html htm) داخل بسته می‌شوند به‌صورت متن؛ هر فایل دیگر (عکس و ...) به‌صورت base64 پیوست می‌شود.
 // قالب بسته در AI_GUIDE.md (§2.9) توضیح داده شده است.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, join } from "node:path";
@@ -10,7 +10,7 @@ if (!dir) {
   console.error("usage: node scripts/make-pack.mjs <folder> [project name] > out.jibpack");
   process.exit(1);
 }
-const CODE = new Set(["mix", "fa", "jib", "bit", "py", "js", "mjs", "c", "h", "cpp", "cc", "hpp", "css", "html", "htm"]);
+const CODE = new Set(["nava", "mix", "fa", "jib", "bit", "py", "js", "mjs", "c", "h", "cpp", "cc", "hpp", "css", "html", "htm"]);
 const name = nameParts.join(" ").trim() || basename(dir);
 const names = readdirSync(dir).filter((n) => statSync(join(dir, n)).isFile() && !n.startsWith("."));
 const isCode = (n) => CODE.has(extname(n).slice(1).toLowerCase());

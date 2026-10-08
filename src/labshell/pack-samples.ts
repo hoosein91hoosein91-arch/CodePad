@@ -10,10 +10,20 @@ import securityPassword from "@/labshell/packs/security-password.jibpack?raw";
 import securityNmap from "@/labshell/packs/security-nmap.jibpack?raw";
 import securityPortscan from "@/labshell/packs/security-portscan.jibpack?raw";
 import soundPiano from "@/labshell/packs/sound-piano.jibpack?raw";
+import navaTodo from "@/labshell/packs/nava-todo.jibpack?raw";
+import navaClicker from "@/labshell/packs/nava-clicker.jibpack?raw";
+import navaSnake from "@/labshell/packs/nava-snake.jibpack?raw";
+import navaCube from "@/labshell/packs/nava-cube3d.jibpack?raw";
+import navaAi from "@/labshell/packs/nava-ai.jibpack?raw";
 
-export type PackSample = { id: string; title: string; detail: string; text: string; group: "fun" | "security" };
+export type PackSample = { id: string; title: string; detail: string; text: string; group: "nava" | "fun" | "security" };
 
 export const PACK_SAMPLES: PackSample[] = [
+  { id: "nava-todo", group: "nava", title: "نوا: کارهای من", detail: "فهرست کارها با ذخیرهٔ خودکار، کنش و شرط — ۳۵ خط نوا", text: navaTodo },
+  { id: "nava-clicker", group: "nava", title: "نوا: معدن طلا (بازی کلیکی)", detail: "زمان‌سنج، تابع قیمت، ارتقا و ذخیرهٔ پیشرفت — ۴۱ خط", text: navaClicker },
+  { id: "nava-snake", group: "nava", title: "نوا: مار (بازی روی بوم)", detail: "بوم، لیست مختصات، کلید/کشیدن انگشت، صدا و رکورد — ۵۲ خط", text: navaSnake },
+  { id: "nava-cube3d", group: "nava", title: "نوا: صحنهٔ سه‌بعدی", detail: "WebGL: مکعب، کره، هرم، چرخش و دوربین — ۲۷ خط", text: navaCube },
+  { id: "nava-ai", group: "nava", title: "نوا: دستیار هوشمند (Gemini)", detail: "«بپرس» با کلید Gemini خودت — ۱۷ خط", text: navaAi },
   { id: "snake-images", group: "fun", title: "مار و سیب (با عکس)", detail: "بازی با عکس‌های پیوست: apple.png، head.png، body.png، grass.png", text: snakeImages },
   { id: "sound-piano", group: "fun", title: "پیانوی نئون (صدا)", detail: "صدا با Web Audio، پخش فایل صوتی پیوست و ذخیره با jibos", text: soundPiano },
   { id: "security-hash", group: "security", title: "امنیت: آزمایشگاه هش", detail: "پایتون: md5/sha1/sha256، اثر بهمنی، PBKDF2 با نمک، HMAC", text: securityHash },

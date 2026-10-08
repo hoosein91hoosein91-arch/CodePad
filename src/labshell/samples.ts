@@ -153,6 +153,21 @@ const HTML = `<!doctype html>
 </html>
 `;
 
+const NAVA = `# نوا؛ هر خط یک دستور ساده است — «اجرا» را بزن
+برنامه "شمارندهٔ من"
+رنگ #c6f135
+عنوان "سلام! 👋"
+متن "با چند خط کوتاه یک برنامهٔ واقعی بساز. راهنما: NAVA-GUIDE.md"
+عدد شمارنده = ۰
+ذخیره شمارنده
+نمایش "تعداد کلیک: {شمارنده}"
+نمایش "🎉 به ده رسیدی!" اگر شمارنده >= ۱۰
+ردیف
+  دکمه "یکی اضافه کن": شمارنده += ۱؛ صدا ۶۶۰، ۶۰
+  دکمه "از اول": شمارنده = ۰
+پایان
+`;
+
 const CSS = `body {
   margin: 0;
   min-height: 100%;
@@ -321,6 +336,7 @@ console.log("جاوااسکریپت میانگین را حساب کرد:", share
 `;
 
 export const SAMPLES: Record<Lang, { name: string; stdin: string; content: string }> = {
+  nava: { name: "شروع.nava", stdin: "", content: NAVA },
   mix: { name: "ترکیبی.mix", stdin: "", content: MIX },
   farsi: { name: "دماسنج.فا", stdin: "38.2", content: FARSI },
   english: { name: "calculator.jib", stdin: "12\n30", content: ENGLISH },
@@ -394,6 +410,7 @@ export function createFile(lang: Lang, takenNames: string[]): LabFile {
 }
 
 export const TEMPLATE_CHOICES: { kind: TemplateKind; title: string; detail: string }[] = [
+  { kind: "nava", title: "نوا", detail: "زبان سادهٔ فارسی: شرط، حلقه، کنش، زمان‌سنج، بوم، سه‌بعدی، ذخیره و هوش مصنوعی" },
   { kind: "mix", title: "آزمایشگاه کامل", detail: "فایل ترکیبی، جیب، جیب فارسی و ماشین" },
   { kind: "english", title: "جیب", detail: "برنامه، لیست و ماشین ۰ و ۱" },
   { kind: "binary", title: "ماشین ۰ و ۱", detail: "دستورهای هشت‌بیتی و لامپ‌ها" },

@@ -144,9 +144,19 @@ button{background:#00ff9c;color:#001a0c;border:0;border-radius:14px;padding:12px
 <script>setInterval(()=>c.style.opacity=c.style.opacity==='0'?1:0,500)</script>
 </html>`;
 
+const NAVA_STARTER = `# نوا: هر خط یک دستور
+برنامه "برنامهٔ من"
+رنگ #00ff9c
+عنوان "سلام دنیا 👋"
+عدد امتیاز = ۰
+ذخیره امتیاز
+نمایش "امتیاز: {امتیاز}"
+دکمه "یکی اضافه کن": امتیاز += ۱؛ صدا ۸۸۰، ۵۰
+`;
+
 /** افزودن برنامه: ساخت سریع HTML، نصب .jibpack (فایل یا نشانی) و نمونه‌های آماده */
 export function InstallSheet({ open, onOpenChange, accent, onInstalled }: { open: boolean; onOpenChange: (open: boolean) => void; accent: string; onInstalled: (app: App, run: boolean) => void }) {
-  const [name, setName] = useState("برنامهٔ تازه"), [code, setCode] = useState(STARTER), [url, setUrl] = useState(""), [msg, setMsg] = useState("");
+  const [name, setName] = useState("برنامهٔ تازه"), [kind, setKind] = useState<"nava" | "html">("nava"), [code, setCode] = useState(NAVA_STARTER), [url, setUrl] = useState(""), [msg, setMsg] = useState("");
   useEffect(() => { if (open) setMsg(""); }, [open]);
   const fromText = async (text: string, run: boolean) => {
     const pack = parsePack(text);
@@ -162,17 +172,24 @@ export function InstallSheet({ open, onOpenChange, accent, onInstalled }: { open
         <div className="grid gap-2">
           {PACK_SAMPLES.map((s) => (
             <button key={s.id} type="button" className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 p-3 text-start" onClick={() => void fromText(s.text, false).catch((e) => setMsg(String(e)))}>
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl text-xs font-bold" style={{ background: s.group === "security" ? `${accent}22` : "#ffffff14", color: accent }}>{s.group === "security" ? "SEC" : "APP"}</span>
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl text-xs font-bold" style={{ background: s.group === "security" ? `${accent}22` : s.group === "nava" ? `${accent}33` : "#ffffff14", color: accent }}>{s.group === "security" ? "SEC" : s.group === "nava" ? "NAVA" : "APP"}</span>
               <span className="min-w-0"><span className="block text-sm">{s.title}</span><span className="block truncate text-[11px] text-white/45">{s.detail}</span></span>
             </button>
           ))}
         </div>
       </section>
       <section className="space-y-2 border-t border-white/10 pt-4">
-        <h3 className="text-sm font-bold">ساخت سریع برنامهٔ HTML</h3>
+        <h3 className="text-sm font-bold">ساخت سریع برنامه</h3>
+        <div className="grid grid-cols-2 gap-2" role="group" aria-label="زبان برنامهٔ تازه">
+          {(["nava", "html"] as const).map((k) => (
+            <button key={k} type="button" aria-pressed={kind === k} className={`h-9 rounded-xl text-xs font-bold ${kind === k ? "text-black" : "bg-white/10 text-white/70"}`} style={kind === k ? { background: accent } : undefined} onClick={() => { setKind(k); setCode(k === "nava" ? NAVA_STARTER : STARTER); }}>
+              {k === "nava" ? "نوا (فارسی، ساده)" : "HTML"}
+            </button>
+          ))}
+        </div>
         <input className={field} aria-label="نام برنامهٔ تازه" value={name} onChange={(e) => setName(e.target.value)} />
-        <textarea dir="ltr" spellCheck={false} aria-label="کد برنامهٔ تازه" className={`${codeArea} h-40`} value={code} onChange={(e) => setCode(e.target.value)} />
-        <button type="button" className={`${primaryBtn} w-full`} style={{ background: accent }} onClick={() => { const app: App = { id: `app-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`, name: name.trim() || "برنامهٔ تازه", icon: "✦", files: [{ name: "index.html", content: code }], installedAt: Date.now() }; useLauncher.getState().put(app); onInstalled(app, true); }}>ساخت و اجرا</button>
+        <textarea dir={kind === "nava" ? "rtl" : "ltr"} spellCheck={false} aria-label="کد برنامهٔ تازه" className={`${codeArea} h-40`} value={code} onChange={(e) => setCode(e.target.value)} />
+        <button type="button" className={`${primaryBtn} w-full`} style={{ background: accent }} onClick={() => { const app: App = { id: `app-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`, name: name.trim() || "برنامهٔ تازه", icon: "✦", files: [{ name: kind === "nava" ? "main.nava" : "index.html", content: code }], installedAt: Date.now() }; useLauncher.getState().put(app); onInstalled(app, true); }}>ساخت و اجرا</button>
         <p className="text-[11px] text-white/40">برای برنامه‌های چندزبانه (پایتون، mix، عکس‌ها) در ویرایشگر پروژه بساز و با دکمهٔ «لانچر» نصبش کن.</p>
       </section>
       <section className="space-y-2 border-t border-white/10 pt-4">

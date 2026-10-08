@@ -43,7 +43,8 @@ function isFile(value: unknown): value is LabFile {
     typeof file.name === "string" &&
     typeof file.content === "string" &&
     typeof file.stdin === "string" &&
-    (file.lang === "mix" ||
+    (file.lang === "nava" ||
+      file.lang === "mix" ||
       file.lang === "farsi" ||
       file.lang === "english" ||
       file.lang === "binary" ||
@@ -127,7 +128,7 @@ export const useLab = create<LabState>()(
             );
             return { ...project, files: [...project.files, file], activeFileId: file.id };
           }),
-          panel: lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out",
+          panel: lang === "nava" || lang === "css" || lang === "html" || lang === "binary" ? "stage" : "out",
         })),
       importFiles: (items) =>
         set((state) => {
@@ -144,7 +145,7 @@ export const useLab = create<LabState>()(
               });
               return { ...project, files: [...project.files, ...added], activeFileId: added[added.length - 1].id };
             }),
-            panel: lastLang === "css" || lastLang === "html" || lastLang === "binary" ? "stage" : "out",
+            panel: lastLang === "nava" || lastLang === "css" || lastLang === "html" || lastLang === "binary" ? "stage" : "out",
           };
         }),
       // پروژهٔ تازه از یک بسته (.jibpack): فایل اول فعال می‌شود. شناسهٔ پروژه برگردانده می‌شود تا پیوست‌ها به آن اضافه شوند
@@ -162,7 +163,7 @@ export const useLab = create<LabState>()(
           return {
             projects: [...state.projects, project],
             activeProjectId: project.id,
-            panel: first === "css" || first === "html" || first === "binary" ? "stage" : "out",
+            panel: first === "nava" || first === "css" || first === "html" || first === "binary" ? "stage" : "out",
           };
         });
         return project.id;
@@ -185,7 +186,7 @@ export const useLab = create<LabState>()(
           return {
             projects: [...state.projects, project],
             activeProjectId: project.id,
-            panel: project.files[0]?.lang === "css" || project.files[0]?.lang === "html" || project.files[0]?.lang === "binary" ? "stage" : "out",
+            panel: project.files[0]?.lang === "nava" || project.files[0]?.lang === "css" || project.files[0]?.lang === "html" || project.files[0]?.lang === "binary" ? "stage" : "out",
           };
         }),
       removeProject: (id) =>

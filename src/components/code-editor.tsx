@@ -20,6 +20,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirro
 import { tags } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
 import { FARSI_KEYWORDS } from "@/labshell/farsi";
+import { NAVA_FUNCTIONS, NAVA_KEYWORDS } from "@/labshell/nava";
 import { ENGLISH_KEYWORDS } from "@/labshell/english";
 import type { Lang } from "@/labshell/types";
 import { detectKind, kindOf } from "@/labshell/mix";
@@ -151,7 +152,30 @@ const mixLanguage = StreamLanguage.define({
   },
 });
 
+const navaWords = new Set(NAVA_KEYWORDS);
+const navaFns = new Set(NAVA_FUNCTIONS);
+const navaLanguage = StreamLanguage.define({
+  token(stream) {
+    if (stream.eatSpace()) return null;
+    if (stream.sol() && stream.match(/^(#|\/\/)/)) {
+      stream.skipToEnd();
+      return "comment";
+    }
+    if (stream.match(/^"(?:[^"\\]|\\.)*"?/) || stream.match(/^«[^»]*»?/) || stream.match(/^'(?:[^'\\]|\\.)*'?/)) return "string";
+    if (stream.match(/^#[0-9a-fA-F]{3,8}\b/)) return "number";
+    if (stream.match(/^[0-9۰-۹٠-٩]+(?:[.٫][0-9۰-۹٠-٩]+)?/)) return "number";
+    if (stream.match(/^[\p{L}_][\p{L}\p{N}_\u200c]*/u)) {
+      const word = stream.current();
+      return navaWords.has(word) ? "keyword" : navaFns.has(word) ? "function" : "variableName";
+    }
+    stream.next();
+    return "operator";
+  },
+  tokenTable: { comment: tags.comment, string: tags.string, number: tags.number, keyword: tags.keyword, function: tags.function(tags.variableName), variableName: tags.variableName, operator: tags.operator },
+});
+
 function languageOf(lang: Lang) {
+  if (lang === "nava") return new LanguageSupport(navaLanguage);
   if (lang === "mix") return new LanguageSupport(mixLanguage);
   if (lang === "farsi") return new LanguageSupport(farsiLanguage);
   if (lang === "english") return new LanguageSupport(englishLanguage);
@@ -172,6 +196,7 @@ const WORDS: Record<string, string[]> = {
   css: split("color background background-color font-size font-family margin padding border border-radius display flex grid align-items justify-content width height position top left right bottom opacity transform transition animation box-shadow text-align gap"),
   html: split("div span p a img ul ol li h1 h2 h3 button input form label section header footer main nav script style link meta title body head html class id href src type onclick"),
   farsi: [...FARSI_KEYWORDS],
+  nava: [...NAVA_KEYWORDS, ...NAVA_FUNCTIONS],
   english: [...ENGLISH_KEYWORDS],
 };
 const SNIPPETS: Record<string, Completion[]> = {
@@ -184,6 +209,14 @@ const SNIPPETS: Record<string, Completion[]> = {
     snippetCompletion("تابع ${نام}(${ورودی}) {\n  ${}\n}", { label: "تابع", detail: "تابع", boost: 3 }),
     snippetCompletion("اگر ${شرط} {\n  ${}\n}", { label: "اگر", detail: "شرط", boost: 3 }),
     snippetCompletion("برای ${i} از ${1} تا ${10} {\n  ${}\n}", { label: "برای", detail: "حلقه", boost: 3 }),
+  ],
+  nava: [
+    snippetCompletion("اگر ${شرط}\n  ${}\nپایان", { label: "اگر", detail: "شرط", boost: 3 }),
+    snippetCompletion("تکرار ${۳}\n  ${}\nپایان", { label: "تکرار", detail: "حلقه", boost: 3 }),
+    snippetCompletion("برای هر ${x} در ${لیست}\n  ${}\nپایان", { label: "برای هر", detail: "حلقه روی لیست", boost: 3 }),
+    snippetCompletion("کنش ${نام}\n  ${}\nپایان", { label: "کنش", detail: "کار چندمرحله‌ای", boost: 3 }),
+    snippetCompletion("هر ${۱} ثانیه\n  ${}\nپایان", { label: "هر ثانیه", detail: "زمان‌سنج", boost: 3 }),
+    snippetCompletion("دکمه \"${متن}\"\n  ${}\nپایان", { label: "دکمه", detail: "دکمه با چند کار", boost: 3 }),
   ],
   python: [snippetCompletion("def ${name}(${args}):\n    ${}", { label: "def", detail: "function", boost: 3 }), snippetCompletion("for ${i} in range(${10}):\n    ${}", { label: "for", detail: "loop", boost: 3 })],
   javascript: [snippetCompletion("function ${name}(${args}) {\n  ${}\n}", { label: "function", detail: "function", boost: 3 })],
@@ -270,13 +303,13 @@ export function CodeEditor({
             ...historyKeymap,
           ]),
           syntaxHighlighting(highlight),
-          themeFor(lang === "farsi"),
+          themeFor(lang === "farsi" || lang === "nava"),
           languageOf(lang),
-          ...(lang === "farsi" ? [bidiIsolates()] : []),
+          ...(lang === "farsi" || lang === "nava" ? [bidiIsolates()] : []),
           EditorView.lineWrapping,
           EditorView.contentAttributes.of({
             "aria-label": "ویرایشگر کد",
-            dir: lang === "farsi" ? "rtl" : "ltr",
+            dir: lang === "farsi" || lang === "nava" ? "rtl" : "ltr",
             spellcheck: "false",
             autocapitalize: "off",
           }),
@@ -293,5 +326,5 @@ export function CodeEditor({
     };
   }, [fileId, lang, ac]);
 
-  return <div ref={host} className="h-full min-h-0 overflow-hidden" dir={lang === "farsi" ? "rtl" : "ltr"} />;
+  return <div ref={host} className="h-full min-h-0 overflow-hidden" dir={lang === "farsi" || lang === "nava" ? "rtl" : "ltr"} />;
 }
