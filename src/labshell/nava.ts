@@ -3,10 +3,12 @@
  * هر خط یک دستور است. کامپایلر متن را به یک درخت JSON تبدیل می‌کند و صفحه‌ای (HTML/CSS/JS) می‌سازد که آن درخت را با
  * موتور nava-runtime تفسیر می‌کند. هیچ کدی از کاربر به JavaScript تبدیل یا eval نمی‌شود؛ متن‌ها همیشه escape می‌شوند.
  */
+import { navaScene3d } from "./nava-scene.ts";
 import { navaDom, navaEngine } from "./nava-runtime.ts";
 import { expandNava } from "./nava-modules.ts";
 import { APPEARANCE_CSS, appearanceAttributes, parseAppearance, type ButtonAppearance } from "./nava-appearance.ts";
 import { buildNavaKit, kitCommand, type KitRequest } from "./nava-kit.ts";
+import { normalizeNavaGlyph } from "./nava-glyph.ts";
 
 export type NavaWeb = { html: string; css: string; js: string };
 export type NavaResult = { web?: NavaWeb; error?: string };
@@ -40,6 +42,8 @@ export type NavaProgram = {
   actions: Record<string, { params: string[]; body: Stmt[] }>;
   start: Stmt[];
   timers: { sec: Expr; body: Stmt[]; once: boolean; line: number }[];
+  graphics?: "low" | "ultra";
+  onFrame?: Stmt[] | null;
   onTouch: Stmt[] | null;
   onKey: Stmt[] | null;
   buttons: Stmt[][];
@@ -71,7 +75,7 @@ const EXPR_WORDS = new Set(["و", "یا", "نه", "درست", "نادرست", "t
 const RESERVED = new Set([...EXPR_WORDS, "اگر", "وگرنه", "پایان", "برای", "تکرار", "تا", "هر", "وقتی", "کنش", "تابع", "اجرا", "نتیجه", "برگرد", "توقف", "ادامه"]);
 /** خطی که با «نام =» یا «نام +=» یا «نام[…] =» شروع می‌شود همیشه انتساب است (حتی اگر نام شبیه دستور باشد) */
 const LEAD_ASSIGN = /^[\p{L}_][\p{L}\p{N}_\u200c]*\s*(?:\[.*\]\s*)?(?:\+=|-=|=(?!=))/u;
-const BUILTIN_VARS = new Set(["ایکس", "ایگرگ", "کلید"]);
+const BUILTIN_VARS = new Set(["ایکس", "ایگرگ", "کلید", "دلتا"]);
 const DRAW_ARGS: Record<string, [number, number]> = { دایره: [3, 4], مستطیل: [4, 5], خط: [4, 6], نوشته: [3, 5], تصویر: [3, 5] };
 
 const ID = "([\\p{L}_][\\p{L}\\p{N}_\\u200c]*)";
@@ -271,7 +275,7 @@ function opensBlock(text: string): boolean {
     if (!rest) return !capsule;
     return rest.startsWith(":") && !rest.slice(1).trim();
   }
-  if (!/^(اگر|تکرار|برای|تا\s+وقتی|کنش|تابع|هر|بعد\s+از|وقتی\s+(?:لمس|کلید))(\s|:|$)/u.test(text)) return false;
+  if (!/^(اگر|تکرار|برای|تا\s+وقتی|کنش|تابع|هر|فریم|بعد\s+از|وقتی\s+(?:لمس|کلید))(\s|:|$)/u.test(text)) return false;
   return !inlineBody;
 }
 
@@ -287,7 +291,9 @@ function sourceRows(source: string): Row[] {
 
 export function parseNava(source: string): { program?: NavaProgram; error?: string } {
   try {
-    return { program: new Parser(sourceRows(source)).program() };
+    const normalized = normalizeNavaGlyph(source);
+    if (normalized.error) return { error: normalized.error };
+    return { program: new Parser(sourceRows(normalized.source)).program() };
   } catch (e) {
     if (e instanceof NavaError) return { error: `خط ${e.line}: ${e.message}` };
     return { error: e instanceof Error ? e.message : String(e) };
@@ -297,7 +303,7 @@ export function parseNava(source: string): { program?: NavaProgram; error?: stri
 class Parser {
   rows: Row[];
   at = 0;
-  P: NavaProgram = { title: "برنامهٔ من", accent: "#c6f135", vars: [], persist: [], actions: {}, start: [], timers: [], onTouch: null, onKey: null, buttons: [], shows: [], lists: [], shapes: [], canvas: null, scene: null, images: [] };
+  P: NavaProgram = { title: "برنامهٔ من", accent: "#c6f135", vars: [], persist: [], actions: {}, start: [], timers: [], onTouch: null, onKey: null, onFrame: null, graphics: "ultra", buttons: [], shows: [], lists: [], shapes: [], canvas: null, scene: null, images: [] };
   background = "#101410";
   ui: UI[] = [];
   globals = new Map<string, number>();
@@ -308,6 +314,8 @@ class Parser {
   /** ابزارهای آماده (ماشین‌حساب، شمارنده، تایمر، جهان بلوکی) و بلوک‌های سفارشی جهان */
   kits: KitRequest[] = [];
   materials: { name: string; color: string }[] = [];
+  quality: "low" | "ultra" = "ultra";
+  gameMode = false;
 
   constructor(rows: Row[]) {
     this.rows = rows;
@@ -338,6 +346,16 @@ class Parser {
   top(row: Row) {
     const { text, n } = row;
     let m: RegExpExecArray | null;
+    if (text === "حالت بازی") { this.gameMode = true; return; }
+    if (text === "کیفیت پایین" || text === "کیفیت خیلی‌بالا") {
+      this.quality = text === "کیفیت پایین" ? "low" : "ultra"; this.P.graphics = this.quality;
+      return;
+    }
+    if (/^فریم(?:\s*:.*)?$/.test(text)) {
+      if (this.P.onFrame) oops(n, "Frame can be defined only once.");
+      const inline = text.slice(4).trim().replace(/^:/, "").trim();
+      this.P.onFrame = inline ? this.inline(inline, n) : this.block("Frame", n); return;
+    }
     if (LEAD_ASSIGN.test(text)) { this.P.start.push(...this.statement(row, true)); return; }
     const kit = kitCommand(text);
     if (kit?.error) oops(n, kit.error);
@@ -404,9 +422,10 @@ class Parser {
       this.P[which] = m[2] ? this.inline(m[2], n) : this.block(`وقتی ${m[1]}`, n);
       return;
     }
-    if ((m = re("^(مکعب|کره|هرم|زمین)\\s+ID(?:\\s+(.+?))?(?:\\s+در\\s+(.+))?$").exec(text))) {
+    if ((m = re("^(مکعب|کره|هرم|زمین|حلقه|استوانه|مخروط)\\s+ID(?:\\s+(.+?))?(?:\\s+در\\s+(.+))?$").exec(text))) {
       const color = m[3] ? quoted(m[3]) ?? m[3].trim() : m[1] === "زمین" ? "#1f3a2c" : this.P.accent;
       if (!/^(#[\da-f]{3,8}|[a-z]{3,20})$/i.test(color)) oops(n, `رنگ شکل را مثل "#ff85aa" یا "red" بنویس.`);
+      if (this.P.shapes.length >= 512) oops(n, "A scene supports up to 512 objects. Use G1 for lightweight rendering.");
       if (this.P.shapes.some((s) => s.n === m![2])) oops(n, `شکلی به نام «${m[2]}» از قبل هست.`);
       const at = m[4] ? parseArgs(m[4], n) : undefined;
       if (at && at.length !== 3) oops(n, "جای شکل سه عدد می‌خواهد: در x، y، z");
@@ -503,6 +522,7 @@ class Parser {
       if (this.P[which]) oops(n, `هر برنامه فقط یک «${m[1]}» دارد.`);
       const size = m[2] ? splitOuter(m[2], ",،").map((s) => Number(toAscii(s))) : [320, 320];
       if (size.length !== 2 || size.some((x) => !Number.isFinite(x) || x < 40 || x > 2000)) oops(n, `اندازهٔ ${m[1]} دو عدد بین ۴۰ تا ۲۰۰۰ است؛ مثل ${m[1]} ۳۲۰، ۳۲۰`);
+      if (size[0]! / size[1]! < .4 || size[0]! / size[1]! > 2.5) oops(n, `نسبت ${m[1]} برای کادر متعادل باید بین ۱:۲٫۵ و ۲٫۵:۱ باشد.`);
       this.P[which] = { w: size[0]!, h: size[1]! };
       return { k: which, w: size[0]!, h: size[1]! };
     }
@@ -652,8 +672,20 @@ class Parser {
       if (a.length !== 3) oops(n, `${m[1]} سه عدد می‌خواهد؛ مثل ${m[1]} ${m[2]} ۱، ۲، ۰`);
       return simple({ k: "obj", line: n, op: m[1]!, n: m[2]!, a });
     }
-    if ((m = re("^اندازه\\s+ID\\s+(.+)$").exec(text))) return simple({ k: "obj", line: n, op: "اندازه", n: m[1]!, a: [parseExpr(m[2]!, n)] });
-    if ((m = /^دوربین\s+(.+)$/u.exec(text))) return simple({ k: "cam", line: n, e: parseExpr(m[1]!, n) });
+    if ((m = re("^(اندازه|متریال|رنگشکل)\\s+ID\\s+(.+)$").exec(text))) {
+      const a = parseArgs(m[3]!, n), count = m[1] === "رنگشکل" ? [1] : m[1] === "متریال" ? [3] : [1, 3];
+      if (!count.includes(a.length)) oops(n, "Scale takes 1 or 3 values; Mat takes roughness, metal, emission; Tint takes one color.");
+      return simple({ k: "obj", line: n, op: m[1]!, n: m[2]!, a });
+    }
+    if ((m = /^دوربین\s+(.+)$/u.exec(text))) {
+      const a = parseArgs(m[1]!, n); if (![1, 3].includes(a.length)) oops(n, "Camera takes distance, optionally pitch and yaw.");
+      return simple({ k: "cam", line: n, e: a[0]!, a });
+    }
+    if ((m = /^(مه|نور|محیط|مدار)\s+(.+)$/u.exec(text))) {
+      const a = parseArgs(m[2]!, n), count = m[1] === "مه" ? 3 : m[1] === "نور" ? 4 : 1;
+      if (a.length !== count) oops(n, `Invalid ${m[1]} argument count: expected ${count}.`);
+      return simple({ k: "scene", line: n, op: m[1]!, a });
+    }
     if (text === "توقف") return simple({ k: "stop", line: n });
     if (text === "ادامه") return simple({ k: "resume", line: n });
     if (text === "برگرد") return simple({ k: "ret", line: n });
@@ -719,7 +751,8 @@ class Parser {
           case "for": E(s.from); E(s.to); body(s.body, [...inner, new Set([s.v])]); break;
           case "while": E(s.c); body(s.body, inner); break;
           case "push": case "del": case "clear": need(s.n, inner, L); if (s.e) E(s.e); break;
-          case "msg": case "say": case "cam": E(s.e); if (s.k === "cam" && !P.scene) oops(L, "«دوربین» برای صحنهٔ سه‌بعدی است؛ اول بنویس: صحنه"); break;
+          case "msg": case "say": case "cam": if (s.a) s.a.forEach(E); else E(s.e); if (s.k === "cam" && !P.scene) oops(L, "«دوربین» برای صحنهٔ سه‌بعدی است؛ اول بنویس: صحنه"); break;
+          case "scene": if (!P.scene) oops(L, "Create Scene before 3D settings."); s.a.forEach(E); break;
           case "tone": case "melody": s.a.forEach(E); break;
           case "ask": if (!globals.has(s.n)) oops(L, `جواب «بپرس» باید در یک متغیر سراسری ریخته شود؛ بیرون از بلوک‌ها بنویس: متغیر ${s.n} = ""`); E(s.e); break;
           case "draw":
@@ -748,6 +781,7 @@ class Parser {
     Object.values(P.actions).forEach((a) => body(a.body, a.params.length ? [new Set(a.params)] : []));
     P.timers.forEach((t) => { expr(t.sec, [], t.line); body(t.body, []); });
     P.buttons.forEach((b) => body(b, []));
+    if (P.onFrame) { if (!P.canvas && !P.scene) oops(1, "Frame needs Canvas or Scene."); body(P.onFrame, []); }
     if (P.onTouch) { if (!P.canvas && !P.scene) oops(1, "«وقتی لمس» برای «بوم» یا «صحنه» است."); body(P.onTouch, []); }
     if (P.onKey) body(P.onKey, []);
     P.images = [...new Set(P.images)];
@@ -785,7 +819,9 @@ export function compileNava(source: string): NavaResult {
   let parser: Parser;
   let P: NavaProgram;
   try {
-    parser = new Parser(sourceRows(source));
+    const normalized = normalizeNavaGlyph(source);
+    if (normalized.error) return { error: normalized.error };
+    parser = new Parser(sourceRows(normalized.source));
     P = parser.program();
   } catch (e) {
     if (e instanceof NavaError) return { error: `خط ${e.line}: ${e.message}` };
@@ -793,12 +829,14 @@ export function compileNava(source: string): NavaResult {
   }
   const accent = P.accent, background = parser.background;
   // ابزارهای آماده: هر کدام HTML/CSS/JS آفلاین خودش را دارد (بدون eval و بدون کتابخانهٔ بیرونی)
-  const kitParts = parser.kits.map((request, i) => buildNavaKit(request, `nava-kit-${i}`, parser.materials));
+  const kitParts = parser.kits.map((request, i) => buildNavaKit(request, `nava-kit-${i}`, parser.materials, parser.quality));
   const kitHtml = (i: number) => kitParts[i]!.html;
-  const webHtml = `<main class="nv-app"><div class="nv-card"><div class="nv-brand">${html(P.title)}</div>\n${parser.ui.map((item) => uiHtml(item, kitHtml)).join("\n")}\n<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main>`;
-  const css = `:root{color-scheme:dark}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%;background:${background};color:#edf4ed;font-family:Vazirmatn,Tahoma,sans-serif}body{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,color-mix(in srgb,${accent} 15%,${background}),${background} 65%)}.nv-app{min-height:100vh;display:grid;place-items:center;padding:20px}.nv-card{width:min(100%,460px);padding:24px;border:1px solid #ffffff20;border-radius:28px;background:#171e19ef;box-shadow:0 24px 80px #0008;display:flex;flex-direction:column;gap:14px}.nv-brand{color:${accent};font-size:12px;letter-spacing:.08em}h1{font-size:26px;line-height:1.4;margin:0}.nv-copy{color:#b8c6ba;line-height:1.9;margin:0;white-space:pre-wrap}.nv-value{font-size:22px;font-weight:700;margin:2px 0;white-space:pre-wrap;line-height:1.7}.nv-input{width:100%;padding:13px 15px;border:1px solid #ffffff25;border-radius:14px;background:#0e130f;color:#fff;font:inherit;outline:none;resize:vertical}.nv-input:focus{border-color:${accent};box-shadow:0 0 0 3px color-mix(in srgb,${accent} 22%,transparent)}.nv-button{min-height:48px;padding:11px 16px;border:0;border-radius:14px;background:${accent};color:#11170e;font:inherit;font-weight:700;cursor:pointer;transition:transform .15s,filter .15s;touch-action:manipulation}.nv-button:active{transform:scale(.97);filter:brightness(.9)}.nv-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.nv-row>*{flex:1 1 0;min-width:0}.nv-image{width:100%;max-height:260px;object-fit:cover;border-radius:18px}.nv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.nv-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0e130f;border:1px solid #ffffff14}.nv-list li span{flex:1;overflow-wrap:anywhere}.nv-list .nv-empty{color:#7f8f82;justify-content:center}.nv-del{border:0;background:#ff6a7a22;color:#ff8f9b;border-radius:10px;width:32px;height:32px;font:inherit;cursor:pointer}.nv-canvas{display:block;width:100%;margin:0 auto;border-radius:18px;background:#05090699;border:1px solid #ffffff18;touch-action:none}.nv-scene{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,${accent} 18%,#0b1220),#05070d)}.nv-error{padding:12px 14px;border-radius:14px;background:#3a1016;color:#ffb3bc;font-size:14px;line-height:1.8}.nv-toast{position:fixed;inset-inline:0;bottom:28px;margin:auto;width:max-content;max-width:86vw;padding:10px 16px;border-radius:14px;background:#000d;color:${accent};border:1px solid color-mix(in srgb,${accent} 50%,transparent);font-weight:700;box-shadow:0 10px 40px #0009}`;
-  const js = `(()=>{const P=${safeJson(P)};const navaEngine=(${navaEngine.toString()});(${navaDom.toString()})(P,navaEngine);})();`;
+  const webHtml = `<main class="nv-app${parser.gameMode ? " nv-game" : ""}" data-nava-graphics="${parser.quality}"><div class="nv-card"><div class="nv-brand">${html(P.title)}</div>\n${parser.ui.map((item) => uiHtml(item, kitHtml)).join("\n")}\n<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main>`;
+  const css = `:root{color-scheme:dark}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%;background:${background};color:#edf4ed;font-family:Vazirmatn,Tahoma,sans-serif}body{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,color-mix(in srgb,${accent} 15%,${background}),${background} 65%)}.nv-app{min-height:100vh;display:grid;place-items:center;padding:20px}.nv-card{width:min(100%,460px);padding:24px;border:1px solid #ffffff20;border-radius:28px;background:#171e19ef;box-shadow:0 24px 80px #0008;display:flex;flex-direction:column;gap:14px}.nv-app[data-nava-graphics="low"] .nv-card{box-shadow:0 12px 32px #0007}.nv-app[data-nava-graphics="ultra"] .nv-card{border-color:#ffffff35;box-shadow:0 24px 80px #0008,0 0 36px color-mix(in srgb,${accent} 12%,transparent)}.nv-brand{color:${accent};font-size:12px;letter-spacing:.08em}h1{font-size:26px;line-height:1.4;margin:0}.nv-copy{color:#b8c6ba;line-height:1.9;margin:0;white-space:pre-wrap}.nv-value{font-size:22px;font-weight:700;margin:2px 0;white-space:pre-wrap;line-height:1.7}.nv-input{width:100%;padding:13px 15px;border:1px solid #ffffff25;border-radius:14px;background:#0e130f;color:#fff;font:inherit;outline:none;resize:vertical}.nv-input:focus{border-color:${accent};box-shadow:0 0 0 3px color-mix(in srgb,${accent} 22%,transparent)}.nv-button{min-height:48px;padding:11px 16px;border:0;border-radius:14px;background:${accent};color:#11170e;font:inherit;font-weight:700;cursor:pointer;transition:transform .15s,filter .15s;touch-action:manipulation}.nv-button:active{transform:scale(.97);filter:brightness(.9)}.nv-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.nv-row>*{flex:1 1 0;min-width:0}.nv-image{width:100%;max-height:260px;object-fit:cover;border-radius:18px}.nv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.nv-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0e130f;border:1px solid #ffffff14}.nv-list li span{flex:1;overflow-wrap:anywhere}.nv-list .nv-empty{color:#7f8f82;justify-content:center}.nv-del{border:0;background:#ff6a7a22;color:#ff8f9b;border-radius:10px;width:32px;height:32px;font:inherit;cursor:pointer}.nv-canvas{display:block;width:100%;margin:0 auto;border-radius:18px;background:#05090699;border:1px solid #ffffff18;touch-action:none}.nv-scene{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,${accent} 18%,#0b1220),#05070d)}.nv-error{padding:12px 14px;border-radius:14px;background:#3a1016;color:#ffb3bc;font-size:14px;line-height:1.8}.nv-toast{position:fixed;inset-inline:0;bottom:28px;margin:auto;width:max-content;max-width:86vw;padding:10px 16px;border-radius:14px;background:#000d;color:${accent};border:1px solid color-mix(in srgb,${accent} 50%,transparent);font-weight:700;box-shadow:0 10px 40px #0009}`;
+  const js = `(()=>{const P=${safeJson(P)};const navaEngine=(${navaEngine.toString()});(${navaDom.toString()})(P,navaEngine,(${navaScene3d.toString()}));})();`;
   const kitCss = [...new Set(kitParts.map((part) => part.css))].join("\n");
   const kitJs = kitParts.map((part) => part.js).join("\n");
-  return { web: { html: webHtml, css: `:root{--nava-accent:${accent}}\n${css}\n${APPEARANCE_CSS}${kitCss ? "\n" + kitCss : ""}`, js: kitJs ? `${js}\n${kitJs}` : js } };
+  const viewport = P.scene ?? P.canvas ?? { w: 360, h: 600 };
+  const gameCss = parser.gameMode ? `.nv-app.nv-game{padding:0;min-height:100svh;--nv-view-ratio:${viewport.w / viewport.h}}.nv-game[data-nava-graphics] .nv-card{position:relative;width:min(100vw,calc(100svh * var(--nv-view-ratio)));min-height:100svh;padding:0;gap:0;justify-content:center;border:0;border-radius:0;box-shadow:none;background:transparent}.nv-game .nv-brand{display:none}.nv-game .nv-canvas{border:0;border-radius:0;flex-shrink:0}.nv-game .nv-value{position:absolute;z-index:2;inset:16px 16px auto;text-align:center;font-size:14px;font-weight:500;line-height:1.9;color:#edf4ed;text-shadow:0 2px 8px #000;pointer-events:none}.nv-game .nv-error{position:absolute;z-index:3;inset:80px 16px auto}` : "";
+  return { web: { html: webHtml, css: `:root{--nava-accent:${accent}}\n${css}\n${APPEARANCE_CSS}${kitCss ? "\n" + kitCss : ""}\n${gameCss}`, js: kitJs ? `${js}\n${kitJs}` : js } };
 }

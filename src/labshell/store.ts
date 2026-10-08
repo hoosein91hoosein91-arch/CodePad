@@ -6,8 +6,8 @@ import { createFile, createProject, SEED_PROJECT, uid } from "@/labshell/samples
 import type { LabFile, Lang, Project, TemplateKind, TermLine } from "@/labshell/types";
 
 const WELCOME: TermLine[] = [
-  { id: "w1", stream: "sys", text: "نوا: زبان سادهٔ فارسی برای ساخت برنامه‌های تعاملی، بدون نوشتن HTML یا JavaScript." },
-  { id: "w2", stream: "sys", text: "کد نمونه را اجرا کن؛ برای ساخت برنامه از عنوان، متن، متغیر، ورودی و دکمه استفاده کن." },
+  { id: "w1", stream: "sys", text: "Nava Studio: Pg, Scene, Mat, Frame — short Latin commands." },
+  { id: "w2", stream: "sys", text: "Run the scene. Use | to pack commands, drag to orbit and pinch to zoom." },
   { id: "w3", stream: "sys", text: "برای یادگیری دستورهای نوا، نمونهٔ شروع.nava را ببین یا فایل راهنمای NAVA-GUIDE.md را باز کن." },
   { id: "w4", stream: "sys", text: "جیب‌کد: چند زبان در یک برنامه. فایل ترکیبی را باز کن و اجرا بزن." },
   { id: "w5", stream: "sys", text: "با «@@ پایتون» و «@@ جاوااسکریپت» هر بلوک را به زبان خودش بنویس." },

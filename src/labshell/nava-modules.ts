@@ -1,3 +1,4 @@
+import { navaPackedRows } from "./nava-lines.ts";
 import { normalizeNavaLine } from "./nava-short.ts";
 export type NavaLine = { text: string; line: number };
 
@@ -8,16 +9,16 @@ export type NavaLine = { text: string; line: number };
  */
 export function expandNava(source: string, opensBlock: (text: string) => boolean = () => false): { lines: NavaLine[]; error?: string } {
   if (source.length > 1_000_000) return { lines: [], error: "برنامه بیش از یک میلیون نویسه دارد." };
-  const rows = source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n");
+  const rows = navaPackedRows(source);
   const recipes = new Map<string, NavaLine[]>();
   const top: NavaLine[] = [];
   let current: { name: string; body: NavaLine[]; line: number; depth: number } | null = null;
   for (let i = 0; i < rows.length; i++) {
-    const text = normalizeNavaLine(rows[i].trim());
+    const text = normalizeNavaLine(rows[i].text.trim());
     const head = /^تعریف\s+"([^"\n]+)"\s*:?$/.exec(text);
     if (head) {
-      if (current || recipes.has(head[1])) return { lines: [], error: `خط ${i + 1}: تعریف تو در تو یا نام تکراری است.` };
-      current = { name: head[1], body: [], line: i + 1, depth: 0 };
+      if (current || recipes.has(head[1])) return { lines: [], error: `خط ${rows[i].line}: تعریف تو در تو یا نام تکراری است.` };
+      current = { name: head[1], body: [], line: rows[i].line, depth: 0 };
     } else if (current && current.depth === 0 && /^پایان(?:\s|$)/.test(text)) {
       recipes.set(current.name, current.body); current = null;
     } else {
@@ -25,7 +26,7 @@ export function expandNava(source: string, opensBlock: (text: string) => boolean
         if (/^پایان(?:\s|$)/.test(text)) current.depth--;
         else if (opensBlock(text)) current.depth++;
       }
-      (current ? current.body : top).push({ text, line: i + 1 });
+      (current ? current.body : top).push({ text, line: rows[i].line });
     }
   }
   if (current) return { lines: [], error: `خط ${current.line}: تعریف «${current.name}» به «end» نیاز دارد.` };

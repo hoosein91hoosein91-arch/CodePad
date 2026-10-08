@@ -259,8 +259,9 @@ export function navaEngine(P: any, io: any): any {
           break;
         }
         case "draw": io.draw(s.op, s.a.map(E), s.line); break;
-        case "obj": io.obj(s.op, s.n, s.a.map((x: any) => toNum(E(x))), s.line); break;
-        case "cam": io.cam(toNum(E(s.e))); break;
+        case "obj": io.obj(s.op, s.n, s.a.map(E), s.line); break;
+        case "cam": io.cam(...(s.a ? s.a.map((x: any) => toNum(E(x))) : [toNum(E(s.e))])); break;
+        case "scene": io.scene(s.op, s.a.map(E), s.line); break;
         case "call": callUser(s.n, s.a.map(E), s.line); break;
         case "stop": stopTimers(); break;
         case "resume": startTimers(); break;
@@ -289,10 +290,19 @@ export function navaEngine(P: any, io: any): any {
     try { exec(body, child(root)); } catch (err: any) { if (!(err && err.navaRet)) report(err); }
     after();
   };
-  function stopTimers() { for (const t of timers) io.clearInterval(t); timers = []; running = false; }
+  let animationFrame = 0, frameTime: number | null = null;
+  const nextFrame = (time: number) => {
+    animationFrame = 0;
+    if (!running) return;
+    const dt = frameTime === null ? 0 : Math.min(.05, Math.max(0, (time - frameTime) / 1000));
+    frameTime = time; S["دلتا"] = dt; handle(P.onFrame);
+    if (running && !reported) animationFrame = io.requestFrame(nextFrame);
+  };
+  function stopTimers() { if (animationFrame) io.cancelFrame(animationFrame); animationFrame = 0; frameTime = null; for (const t of timers) io.clearInterval(t); timers = []; running = false; }
   function startTimers() {
     if (running) return;
     running = true;
+    if (P.onFrame && io.requestFrame) animationFrame = io.requestFrame(nextFrame);
     for (const t of P.timers) {
       if (t.once) continue;
       let sec = 1;
@@ -316,7 +326,7 @@ export function navaEngine(P: any, io: any): any {
     run: handle,
     start: async () => {
       t0 = io.now();
-      S["ایکس"] = 0; S["ایگرگ"] = 0; S["کلید"] = "";
+      S["ایکس"] = 0; S["ایگرگ"] = 0; S["کلید"] = ""; S["دلتا"] = 0;
       try { for (const d of P.vars) { steps = 0; S[d.n] = ev(d.e, root, d.line); } } catch (err) { report(err); io.render(); return; }
       if (P.persist.length) {
         try {
@@ -337,7 +347,7 @@ export function navaEngine(P: any, io: any): any {
   return api;
 }
 
-export function navaDom(P: any, engine: any): void {
+export function navaDom(P: any, engine: any, sceneFactory: any): void {
   const doc = document;
   const $ = (s: string) => doc.querySelector(s) as any;
   const errBox = $(".nv-error");
@@ -392,110 +402,9 @@ export function navaDom(P: any, engine: any): void {
     g2.restore();
   };
 
-  // ── صحنهٔ سه‌بعدی (WebGL خام، بدون کتابخانه) ──
+  // Offline scene renderer is injected into generated previews as a self-contained function.
   const sc: any = doc.getElementById("nv-scene");
   const sw = P.scene ? P.scene.w : 0, sh = P.scene ? P.scene.h : 0;
-  const objs: any = {};
-  for (const s of P.shapes) objs[s.n] = { kind: s.kind, color: s.color, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1 };
-  let camDist = 6;
-  let gl: any = null, prog: any = null;
-  const meshes: any = {};
-  const rgb = (() => {
-    const c = doc.createElement("canvas").getContext("2d");
-    return (color: string) => {
-      if (!c) return [0.4, 0.96, 0.65];
-      c.fillStyle = "#67f5a5"; c.fillStyle = color;
-      const v = String(c.fillStyle);
-      if (v[0] === "#") return [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16) / 255);
-      const m = v.match(/[\d.]+/g) || ["103", "245", "165"];
-      return m.slice(0, 3).map((x) => Number(x) / 255);
-    };
-  })();
-  if (sc) {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    sc.width = Math.round(sw * dpr); sc.height = Math.round(sh * dpr);
-    gl = sc.getContext("webgl", { antialias: true, alpha: true }) || sc.getContext("experimental-webgl");
-    if (gl) {
-      const shader = (type: number, src: string) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
-      prog = gl.createProgram();
-      gl.attachShader(prog, shader(gl.VERTEX_SHADER, "attribute vec3 p;attribute vec3 q;uniform mat4 m;uniform mat4 w;varying vec3 n;void main(){n=(w*vec4(q,0.0)).xyz;gl_Position=m*vec4(p,1.0);}"));
-      gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, "precision mediump float;uniform vec3 c;varying vec3 n;void main(){float d=max(dot(normalize(n),normalize(vec3(0.45,0.8,0.6))),0.0);gl_FragColor=vec4(c*(0.32+0.68*d),1.0);}"));
-      gl.linkProgram(prog);
-      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) gl = null;
-    }
-    if (gl) {
-      gl.useProgram(prog);
-      gl.enable(gl.DEPTH_TEST);
-      const build = (tris: number[][], smooth: boolean) => {
-        const pos: number[] = [], nor: number[] = [];
-        for (let i = 0; i < tris.length; i += 3) {
-          const [a, b, c] = [tris[i], tris[i + 1], tris[i + 2]];
-          const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-          const f = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
-          for (const p of [a, b, c]) { pos.push(p[0], p[1], p[2]); const k = smooth ? p : f; nor.push(k[0], k[1], k[2]); }
-        }
-        const bp = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bp); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
-        const bn = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bn); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(nor), gl.STATIC_DRAW);
-        return { bp, bn, count: pos.length / 3 };
-      };
-      const quad = (a: number[], b: number[], c: number[], d: number[]) => [a, b, c, a, c, d];
-      const h = 0.75;
-      const V = (x: number, y: number, z: number) => [x * h, y * h, z * h];
-      meshes["مکعب"] = build([
-        ...quad(V(-1, -1, 1), V(1, -1, 1), V(1, 1, 1), V(-1, 1, 1)), ...quad(V(1, -1, -1), V(-1, -1, -1), V(-1, 1, -1), V(1, 1, -1)),
-        ...quad(V(-1, 1, 1), V(1, 1, 1), V(1, 1, -1), V(-1, 1, -1)), ...quad(V(-1, -1, -1), V(1, -1, -1), V(1, -1, 1), V(-1, -1, 1)),
-        ...quad(V(1, -1, 1), V(1, -1, -1), V(1, 1, -1), V(1, 1, 1)), ...quad(V(-1, -1, -1), V(-1, -1, 1), V(-1, 1, 1), V(-1, 1, -1)),
-      ], false);
-      const sp: number[][] = [];
-      const LAT = 18, LON = 28, R = 0.85;
-      const pt = (i: number, j: number) => { const t = (i / LAT) * Math.PI, f = (j / LON) * Math.PI * 2; return [R * Math.sin(t) * Math.cos(f), R * Math.cos(t), R * Math.sin(t) * Math.sin(f)]; };
-      for (let i = 0; i < LAT; i++) for (let j = 0; j < LON; j++) sp.push(...quad(pt(i, j), pt(i, j + 1), pt(i + 1, j + 1), pt(i + 1, j)));
-      meshes["کره"] = build(sp, true);
-      const top = [0, 0.85, 0], b1 = [-0.85, -0.7, 0.85], b2 = [0.85, -0.7, 0.85], b3 = [0.85, -0.7, -0.85], b4 = [-0.85, -0.7, -0.85];
-      meshes["هرم"] = build([b1, b2, top, b2, b3, top, b3, b4, top, b4, b1, top, ...quad(b4, b3, b2, b1)], false);
-      meshes["زمین"] = build(quad([-4, 0, 4], [4, 0, 4], [4, 0, -4], [-4, 0, -4]), false);
-    }
-  }
-  const mul = (a: number[], b: number[]) => { const o = new Array(16).fill(0); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
-  const T = (x: number, y: number, z: number) => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1];
-  const RX = (d: number) => { const r = (d * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]; };
-  const RY = (d: number) => { const r = (d * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]; };
-  const RZ = (d: number) => { const r = (d * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; };
-  const SC = (k: number) => [k, 0, 0, 0, 0, k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1];
-  const draw3d = () => {
-    if (!gl) return;
-    gl.viewport(0, 0, sc.width, sc.height);
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    const f = 1 / Math.tan((50 * Math.PI) / 360), asp = sw / sh, near = 0.1, far = 100;
-    const proj = [f / asp, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, (2 * far * near) / (near - far), 0];
-    const view = mul(T(0, 0, -camDist), RX(18));
-    const lp = gl.getAttribLocation(prog, "p"), lq = gl.getAttribLocation(prog, "q");
-    const um = gl.getUniformLocation(prog, "m"), uw = gl.getUniformLocation(prog, "w"), uc = gl.getUniformLocation(prog, "c");
-    for (const name of Object.keys(objs)) {
-      const o = objs[name], mesh = meshes[o.kind];
-      if (!mesh) continue;
-      const model = mul(T(o.pos[0], o.pos[1], o.pos[2]), mul(RY(o.rot[1]), mul(RX(o.rot[0]), mul(RZ(o.rot[2]), SC(o.scale)))));
-      gl.uniformMatrix4fv(um, false, new Float32Array(mul(proj, mul(view, model))));
-      gl.uniformMatrix4fv(uw, false, new Float32Array(model));
-      gl.uniform3fv(uc, new Float32Array(rgb(o.color)));
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bp); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 3, gl.FLOAT, false, 0, 0);
-      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bn); gl.enableVertexAttribArray(lq); gl.vertexAttribPointer(lq, 3, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
-    }
-  };
-  let frame3d = 0;
-  const want3d = () => { if (gl && !frame3d) frame3d = requestAnimationFrame(() => { frame3d = 0; draw3d(); }); };
-  const obj = (op: string, name: string, a: number[], line: number) => {
-    const o = objs[name];
-    if (!o) lineErr(line, `شکل «${name}» در صحنه نیست.`);
-    const v = (i: number) => (Number.isFinite(a[i]) ? a[i] : 0);
-    if (op === "بچرخان") { o.rot[0] += v(0); o.rot[1] += v(1); o.rot[2] += v(2); }
-    else if (op === "جابجا") o.pos = [v(0), v(1), v(2)];
-    else if (op === "حرکت") { o.pos[0] += v(0); o.pos[1] += v(1); o.pos[2] += v(2); }
-    else if (op === "اندازه") o.scale = Math.max(0, v(0) || 0);
-    want3d();
-  };
 
   // ── پیام، خطا، حافظه، هوش مصنوعی ──
   let toastTimer = 0;
@@ -535,6 +444,10 @@ export function navaDom(P: any, engine: any): void {
     (P.images as string[]).map((src) => new Promise((done) => { const im = image(src); if (im.complete) done(true); else { im.onload = im.onerror = () => done(true); setTimeout(() => done(false), 3000); } })),
   );
 
+  const scene3d = sceneFactory(P, sc, error);
+  const obj = scene3d.obj;
+  const want3d = () => scene3d.requestDraw?.();
+
   const io = {
     now: () => performance.now(),
     random: Math.random,
@@ -542,7 +455,9 @@ export function navaDom(P: any, engine: any): void {
     clearInterval: (id: number) => window.clearInterval(id),
     setTimeout: (f: any, ms: number) => window.setTimeout(f, ms),
     toast, tone, error, load, save, ask, fileText, ready, draw, obj,
-    cam: (d: number) => { camDist = Math.max(1.5, Math.min(60, d || 6)); want3d(); },
+    cam: scene3d.cam, scene: scene3d.scene,
+    requestFrame: (fn: any) => requestAnimationFrame(fn),
+    cancelFrame: (id: number) => cancelAnimationFrame(id),
     melody: (fs: number[], ms: number) => fs.forEach((f, i) => window.setTimeout(() => tone(f, ms), i * ms)),
     play: (src: string) => { try { void new Audio(src).play().catch(() => {}); } catch { /* */ } },
     say: (text: string) => {
@@ -604,6 +519,7 @@ export function navaDom(P: any, engine: any): void {
     let sx = 0, sy = 0;
     el.addEventListener("pointerdown", (e: any) => { sx = e.clientX; sy = e.clientY; audio(); });
     el.addEventListener("pointerup", (e: any) => {
+      if (el === sc && scene3d.orbit) return;
       const dx = e.clientX - sx, dy = e.clientY - sy;
       if (P.onKey && Math.hypot(dx, dy) > 28) { api.key(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "راست" : "چپ") : dy > 0 ? "پایین" : "بالا"); return; }
       const r = el.getBoundingClientRect();
@@ -621,6 +537,6 @@ export function navaDom(P: any, engine: any): void {
       api.key(names[e.key] || e.key);
     });
   }
-  if (sc && !gl) error("این دستگاه WebGL ندارد؛ صحنهٔ سه‌بعدی نشان داده نمی‌شود.");
+  window.addEventListener("pagehide", () => { api.stop(); scene3d.dispose(); });
   void api.start();
 }

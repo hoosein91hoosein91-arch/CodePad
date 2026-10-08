@@ -1,6 +1,6 @@
 /** Read both published launcher backup formats before any storage is changed. */
 export type BackupApp = {
-  name: string; icon: string; iconImage?: string; iconColor?: string; page?: number; pageIndex?: number;
+  name: string; icon: string; iconImage?: string; iconColor?: string; page?: number; pageIndex?: number; entryFile?: string; sourceProjectId?: string;
   files: { name: string; content: string }[];
   assets: { name: string; type: string; b64: string }[];
 };

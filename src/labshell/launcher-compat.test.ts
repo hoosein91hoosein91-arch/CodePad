@@ -69,3 +69,16 @@ test("compact Nava stays LTR and full Persian Nava stays RTL, ignoring comments"
   assert.equal(navaCodeDirection('# متن فارسی\n// note\nbt "شروع": sy "تو باختی"'), "ltr");
   assert.equal(navaCodeDirection('# pg "note"\nعنوان "سلام"'), "rtl");
 });
+
+// Regression: an imported/edited game must launch instead of the starter main.nava.
+test("explicit launcher entry selects the active project file and survives backup", async () => {
+  const { launcherEntry } = await import("./launcher-entry.ts");
+  const files = [{ name: "main.nava", content: 'Pg "Starter" | Cnt' }, { name: "rift.nava", content: 'Pg "My game" | Scene N360,N480' }];
+  const app = { name: "Game", icon: "G", files, entryFile: "rift.nava", sourceProjectId: "my-project" };
+  assert.equal(launcherEntry(app)?.content, files[1].content);
+  const copy = readLauncherBackup(JSON.stringify({ jibosBackup: 1, apps: [app] })).apps[0];
+  assert.equal(launcherEntry(copy)?.name, "rift.nava");
+  assert.equal(copy.sourceProjectId, "my-project");
+  assert.equal(launcherEntry({ files })?.name, "main.nava");
+  assert.equal(launcherEntry({ files, entryFile: "missing" })?.name, "main.nava");
+});

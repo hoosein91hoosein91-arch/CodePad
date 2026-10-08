@@ -7,7 +7,7 @@ import type { Project } from "@/labshell/types";
 import { dropAppStore } from "@/labshell/jibos";
 import { appPage, readLauncherBackup } from "@/labshell/launcher-compat";
 
-export type App = { id: string; name: string; icon: string; iconImage?: string; iconColor?: string; files: { name: string; content: string }[]; installedAt: number; page?: number; pageIndex?: number };
+export type App = { id: string; name: string; icon: string; iconImage?: string; iconColor?: string; files: { name: string; content: string }[]; installedAt: number; entryFile?: string; sourceProjectId?: string; page?: number; pageIndex?: number };
 export const assetKey = (id: string) => `launcher-${id}`;
 
 const storage = {
@@ -26,7 +26,7 @@ export const useLauncher = create<{ apps: App[]; put: (app: App) => void; patch:
   persist(
     (set) => ({
       apps: [],
-      put: (app) => set((s) => ({ apps: [...s.apps.filter((a) => a.name !== app.name), app] })),
+      put: (app) => set((s) => ({ apps: [...s.apps.filter((a) => a.name !== app.name && a.id !== app.id), app] })),
       patch: (id, changes) => set((s) => ({ apps: s.apps.map((a) => a.id === id ? { ...a, ...changes, ...(changes.page !== undefined || changes.pageIndex !== undefined ? { page: changes.page ?? changes.pageIndex, pageIndex: changes.page ?? changes.pageIndex } : {}) } : a) })),
       drop: (id) => set((s) => ({ apps: s.apps.filter((a) => a.id !== id) })),
     }),
@@ -41,29 +41,33 @@ export const useLauncher = create<{ apps: App[]; put: (app: App) => void; patch:
 
 const iconOf = (name: string) => name.match(/\p{Extended_Pictographic}/u)?.[0] ?? (name.trim()[0] ?? "?");
 
-async function install(name: string, files: App["files"], assets: File[]): Promise<App> {
-  const old = useLauncher.getState().apps.find((a) => a.name === name);
-  if (old) await removeProjectAssets(assetKey(old.id)); // نصب دوباره = به‌روزرسانی
+async function install(name: string, files: App["files"], assets: File[], entryFile?: string, sourceProjectId?: string): Promise<App> {
+  const old = useLauncher.getState().apps.find((a) => sourceProjectId ? a.sourceProjectId === sourceProjectId || (!a.sourceProjectId && a.name === name) : a.name === name); // نصب دوباره = به‌روزرسانی
   // نصب دوباره ظاهرِ شخصی‌سازی‌شدهٔ آیکن را نگه می‌دارد
-  const app: App = { id: Math.random().toString(36).slice(2) + Date.now().toString(36), name, icon: old?.icon ?? iconOf(name), iconImage: old?.iconImage, iconColor: old?.iconColor, files, installedAt: Date.now(), page: old?.page ?? 0 };
+  const app: App = { id: old?.id ?? Math.random().toString(36).slice(2) + Date.now().toString(36), entryFile, sourceProjectId, name, icon: old?.icon ?? iconOf(name), iconImage: old?.iconImage, iconColor: old?.iconColor, files, installedAt: Date.now(), page: old?.page ?? 0 };
   await loadAssets();
   if (assets.length) await addAssets(assetKey(app.id), assets);
+  if (old && old.id !== app.id) await removeProjectAssets(assetKey(old.id));
   useLauncher.getState().put(app);
   return app;
 }
 
 export function installPack(pack: Pack): Promise<App> {
-  return install(pack.name, pack.files, pack.assets.map(assetFile));
+  return install(pack.name, pack.files, pack.assets.map(assetFile), pack.entryFile);
 }
 
 export async function installProject(project: Project): Promise<App> {
+  // Snapshot the open project before awaiting assets so later editor changes cannot select a template.
+  const snapshot = { ...project, files: project.files.map((f) => ({ ...f })) };
+  const entry = snapshot.files.find((f) => f.id === snapshot.activeFileId);
+  if (!entry) throw new Error("فایل فعال پروژه پیدا نشد.");
   await loadAssets();
   const files: File[] = [];
   for (const meta of assetsOf(project.id)) {
     const blob = await readAssetBlob(project.id, meta.name);
     if (blob) files.push(new File([blob], meta.name, { type: blob.type }));
   }
-  return install(project.name, project.files.map((f) => ({ name: f.name, content: f.content })), files);
+  return install(snapshot.name, snapshot.files.map((f) => ({ name: f.name, content: f.content })), files, entry.name, snapshot.id);
 }
 
 export async function uninstall(id: string): Promise<void> {
@@ -91,6 +95,10 @@ function toBase64(bytes: Uint8Array): string {
 export async function exportPack(app: App): Promise<string> {
   await loadAssets();
   const out = [`@@@ jibpack 1 ${app.name.replace(/[\r\n]/g, " ").trim() || "CodePad app"}`];
+  if (app.entryFile) {
+    if (/[\r\n]/.test(app.entryFile)) throw new Error("Invalid entry file.");
+    out.push(`@@@ entry ${app.entryFile}`);
+  }
   for (const f of app.files) {
     if (!f.name || /[\r\n]/.test(f.name) || f.content.split(/\r\n?|\n/).some((line) => line.startsWith("@@@"))) {
       throw new Error("یکی از فایل‌ها شامل خطی است که قالب jibpack رزرو کرده؛ آن خط را تغییر بده و دوباره خروجی بگیر.");
@@ -121,7 +129,7 @@ export type Backup = {
   jibosBackup: 1;
   exportedAt: number;
   prefs: unknown;
-  apps: { name: string; icon: string; iconImage?: string; iconColor?: string; page?: number; files: { name: string; content: string }[]; assets: { name: string; type: string; b64: string }[] }[];
+  apps: { name: string; icon: string; iconImage?: string; iconColor?: string; page?: number; entryFile?: string; sourceProjectId?: string; files: { name: string; content: string }[]; assets: { name: string; type: string; b64: string }[] }[];
 };
 
 /** کل لانچر را به یک فایل JSON (.jibos) تبدیل می‌کند؛ عکس‌های پیوست هم داخل آن base64 می‌شوند */
@@ -135,7 +143,7 @@ export async function exportBackup(prefs: unknown): Promise<string> {
       if (!blob) continue;
       assets.push({ name: meta.name, type: blob.type, b64: toBase64(new Uint8Array(await blob.arrayBuffer())) });
     }
-    apps.push({ name: app.name, icon: app.icon, iconImage: app.iconImage, iconColor: app.iconColor, page: appPage(app), files: app.files, assets });
+    apps.push({ name: app.name, icon: app.icon, iconImage: app.iconImage, iconColor: app.iconColor, page: appPage(app), entryFile: app.entryFile, sourceProjectId: app.sourceProjectId, files: app.files, assets });
   }
   const backup: Backup = { jibosBackup: 1, exportedAt: Date.now(), prefs, apps };
   return JSON.stringify(backup, null, 2);
@@ -149,7 +157,7 @@ export async function importBackup(text: string): Promise<{ installed: number; p
   // Decode every attachment first: a malformed backup must not partially replace installed programs.
   const prepared = data.apps.map((a) => ({ a, files: a.assets.map((as) => new File([fromBase64(as.b64)], as.name, { type: as.type || "application/octet-stream" })) }));
   for (const { a, files } of prepared) {
-    const app = await install(a.name, a.files, files);
+    const app = await install(a.name, a.files, files, a.entryFile, a.sourceProjectId);
     useLauncher.getState().patch(app.id, { icon: a.icon, iconImage: a.iconImage, iconColor: a.iconColor, page: a.page ?? 0 });
     installed++;
   }
