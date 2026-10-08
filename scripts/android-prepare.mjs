@@ -238,3 +238,12 @@ if (!styles.includes(marker)) {
   writeFileSync(stylesPath, styles);
 }
 console.log("android resources prepared");
+
+// Monotonic app version so Android can identify this update.
+const gradlePath = "android/app/build.gradle";
+if (existsSync(gradlePath)) {
+  const gradle = readFileSync(gradlePath, "utf8")
+    .replace(/versionCode\s+\d+/, "versionCode 250")
+    .replace(/versionName\s+"[^"]+"/, 'versionName "2.5.0"');
+  writeFileSync(gradlePath, gradle);
+}

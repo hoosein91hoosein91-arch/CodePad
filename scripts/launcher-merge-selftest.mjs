@@ -89,3 +89,23 @@ assert.equal(old.installed, 1);
 assert.equal(state.apps[0].page, 8);
 assert.equal(state.apps[0].files[0].content, original.files[0].content);
 console.log("PASS launcher integration: hydration, legacy page API, pack export/assets, both backups, invalid-backup nonmutation.");
+
+// Installing an edited active file must not run the bundled main.nava starter.
+const project = { id: "active-project", name: "My custom game", activeFileId: "edited", files: [
+  { id: "starter", name: "main.nava", content: 'Pg "Starter" | Cnt' },
+  { id: "edited", name: "rift.nava", content: 'Ap "Rift edited" | Scene N360,N480' }
+] };
+const installed = await api.installProject(project);
+assert.equal(installed.entryFile, "rift.nava");
+assert.equal(installed.sourceProjectId, project.id);
+assert.equal(installed.files[1].content, project.files[1].content);
+const exported = await api.exportPack(installed);
+assert.ok(exported.includes("@@@ entry rift.nava"));
+const snapshot = JSON.parse(await api.exportBackup({}));
+assert.equal(snapshot.apps.find(a => a.name === project.name).entryFile, "rift.nava");
+project.files[1].content = 'Ap "Version two" | Cnt';
+const updated = await api.installProject(project);
+assert.equal(updated.id, installed.id);
+assert.equal(updated.files[1].content, project.files[1].content);
+assert.equal(state.apps.filter(a => a.sourceProjectId === project.id).length, 1);
+console.log("PASS active project install, edited entry, export, backup and stable reinstall.");

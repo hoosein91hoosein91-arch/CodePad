@@ -237,7 +237,7 @@ must("nava starter sample", !!compileNava(SAMPLES.nava.content).web);
 must("nava short calculator", /nava-kit-0/.test(compileNava("cal").web?.html ?? ""));
 must("nava short = long", JSON.stringify(compileNava(compactNavaSource('صفحه "x"\nعدد n = ۰\nدکمه "y" (ru240rn64yGi65G72): n += ۱')).web) === JSON.stringify(compileNava('صفحه "x"\nعدد n = ۰\nدکمه "y" (ru240rn64yGi65G72): n += ۱').web));
 must("nava recipe with block", !!compileNava('df "r"\nbt "b"\n  اگر ۱ > ۰: پیام "!"\nend\nend\nus "r"').web);
-must("nava fixPrompt guide", fixPrompt("main.nava", "cal", "").includes("cal=ماشین‌حساب") && !fixPrompt("index.html", "<p>", "").includes("cal=ماشین‌حساب"));
+must("nava fixPrompt guide", fixPrompt("main.nava", "Cal", "").includes("Latin Nava Studio") && fixPrompt("main.nava", "Cal", "").includes("Fr ... End") && !fixPrompt("index.html", "<p>", "").includes("Latin Nava Studio"));
 for (const id of ["nava-todo", "nava-clicker", "nava-snake", "nava-cube3d", "nava-ai", "nava-kits", "nava-voxel"]) {
   const p = parsePack(readFileSync(new URL(`../src/labshell/packs/${id}.jibpack`, import.meta.url), "utf8"));
   must(`pack ${id} parses`, !!p && p.problems.length === 0 && p.files.length === 1 && p.files[0]!.name === "main.nava");
