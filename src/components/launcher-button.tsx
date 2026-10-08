@@ -1,6 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { LayoutGrid, X } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { installProject } from "@/labshell/launcher";
 import { activeProject, useLab } from "@/labshell/store";
@@ -41,9 +40,9 @@ export function LauncherButton() {
             نصب پروژهٔ فعال در لانچر
           </button>
           {msg ? <p className="text-sm">{msg}</p> : null}
-          <Link to="/launcher" className="grid h-11 place-items-center rounded-lab bg-panel-2 text-sm">
+          <a href="/launcher" className="grid h-11 place-items-center rounded-lab bg-panel-2 text-sm">
             رفتن به لانچر
-          </Link>
+          </a>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

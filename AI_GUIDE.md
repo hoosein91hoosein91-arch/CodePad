@@ -1,8 +1,19 @@
 # CodePad (جیب‌کد) — Guide for AI assistants
 
+## Nava 0.4 — abbreviated language (`.nava`)
+
+Prefer Nava for short low-code apps. All supported grammar keywords now have two/three-letter aliases; preserve visible text and user identifiers. See `NAVA-GUIDE.md` and `NAVA-AI-SPEC.json` for the exact current grammar, palette and limitations.
+
+```text
+pg "بازی من"
+bt "شروع" (ru240rn64yGi65G72): sy "تو باختی"
+```
+
+Minimal calculator: `cal`. World demo: `vx sz ۲۴ sd ۷`. Recipes: `df "name"`, body, `end`, then `us "name"`. Do not abbreviate strings inside quotes. Existing Persian Nava code remains accepted. Python, mix and Jib examples below retain their own grammar.
+
 This file is for an AI assistant (or a human) **writing programs that run inside the CodePad app**.
-Everything here comes from the source on `main` (CodePad v2.2.0: **Nava language** §2.13 since v2.2.0, **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0, **JibOS launcher upgrade** §2.11 since v2.0.0, and **v2.1.0 additions** §2.12 — terminal shell over a virtual filesystem, private browser, multi-page home + export, net-security samples, Termux hand-off: `src/labshell/*`, `src/lib/termux-bridge.ts`, `src/components/launcher/*`) and from tests run in headless Chrome at phone size.
-Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later. Everything in §2.11 (Gemini, `window.jibos`, developer mode, wallpapers, custom icons, security samples) needs v2.0.0 or later. Everything in §2.12 (terminal shell/virtual filesystem, private browser, multi-page home + export, simulated nmap/port-scan samples, Termux hand-off) needs v2.1.0 or later. The Nava language (§2.13, `.nava`) needs v2.2.0 or later.
+Everything here comes from the source on `main` (CodePad v1.6.0 plus the **attachments** feature, §2.8: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
+Attachments exist only in app builds that include them; an older APK ignores everything in §2.8.
 If the code changes, re-check the files listed in [§9 Where things live](#9-where-things-live).
 
 > **The three rules that matter most**
@@ -39,7 +50,6 @@ If the code changes, re-check the files listed in [§9 Where things live](#9-whe
 
 | Language | Internal id | File extension(s) | Engine | Input (stdin) | Time limit |
 |---|---|---|---|---|---|
-| **Nava (نوا)** — Persian one-line commands → full web app | `nava` | `.nava` | compiled to a JSON program + a small embedded interpreter (no `eval`), shown in the **صفحه** tab; see §2.13 and [NAVA-GUIDE.md](NAVA-GUIDE.md) | `ورودی` boxes in the page | 100 000 loop turns, 3 M steps per event |
 | Mix (several languages in one file) | `mix` | `.mix` (and any unknown extension, e.g. `.txt`) | per block, see §3 | per block | per block |
 | Python | `python` | `.py` | Pyodide (CPython 3.14 compiled to WebAssembly) in a Web Worker | `input()` opens a popup; or pre-fill the **ورودی** box | 25 s |
 | JavaScript (console) | `javascript` | `.js`, `.mjs` | Web Worker, `"use strict"`, **no DOM** | none | 2.5 s |
@@ -53,9 +63,9 @@ If the code changes, re-check the files listed in [§9 Where things live](#9-whe
 
 Opening files from outside: you can use the open-file button, Android "Share → CodePad", or "Open with". Nothing is rejected any more. The rules are:
 - **Text files ≤ 1 MB** open as **code files**. Unknown extensions (e.g. `.txt`) open as **mix**, and auto-detection decides the language of each chunk.
+- **A pack file (`.jibpack`, §2.9)** opens as a **new project**: its code becomes project files and its images/files become attachments.
 - **Everything else becomes an attachment** (§2.8): images, audio, video, fonts, PDFs, archives, any binary file, and any text file **larger than 1 MB**. There is no size or type limit for attachments.
 - To force a small text file (a `.csv`, a `.json`, even a `.py` used as data) to be an attachment instead of code, add it with **افزودن عکس یا فایل** in the menu.
-- **A pack file (`.jibpack`, §2.9)** opens as a **new project**: its code becomes project files and its images/files become attachments (v1.8.0+).
 
 ### 2.1 Python (`.py`)
 - This is real CPython, but **only the standard library**. Pyodide's extra packages (numpy, pandas, matplotlib…) are **not installed**, and `micropip` cannot fetch them offline. `import numpy` → `ModuleNotFoundError`.
@@ -152,16 +162,6 @@ The user can upload **any file** into the active project: images, CSV/JSON/text 
 - A name is the plain file name, case-sensitive, with its extension: `photo.png`, `data.csv`, `my song.mp3`. There are **no folders**: write `"photo.png"`, not `"images/photo.png"` or `"./assets/photo.png"`.
 - You cannot know which files the user has. **Ask for the names**, or write code that adapts (`os.listdir(".")` in Python lists them).
 
-**Any file type works, like adding files to a project in PyCharm.** CodePad does not care about the extension: it stores the bytes and uses the plain file name. Unknown extensions (`.xyz`, `.dat`, no extension) work too; they are typed `application/octet-stream`. This was tested with `.png`, `.csv`, `.json`, `.txt` with a Persian name and a space, `.bin`, and `.xyz`.
-
-| Kind of file | In a page (HTML / CSS / page JS) | In Python |
-|---|---|---|
-| Image (`png jpg gif webp svg avif bmp ico`…) | `<img src="photo.png">`, `url(photo.png)` in CSS, `new Image(); img.src = "photo.png"` → canvas `drawImage` | `open("photo.png", "rb").read()` (raw bytes; no decoder, no Pillow) |
-| Text / data (`csv json txt md xml tsv yaml` …, any text) | `assetText("data.csv")` → string; `JSON.parse(assetText("info.json"))` | `open("data.csv", encoding="utf-8")`, `csv`, `json.load(open("info.json"))` |
-| Binary (`bin dat zip db pdf` …, any extension) | `assetBytes("model.bin")` → `Uint8Array` | `open("model.bin", "rb").read()`; `zipfile` and `struct` from the standard library |
-| Audio / video (`mp3 wav ogg m4a mp4 webm mov`) | `<audio controls src="song.mp3">`, `<video controls src="clip.mp4">`, `new Audio("beep.wav")` | bytes only |
-| Font (`woff2 woff ttf otf`) | `@font-face { src: url("my-font.woff2"); }` | bytes only |
-
 **Using them in a page (`.html`, or the HTML/CSS/JS blocks of a mix file)**
 - Write the name wherever a URL goes. CodePad replaces it with the file itself (a `data:` URL) before the page runs:
   ```html
@@ -178,7 +178,7 @@ The user can upload **any file** into the active project: images, CSV/JSON/text 
     const bytes = assetBytes("data.bin");                       // a Uint8Array
   </script>
   ```
-- The replacement only happens when the name is **the whole string**: inside quotes (`"photo.png"`, `'photo.png'`, also `"./photo.png"`) or inside `url(photo.png)`. Backtick strings (`` `photo.png` ``) are **not** replaced, so use normal quotes. A name built at run time (`"photo" + n + ".png"`), or one hidden inside a longer string (`"images/photo.png"`), is **not** replaced. Write each name out in full, or keep a literal list (`const pics = ["a.png", "b.png"]`).
+- The replacement only happens when the name is **the whole string**: inside quotes (`"photo.png"`, `'photo.png'`) or inside `url(photo.png)`. A name built at run time (`"photo" + n + ".png"`), or one hidden inside a longer string (`"images/photo.png"`), is **not** replaced. Write each name out in full, or keep a literal list (`const pics = ["a.png", "b.png"]`).
 - `assetText(...)` and `assetBytes(...)` take that same literal string (which has already become a `data:` URL). Use them, not `fetch`, to read a file's contents: `fetch` is blocked in pages (§4.2).
 - The replacement also applies to the `shared` object in a mix file: if Python puts `shared["pic"] = "photo.png"`, the page receives `shared.pic` as the image's `data:` URL.
 - Only attachments whose name appears in the page's HTML/CSS/JS (or in `shared`) are embedded. Linked `style.css` / `script.js` files from the same project count too.
@@ -201,7 +201,6 @@ The user can upload **any file** into the active project: images, CSV/JSON/text 
 - JavaScript console files (`.js`), C/C++, Jib, Jib Farsi and the binary machine **cannot read attachments**. To use an attachment from JavaScript, put the code in an HTML page or an `@@ js` block that mentions `document` (§3.5).
 - A plain `.css` file previews on a fixed demo card; to see a background image, use an HTML page.
 
-
 ### 2.9 Packs (`.jibpack`): code and images in one light file
 A pack is **one text file** that carries code files and attachments together. When the user opens it (open-file button, Share → CodePad, Open with), CodePad creates a **new project** named after the pack, puts the code files in it, stores the images and files as attachments of that project, and says so in the output panel. The user then only presses **اجرا**. Use a pack whenever you hand the user a program that needs images or data files: one file to download instead of several uploads.
 
@@ -222,167 +221,16 @@ iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAA...
 - A line that starts with `@@@` is reserved by the format. Do not write one inside code.
 - Names are flat (no folders), like attachments (§2.8). If the user already has a project open, the pack never touches it: it always creates a new project, so file names cannot collide.
 - A pack whose base64 is damaged still opens; the broken assets are listed as errors in the output panel.
-- Pack files use the extension `.jibpack`. A file with another extension (other than image/media/archive extensions) is also treated as a pack if its first non-empty line is `@@@ jibpack`.
+- Pack files use the extension `.jibpack`. A file without that extension is also treated as a pack if its first line is `@@@ jibpack`.
 
 How to produce one:
-- With the helper script (Node): put the code files and images in a folder, then run `node scripts/make-pack.mjs <folder> "Project name" > game.jibpack`. Code files (`mix fa jib bit py js mjs c h cpp cc hpp css html htm`) become `@@@ file` sections and every other file becomes an `@@@ asset`.
+- With the helper script (Node): put the code files and images in a folder, then run `node scripts/make-pack.mjs <folder> "Project name" > game.jibpack`. Code files (`mix fa jib bit py js c h cpp cc hpp css html htm`) become `@@@ file` sections and every other file becomes an `@@@ asset`.
 - By hand: write the `@@@ file` sections as text and paste each image as base64 (`base64 -w 76 image.png`).
 - Always check the result: the first line is the header, and every image header is `@@@ asset name.ext`.
 
-**Built-in example (v1.8.0+):** menu (☰) → **پروژهٔ تازه** → **مار و سیب (با عکس)** opens the snake-and-apple game as a pack. You get a new project «مار و سیب» with `snake.mix` and four 64×64 sprite attachments (`apple.png`, `head.png`, `body.png`, `grass.png`). Press **اجرا** and the game draws with the images. It works offline, and the images can be replaced by uploading files with the same names.
-- How it works: Python puts the image **names** in `shared["images"]`, and the page JS loads them with `new Image()`. CodePad replaces the names with the images themselves (§2.8). If an image is missing, the game falls back to plain shapes.
-- The pack file itself is in the repository at `src/labshell/packs/snake-images.jibpack` (about 27 KB). Use it as a template for your own packs.
-
-
-### 2.10 Launcher (v1.9.0+): run projects as apps
-The launcher is a home screen at `/launcher`. It shows a clock, a grid of installed apps and a **+** button.
-- **Installing:**
-  - From the editor: toolbar button **لانچر** (four squares) → **نصب پروژهٔ فعال در لانچر**. This copies the active project's code files and attachments into an app. Installing again with the same project name **updates** that app.
-  - From the launcher: **+** (**افزودن برنامه**) → a built-in sample, a quick single-file HTML app, a `.jibpack` file (§2.9), or a download URL. The download only works if the site allows cross-origin requests; otherwise download the file and pick it.
-- **Running:** tap an icon. The app runs fullscreen with the normal CodePad engine, and the back button in its header (or the Android back button) returns home. Since v2.0.0, **ویرایش** (or a long press on an icon) opens the app's personalization sheet (icon image, emoji, colour, name, delete) — see §2.11.
-- **Which file runs (the entry file):**
-  1. a file named `main.*`
-  2. otherwise the first `.mix`
-  3. otherwise the first `.html`
-  4. otherwise the first non-CSS file
-
-  To control this, name the entry file `main.mix` / `main.html` / `main.py`.
-- **What the user sees:**
-  - A page (HTML, or a mix file with `@@ html`) fills the screen.
-  - A Jib program with `page { }` shows its card, with the printed lines on it.
-  - Anything else shows its text output.
-  - There is no output panel, so a page's `console.log` is not visible in the launcher.
-- **Data:** app code is stored in `localStorage` (key `jibcode-launcher`). App attachments live in IndexedDB, separate from the editor project, so editing the project later does not change the installed app until you install it again.
-- **Sandbox:** pages run in the same sandboxed iframe as in the editor, but without the editor's CSP. Still write offline, self-contained code (§4.2) so the app also works in the editor.
-
-### 2.11 JibOS launcher upgrade (v2.0.0+): theme, personalization, Gemini, `window.jibos`, developer mode
-The launcher (§2.10) became **JibOS**, a phone-style home screen. Everything below runs inside the app's Android WebView; nothing touches the Android system itself.
-
-**Look and personalization** (dock → **ظاهر**; all saved on the device in `localStorage`, key `jibcode-launcher-preferences`)
-- Default theme **ترمینال نئون (ماتریکس)**: near-black background, neon-green accent, glowing monospace clock, a light "matrix rain" canvas (throttled to ~18 fps, paused while an app or the console is open, a still frame when the system asks for reduced motion), optional CRT scanlines and a neon grid.
-- Theme presets: ترمینال نئون، نئون آرام، سایبرپانک، ترمینال کهربایی، اقیانوس. Each one sets wallpaper + accent + effects; every setting can still be changed one by one.
-- **Wallpaper:** 8 built-in gradients, or **any photo from the phone** (it is resized to max 1400 px and stored as a JPEG `data:` URL). If `localStorage` is full, a message asks for a smaller image.
-- **Accent colour:** 8 presets or any colour (colour picker). Columns (3–6), icon size, icon roundness, glass cards, labels under icons, console button in the dock, and the host name shown in the console.
-- **Per-app icons:** tap **ویرایش** (or long-press an icon) → pick an **image** for the icon (resized to 256 px), or an emoji/symbol, a background colour and a new name. Re-installing an app with the same name keeps its custom icon.
-- Status bar with clock, battery level (when the WebView exposes the Battery API) and a **DEV** badge when developer mode is on; search box; empty-state card; open/close animations; toasts.
-
-**Built-in sample apps** (+ → **نمونه‌های آماده**; also in the editor menu under **پروژهٔ تازه**) — all offline:
-| Sample | Type | What it teaches |
-|---|---|---|
-| امنیت: آزمایشگاه هش | `main.py` | md5 / sha1 / sha256 / sha512, avalanche effect, PBKDF2-SHA256 with salt (hand-written with `hmac`, checked against the RFC test vector), HMAC |
-| امنیت: Base64 و Hex | `main.py` | base64, URL-safe base64, hex, binascii, URL percent-encoding, bits — and why encoding is not encryption |
-| امنیت: رمز سزار و ویژنر | `main.py` | Caesar and Vigenère ciphers, trying all 25 Caesar keys, frequency analysis |
-| امنیت: رمز XOR | `main.py` | XOR cipher, known-plaintext key recovery, why key reuse breaks it, one-time pad |
-| امنیت: سنجش قدرت رمز عبور | `index.html` | entropy estimate, time-to-guess, common-password list, secure generator with `crypto.getRandomValues` |
-| پیانوی نئون (صدا) | `index.html` | Web Audio tones/melody, playing an attached `sound.mp3`, saving a score with `jibos.storage` |
-| مار و سیب (با عکس) | `snake.mix` + 4 PNGs | the image snake game (§2.9) |
-
-Pyodide in CodePad has **no OpenSSL**: `hashlib.md5/sha1/sha256/sha512/blake2`, `hmac` and `secrets` work, but `hashlib.pbkdf2_hmac`, `hashlib.scrypt` and `ssl` do **not** (the hash sample shows how to build PBKDF2 from `hmac`). Anything that needs real network or OS access — port scanning, packet capture, Wi-Fi tools, reading other apps — is **out of scope**: an Android app's WebView cannot do it.
-
-**Connect Gemini** (dock → **Gemini**, or **ظاهر** → **اتصال Gemini**)
-- The user pastes **their own** Google Gemini API key once (from Google AI Studio) and taps **ذخیرهٔ اتصال**. The key is stored only in this device's `localStorage` (`jibcode-gemini-key`, model in `jibcode-gemini-model`) and survives app restarts, so it "stays connected" until **قطع اتصال**. No key is in the source code or the repo. The key is not encrypted on the device; only its last 4 characters are shown.
-- Calls go straight from the phone to the official REST endpoint `POST https://generativelanguage.googleapis.com/v1beta/models/<model>:generateContent` with header `x-goog-api-key` (never in the URL). Default model `gemini-3.8-flash`; also selectable: `gemini-flash-latest`, `gemini-3.5-flash`, `gemini-3.1-flash-lite`, `gemini-2.5-flash`. CORS from the app's `https://localhost` origin is allowed by Google.
-- **پرسیدن** = ask a question / generate code. **ساخت برنامه** = Gemini writes one self-contained HTML file which is installed as a launcher app. In developer mode the code editor of an installed app also has a **Gemini** button that rewrites the current file (you review and save).
-- Errors are explained in Persian: missing key, invalid key (400), denied (403), quota (429), no internet.
-- **Limits:** needs internet and a valid key; usage/billing is on the user's Google account. Gemini only acts when the user presses a button — there is no background agent that does things on its own.
-
-**`window.jibos` — API for apps installed in the launcher** (HTML pages and mix pages run in the launcher; not in the editor's **صفحه** tab, so always check `if (window.jibos)`)
-| Call | Needs developer mode | What it does |
-|---|---|---|
-| `jibos.beep(freq, ms, type, vol)` → Promise | no | a tone with Web Audio, inside the app's own frame |
-| `jibos.melody([freqs], ms, type)` | no | plays notes one after another (`0` = rest) |
-| `jibos.play(src)` | no | `new Audio(src).play()` — e.g. an attachment `"sound.mp3"` |
-| `jibos.toast(text)` | no | shows a toast on the launcher |
-| `jibos.info()` | no | `{app, version, devMode, theme, online}` |
-| `jibos.storage.get(k)` / `.set(k, v)` / `.remove(k)` / `.keys()` | no | **persistent per-app storage** (JSON, max 200 000 characters per app, removed on uninstall). Use this instead of `localStorage`, which does not work in the sandboxed frame |
-| `jibos.vibrate(ms or pattern)` | no | `navigator.vibrate` on the launcher; returns `false` when the WebView does not allow it (often on Android without the VIBRATE permission) |
-| `jibos.speak(text, lang)` | no | `speechSynthesis`; returns `false` where the WebView has no speech synthesis (common on Android) |
-| `jibos.clipboard(text)` | **yes** | copy text |
-| `jibos.apps()` / `jibos.launch(name)` | **yes** | list / open installed apps |
-| `jibos.setWallpaper(gradient or data:image…)` / `jibos.setAccent("#00ff9c")` | **yes** | change the launcher look |
-
-All calls except `beep/melody/play` are async and go through `postMessage` with a random per-window token; the launcher answers only its own frame. A developer-mode call made while developer mode is off rejects with an error.
-Audio: Web Audio and `<audio>` work inside installed apps after a tap (autoplay rules). Background audio after leaving the app, microphone, camera, Bluetooth, notifications and widgets are **not** available.
-
-**Developer mode** (**ظاهر** → **حالت توسعه‌دهنده**, or tap **JibOS 2.2.0** seven times, or `dev on` in the console)
-- This is **in-app** control only. It is **not** Android root and cannot root the phone; no normal app can.
-- Unlocks: editing any installed app's files (and adding files) from the launcher; a launcher configuration editor (JSON); custom CSS for the launcher; a JavaScript **boot script** that runs when the launcher opens with an `api` object (`apps()`, `launch(name)`, `prefs()`, `setPrefs({…})`, `toast(msg)`, `beep(hz, ms)`, `install(name, html)`, `uninstall(name)`, `gemini(prompt)`); the list of all apps with export to `.jibpack`, copy and delete; full JSON backup/restore (attachments are not in the JSON — export a `.jibpack` for those); reset; the developer-only `window.jibos` calls; and the console's `js` command.
-- Escape hatch: open `/launcher?safe=1` to skip custom CSS and the boot script.
-
-**Console** (dock → **کنسول**): since v2.1.0 this is a **simulated POSIX shell over a virtual in-app filesystem** plus the crypto/security helpers and an optional Termux hand-off — see §2.12. It still runs **no** native binary itself.
-
-### 2.12 v2.1.0 additions: terminal shell, private browser, multi-page home, net-security samples
-All of this runs inside the app's Android WebView. Honest limits are spelled out below and in §4.5.
-
-**Terminal / Termux-style console** (dock → **کنسول**) — now a **simulated POSIX shell over a virtual, in-app filesystem** (`src/labshell/vfs.ts`):
-- Navigation & files: `pwd`, `cd <path>`, `ls [path]`, `tree`, `cat`, `head [n]`, `grep <pattern> <file>`, `wc`, `touch`, `mkdir`, `rm`, and `echo text > file` / `>> file`.
-- The virtual tree has `/apps/<AppName>/<files>` (installed launcher apps + their attachments, **read-only**) and `/home/user` (a **writable scratch** area that lives only for the session and is cleared on close). It is **not** the Android filesystem.
-- Still present: `apps`, `open <app>`, `theme`, `accent`, `matrix`, `hash/b64/unb64/hex/unhex/xor/rot13/caesar`, `entropy`, `passgen`, `net`, `neofetch`, `whoami`, `dev on|off`, `date`, `beep`, `gemini <q>`, `js <expr>` (dev mode), `browser [url]`.
-- `nmap <host>` / `scan <host>`: an **educational, simulated** port scan over deterministic mock data (`src/labshell/netsim.ts`). It is clearly labelled; **no packet is ever sent and no socket is opened** — a WebView has no raw TCP/UDP.
-- `termux <command>`: an **optional hand-off** to the **real Termux app** (`src/lib/termux-bridge.ts`, native `TermuxBridgePlugin`). It only works in the installed Android build, when Termux is installed and the user has granted `com.termux.permission.RUN_COMMAND`, and only after the user types the command. On the web/preview it errors out. This is CodePad asking another app to run a command; CodePad itself still runs no native binaries. `nmap` through this bridge is restricted on the native side to private-range `nmap -sn` discovery and `pkg install nmap`.
-
-**Private / secure browser** (dock → **مرورگر**, or `browser` in the console) — `src/components/launcher/browser.tsx`:
-- An in-app **incognito tab**: a sandboxed `<iframe>` with `referrerPolicy="no-referrer"`; it keeps no history and clears when closed.
-- Honest, shown-in-app limits (also §4.5): it **cannot hide your real IP** (that needs a real VPN/Tor), it **cannot run Chrome-PC extensions** (the Android WebView engine has no extension support), and it **does not pretend to be a PC**. Many sites refuse to load in an iframe (`X-Frame-Options`); when that happens there is an **“open externally”** button that opens the page in the system browser / Tor Browser (via the Termux bridge’s `openExternal`/`openTorBrowser` on native, or `window.open` on web).
-
-**Multi-page, phone-like home** — `src/routes/launcher.tsx`, `src/labshell/launcher-prefs.ts`:
-- **Multiple home pages** with real horizontal **swipe/paging** (CSS scroll-snap) and page **dots**. **ویرایش** mode shows an **add-page** button (`+`, up to 8 pages) and a **per-page wallpaper** button; without a per-page image a page uses the global wallpaper.
-- Apps are assigned to a page in their personalization sheet (**صفحهٔ خانه**). `prefs.pages` and `prefs.pageWallpapers` are stored on the device like the rest of the prefs; `app.page` is stored with each app.
-- **Export / backup**: **ظاهر → خروجی پشتیبان** writes a single `.jibos` JSON file with the prefs and **every app including its attachments** (base64). **بازگردانی** reinstalls everything from such a file (`exportBackup` / `importBackup` in `src/labshell/launcher.ts`).
-
-**New educational security samples** (+ → **نمونه‌های آماده**):
-| Sample | Type | What it teaches |
-|---|---|---|
-| امنیت: اسکن پورت (nmap، آموزشی) | `main.py` | what a port scan is (open/closed/filtered, SYN/connect/host-discovery), plus an **offline simulation** over mock data — no real traffic |
-| امنیت: دمو اسکن پورت (تعاملی) | `index.html` | an interactive **simulated** scan with a progress bar over deterministic mock data |
+Example: the "snake and apple" game (§5.3) as a pack, with four 64×64 sprites (`apple.png`, `head.png`, `body.png`, `grass.png`) used from a mix file (§5.4 shows the technique). The whole pack is about 27 KB.
 
 ---
-
-### 2.13 Nava (نوا, `.nava`, v2.2.0+): a tiny Persian language for apps, games, 2D/3D and AI
-Nava is a Persian-first language built from HTML/CSS/JS ideas: **one short Persian command per line**, compiled to a complete, styled, phone-sized web page. The full reference with examples is **[NAVA-GUIDE.md](NAVA-GUIDE.md)** (Persian). Source: `src/labshell/nava.ts` (parser/compiler, checker, page builder) and `src/labshell/nava-runtime.ts` (`navaEngine` = DOM-free interpreter, tested in node; `navaDom` = page, canvas, WebGL, audio, storage, AI).
-- **How it runs:** the source becomes a JSON AST that is embedded in the page with a small interpreter. No user text ever becomes JavaScript (no `eval`/`new Function`). Loops are capped (100 000 turns per loop, 3 000 000 steps per event, call depth 200). Errors are Persian with a line number (`خط 12: …`), at compile time and at runtime; a runtime error stops the timers.
-- **Where:** editor (☰ → فایل تازه → **نوا**, or a project template), launcher (install sheet → **نوا** quick-create, or the five Nava samples), and **download as standalone HTML**. In the launcher a project whose files include a `.nava` runs it as the entry (preferred over `index.html`).
-- **Old commands still work:** `برنامه`, `رنگ`, `عنوان`, `متن`, `عدد`, `ورودی`, `نمایش`, `دکمه … وقتی زده شد:`, `پیام`.
-
-Command set (short):
-| Group | Commands |
-|---|---|
-| settings | `برنامه "name"`, `رنگ #hex`, `پس‌زمینه #hex` |
-| variables | `عدد x = 0`, `متغیر x = …`, `لیست L [= [..]]`, `ذخیره a، b` (persist), `x = / += / -=`, `L[i] = …` (index from 1, negative from the end); inside blocks these make locals |
-| UI | `عنوان`, `متن` (live with `{expr}`), `عکس "f.png" [توضیح "…"]`, `ورودی x "hint" [عدد\|رمز\|چندخطی]`, `نمایش "…{expr}…" [اگر cond]`, `دکمه "label": a؛ b` or a block ending in `پایان`, `فهرست L [با حذف]`, `ردیف … پایان`, `بوم w، h` (2D canvas), `صحنه w، h` (3D WebGL) |
-| 3D | `مکعب/کره/هرم/زمین name "#color" [در x، y، z]`, `بچرخان name dx، dy، dz` (degrees, cumulative), `جابجا name x، y، z`, `حرکت name dx، dy، dz`, `اندازه name s`, `دوربین distance` |
-| control | `اگر / وگرنه اگر / وگرنه / پایان`, inline `اگر cond: stmt`, `تکرار N [بار] [با i]`, `برای هر x در L`, `برای i از a تا b`, `تا وقتی cond`, `کنش name [با a، b]`, `تابع name با a … نتیجه expr`, call with `اجرا name args`, bare `name args` or `name(args)` in expressions, `برگرد` |
-| events/time | `هر N ثانیه`, `بعد از N ثانیه`, `وقتی لمس` (`ایکس`, `ایگرگ`), `وقتی کلید` (`کلید` = بالا/پایین/چپ/راست/فاصله/اینتر; swipes on the canvas too), `توقف`, `ادامه` |
-| lists | `افزودن x به [اول] L`, `حذف x از L`, `حذف اول/آخر از L`, `حذف شماره i از L`, `خالی L` |
-| output | `پیام` (toast), `صدا hz، ms` or `صدا "file.mp3"`, `آهنگ f1، f2…`, `بگو` (speech synthesis), `بپرس x = prompt` (Gemini) |
-| canvas | `پاک [color]`, `دایره x، y، r، color`, `مستطیل x، y، w، h، color`, `خط x1، y1، x2، y2، color، width`, `نوشته text، x، y، color، size`, `تصویر "f.png"، x، y، [w، h]` |
-| built-ins | `تصادفی طول گرد صحیح قدرمطلق جذر توان حداقل حداکثر جمع سینوس کسینوس فاصله عدد متن زمان ساعت تاریخ شامل جای جدا چسب خطوط برعکس مرتب بخش فایل` |
-| expressions | `+ - * / %` (`× ÷`), `= == != < > <= >=`, `و یا نه` (`&& \|\| !`), lists `[1، 2]`, templates `"{expr}"`, strings in `"…"`, `'…'` or `«…»`, Persian digits, comments `#` / `//` |
-
-Example (a persistent counter game with a canvas, a function, a loop and a timer — 16 lines):
-```
-برنامه "شمارنده"
-عدد امتیاز = ۰
-ذخیره امتیاز
-بوم ۳۰۰، ۸۰
-نمایش "امتیاز: {امتیاز}"
-نمایش "🎉 عالی!" اگر امتیاز >= ۱۰
-دکمه "+۱": امتیاز += ۱
-تابع رنگ‌من با i
-  اگر i <= امتیاز: نتیجه "#67f5a5"
-  نتیجه "#333333"
-پایان
-هر ۰.۵ ثانیه
-  پاک
-  برای i از ۱ تا ۱۰: دایره i * ۲۸، ۴۰، ۱۰، رنگ‌من(i)
-پایان
-```
-
-- **Storage (`ذخیره`)**: launcher → per-app `jibos.storage`; editor → per-project storage via the editor's own bridge; standalone HTML → `localStorage` (`nava:<program name>`), falling back to memory. Saves only when a value changes.
-- **Attachments**: refer by flat name (`عکس "cat.png"`, `تصویر "ship.png"، …`, `صدا "win.mp3"`, `فایل("words.txt")`) exactly as in §2.8.
-- **AI (`بپرس`)**: goes through the `window.jibos` bridge command `ai` → `appAsk` in `src/labshell/gemini.ts`, using the user's own Gemini key (**ظاهر → اتصال Gemini**). It asks the user's permission once per app, is limited to 12 requests per minute per app and 4000 characters per prompt, needs internet, and has a 120 s timeout. While waiting the variable shows «… در حال فکر کردن»; errors come back as readable Persian text. Not available in a standalone HTML export.
-- **Honest limits:** 3D is a **lightweight raw-WebGL renderer** (cube, sphere, pyramid, plane, one directional light, a perspective camera) — no model files (glTF/OBJ), textures, shadows, physics or AAA graphics; tens of shapes, not thousands. AI is **only a call to the hosted Gemini model** — no on-device model and **no model training** (that needs servers/GPUs). No classes/objects/dictionaries/modules/arbitrary network. Nava apps are web pages: no SMS, calls, phone files, Bluetooth or background execution. "500 Python lines → 50 Nava lines" holds for UI apps and small games, not for heavy algorithms.
-- Built-in samples (`src/labshell/packs/nava-*.jibpack`): **نوا: کارهای من** (35 lines), **نوا: معدن طلا** (clicker, 41), **نوا: مار** (snake on canvas, 52), **نوا: صحنهٔ سه‌بعدی** (WebGL, 27), **نوا: دستیار هوشمند** (Gemini, 17).
 
 ## 3. Mix files (`.mix`) — full format
 
@@ -529,23 +377,7 @@ Consequences (the first three were checked in headless Chrome):
 - C/C++ and the binary machine never show a popup. They read only the **ورودی** box. JavaScript has no input at all.
 - A mix run shows nothing until **all** its blocks have finished.
 
-### 4.5 Launcher (JibOS) limits — what is not possible and what ships instead
-| Asked for | Possible? | What CodePad does instead |
-|---|---|---|
-| Root the phone / "rooted launcher" | **No** — an app cannot gain Android root | **Developer mode**: full control of the launcher, its apps and settings, inside the app (§2.11) |
-| Real hacking tools (port scans, sniffing, Wi-Fi attacks) | **No** — a WebView has no raw sockets or system access, and it would not be appropriate | Offline, educational **security & cryptography samples** (§2.11) |
-| Hide my real IP / look like I'm on a PC / change fingerprint | **No** — an app cannot spoof your IP or device at the system level; that needs a real VPN/Tor | A private **incognito tab** (no history/cookies, cleared on close) + an **open-externally** button to a real browser/Tor; the honest limit is shown in-app (§2.12) |
-| Run Chrome-PC extensions inside the browser | **No** — the Android WebView engine has no extension API | A simple private-browsing tab; for extensions use desktop Chrome (§2.12) |
-| Real `nmap` / port scanning / network control from the app | **No** — a WebView has no raw TCP/UDP sockets | An **educational simulated** `nmap`/scan over mock data (console + two samples); an optional hand-off to the **real Termux** app on native Android, restricted to private-range `nmap -sn` (§2.12) |
-| Anti-hack / anti-remote-control / device protection | **No** — blocking device takeover is an OS/root job, not a normal app's | Nothing claims to do this; the editor has an offline static **code review** (`بررسی`) that flags risky patterns only |
-| Run real Linux/Termux binaries or packages in the console | **No** — the console is a simulated shell in the WebView | A POSIX-ish shell over a **virtual** filesystem; `termux <cmd>` can hand a command to the real Termux app on native (§2.12) |
-| Gemini doing things "without being asked" | Not built — every request is a button press | One-time key, always connected; ask / build an app / improve a file on demand |
-| Be a real Android home-screen launcher | **No** — CodePad is a normal app | A phone-style home screen inside CodePad |
-| Background music, notifications, widgets, multi-window | No | Audio while the app is open; toasts |
-| `localStorage` inside an installed app | No (sandboxed frame) | `jibos.storage` |
-| Vibration / text-to-speech | Depends on the device WebView | `jibos.vibrate` / `jibos.speak` return `false` when unavailable |
-
-### 4.6 Runtime limits
+### 4.5 Runtime limits
 - Time limits: Python 25 s; JavaScript, C/C++ and Jib 2.5 s; binary 300 steps. An infinite loop is stopped with a timeout message, and the **توقف** button stops a run.
 - There is no real file system for programs. Python's `open()` works on Pyodide's temporary in-memory file system; files a program writes are not saved. Programs **can** read the user's attachments (§2.8): Python through `open("name")`, pages through the file name in a URL or `assetText("name")`. Programs cannot read the project's code files, except HTML `<link>`/`<script src>` inlining (§2.7).
 - There is no network for programs: no pip, no HTTP requests from Python, no fetch from pages.
@@ -554,7 +386,7 @@ Consequences (the first three were checked in headless Chrome):
 
 ---
 
-## 5. Worked examples (tested in CodePad v1.7.0)
+## 5. Worked examples (both tested in CodePad v1.6.0)
 
 ### 5.1 A simple HTML page (`index.html`)
 ```html
@@ -879,18 +711,11 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 8. Use a mobile layout: a viewport fitting about 360 px wide, touch/pointer events (`pointerdown`), and large buttons.
 9. Tell the user: press **اجرا**, then look at **صفحه** (graphics) or **خروجی** (text). Switching tabs restarts a page.
 10. To give the user a program together with its images or data, deliver **one `.jibpack`** (§2.9) instead of asking for separate uploads.
-11. For an app meant for the launcher: ship `index.html` (or `main.mix`), use `jibos.storage` to save data, `jibos.beep`/`jibos.play` for sound, and guard every call with `if (window.jibos)` so it still runs in the editor.
-12. If the program needs the user's images or files: ask for their exact names, use flat names in full literal strings (§2.8), read data in a page with `assetText(...)` (not `fetch`), read data in Python with `open(...)`, and tell the user to upload them first via **افزودن عکس یا فایل**.
+11. If the program needs the user's images or files: ask for their exact names, use flat names in full literal strings (§2.8), read data in a page with `assetText(...)` (not `fetch`), read data in Python with `open(...)`, and tell the user to upload them first via **افزودن عکس یا فایل**.
 
 ## 7. Getting the Android app (APK)
 - Latest release: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest
-- Direct download, **v2.2.0** (adds the **Nava** language: Persian one-line commands for apps, games, 2D canvas, lightweight WebGL 3D, storage and Gemini `بپرس`; five Nava samples): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.2.0/CodePad.apk
-- v2.1.0 (adds terminal shell over a virtual filesystem, private browser, multi-page home + export/backup, simulated nmap/port-scan samples, optional Termux hand-off): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.1.0/CodePad.apk
-- v2.0.0 (JibOS launcher: neon-terminal theme, wallpapers, custom icons, Gemini, `window.jibos`, developer mode, security samples): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.0.0/CodePad.apk
-- v1.9.0 (adds the launcher): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.9.0/CodePad.apk
-- v1.8.0 (packs and the built-in image snake sample): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.8.0/CodePad.apk
-- v1.7.0 (attachments, no packs): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.7.0/CodePad.apk
-- Previous version, v1.6.0 (no attachments): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.6.0/CodePad.apk
+- Direct download, v1.6.0: https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.6.0/CodePad.apk (about 12.4 MB)
 - Source: https://github.com/hoosein91hoosein91-arch/CodePad
 - Each APK is a **debug build** from GitHub Actions (`./gradlew assembleDebug`). It is not release-signed and is not on Google Play.
   - Android will ask you to allow **installing from unknown sources** for your browser or file manager.
@@ -903,13 +728,12 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 - Checks:
   - `npx tsc --noEmit`
   - `npx eslint .`
-  - `node --experimental-strip-types scripts/jib-selftest.mjs` with Node 22+ (or `npx -y node@22 scripts/jib-selftest.mjs`; must print `ALL PASSED`). Since v2.0.0 it also checks the sample packs, the crypto helpers, launcher settings validation and the Gemini request/response/error path with a fake `fetch`.
+  - `npx -y node@22 scripts/jib-selftest.mjs` (must print `ALL PASSED`)
 
 ## 9. Where things live
 | File | What it does |
 |---|---|
 | `src/labshell/types.ts` | language ids, labels, extensions (`LANG_META`) |
-| `src/labshell/nava.ts`, `src/labshell/nava-runtime.ts`, `NAVA-GUIDE.md` | Nava parser/checker/page builder; embedded interpreter (`navaEngine`) and page/canvas/WebGL/audio/storage/AI layer (`navaDom`); full Persian reference |
 | `src/labshell/mix.ts` | mix parser, aliases, auto-detection, `shared`, page assembly (`runMix`) |
 | `src/labshell/html-doc.ts` | page document builder, CSP, console bridge, `buildWebDoc`, attachment embedding (`withAssets`) |
 | `src/labshell/runtime.ts` | Python/JS/C/Jib runners, time limits, the input re-run loop, sending attachments to the Python worker |
@@ -917,16 +741,9 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 | `src/labshell/farsi.ts`, `english.ts` | Jib compiler (Farsi + English keywords) |
 | `src/labshell/binary.ts` | 8-bit machine |
 | `src/labshell/open-files.ts` | opening external files, extension map, 1 MB code limit, routing everything else to attachments |
-| `src/labshell/assets.ts` | attachments: IndexedDB storage, add/remove, `data:` URLs for pages |
 | `src/labshell/pack.ts` | `.jibpack` parser: code files + base64 attachments in one text file |
-| `src/labshell/pack-samples.ts`, `src/labshell/packs/*.jibpack` | built-in pack samples shown under **پروژهٔ تازه** and in the launcher (snake, piano, security samples, five Nava samples) |
 | `scripts/make-pack.mjs` | builds a `.jibpack` from a folder |
-| `src/routes/launcher.tsx`, `src/labshell/launcher.ts`, `src/components/launcher-button.tsx` | launcher home screen, installed-apps store, editor toolbar button |
-| `src/components/launcher/*` | JibOS UI: app window + `jibos` bridge handler (`app-window.tsx`), settings, Gemini, app customize/editor/install sheets, developer mode (`dev-sheet.tsx`), console (`terminal.tsx`), matrix rain |
-| `src/labshell/launcher-prefs.ts` | launcher themes, wallpapers, accents, settings validation |
-| `src/labshell/gemini.ts` | Gemini REST call (`generateContent`), on-device key storage, prompts, code extraction |
-| `src/labshell/jibos.ts` | `window.jibos` client script injected into installed apps, per-app storage |
-| `src/labshell/crypto-utils.ts` | SHA (WebCrypto), base64, hex, XOR, Caesar, entropy, password generator |
+| `src/labshell/assets.ts` | attachments: IndexedDB storage, add/remove, `data:` URLs for pages |
 | `src/labshell/asset-refs.ts` | pure helpers: finding and replacing attachment names in code, `assetText`/`assetBytes` page helpers |
 | `src/labshell/samples.ts` | built-in samples and project templates |
 | `src/components/lab-shell.tsx` | UI, Run button, tabs, sandboxed iframe |

@@ -1,0 +1,399 @@
+{
+  "language": "Nava",
+  "version": "0.4",
+  "extension": ".nava",
+  "caseSensitive": true,
+  "oneInstructionPerLine": true,
+  "components": [
+    {
+      "id": "calculator",
+      "command": "cal",
+      "aliases": [
+        "ماشین‌حساب",
+        "ماشین حساب",
+        "ماشینحساب",
+        "calculator"
+      ],
+      "example": "cal mb",
+      "description": "ماشین‌حساب آفلاین با محاسبات، پرانتز، درصد، تاریخچه و صفحه‌کلید"
+    },
+    {
+      "id": "counter",
+      "command": "cnt",
+      "aliases": [
+        "شمارنده",
+        "counter"
+      ],
+      "example": "cnt",
+      "description": "شمارندهٔ آماده با افزایش، کاهش و بازنشانی"
+    },
+    {
+      "id": "timer",
+      "command": "tm",
+      "aliases": [
+        "تایمر",
+        "timer"
+      ],
+      "example": "tm ۶۰",
+      "description": "تایمر ثانیه‌ای با شروع، مکث و بازنشانی"
+    },
+    {
+      "id": "voxel",
+      "command": "vx",
+      "aliases": [
+        "جهان بلوکی",
+        "voxel"
+      ],
+      "example": "vx sz ۲۴ sd ۷",
+      "description": "نمونهٔ سه‌بعدی آفلاین با پرواز، ساخت‌وساز، بلوک سفارشی و خروجی JSON"
+    }
+  ],
+  "examples": [
+    {
+      "id": "calculator",
+      "title": "ماشین‌حساب",
+      "code": "pg \"ماشین‌حساب\"\nfg #67f5a5\ncal mb\n"
+    },
+    {
+      "id": "voxel",
+      "title": "دنیای بلوکی",
+      "code": "pg \"دنیای من\"\nvx sz ۲۴ sd ۷\nbl \"یاقوت\" #dc477b\n"
+    },
+    {
+      "id": "timer",
+      "title": "تایمر",
+      "code": "pg \"یک دقیقه\"\ntm ۶۰\n"
+    },
+    {
+      "id": "packed-button",
+      "title": "دکمهٔ فشرده",
+      "code": "bt \"شروع\" (ru240rn64yGi65G72): sy \"تو باختی\"\n"
+    },
+    {
+      "id": "counter",
+      "title": "شمارنده",
+      "code": "pg \"امتیاز من\"\ncnt\n"
+    }
+  ],
+  "primitives": [
+    "pg \"title\"",
+    "ap \"name\"",
+    "hd \"text\"",
+    "tx \"text\"",
+    "fg #67f5a5",
+    "bg #101410",
+    "num n = 0",
+    "var message = \"text\"",
+    "in name \"hint\"",
+    "out \"Count: {n}\"",
+    "bt \"Add\": n = n + 1",
+    "img \"asset.png\"",
+    "bl \"Ruby\" #dc477b",
+    "bt \"Hello\" (ru240rn64yGi65G72): sy \"Hello!\""
+  ],
+  "recipes": {
+    "define": "df \"name\"",
+    "end": "end",
+    "use": "us \"name\"",
+    "nestedDefinitions": false,
+    "cycles": false
+  },
+  "limits": {
+    "sourceCharacters": 1000000,
+    "expandedLines": 10000,
+    "recipeDepth": 32,
+    "timerSeconds": [
+      1,
+      86400
+    ],
+    "worldWidth": [
+      12,
+      48
+    ],
+    "worldHeight": 20,
+    "customMaterials": 32,
+    "componentsPerPage": 32,
+    "voxelWorldsPerPage": 2
+  },
+  "notImplemented": [
+    "native Android app compilation",
+    "Minecraft mod compatibility",
+    "infinite terrain",
+    "survival",
+    "multiplayer",
+    "world JSON import"
+  ],
+  "modelInstructions": "You are helping write Nava 0.4 programs in CodePad. Write abbreviated keywords by default. The complete implemented keyword registry is: pg=صفحه; ap=برنامه; hd=عنوان; tx=متن; fg=رنگ; bg=پس‌زمینه; num=عدد; var=متغیر; in=ورودی; out=نمایش; bt=دکمه; img=عکس; alt=توضیح; sy=بگو; on=وقتی زده شد; cal=ماشین‌حساب; mb=موبایل; cnt=شمارنده; tm=تایمر; vx=جهان بلوکی; sz=اندازه; sd=بذر; bl=بلوک; df=تعریف; end=پایان; us=استفاده; tr=درست; fl=نادرست. Each instruction is on its own line; no @@, HTML or JavaScript. Preserve every quoted literal exactly, including visible messages, button labels, image paths, recipe names and interpolation placeholders. Preserve user variable names; do not abbreviate identifiers. Keywords are case-sensitive. Existing Persian and English component aliases still work. Do not invent commands. Boolean literals tr/fl are reserved identifiers. High-level components: cal mb = ماشین‌حساب آفلاین با محاسبات، پرانتز، درصد، تاریخچه و صفحه‌کلید; cnt = شمارندهٔ آماده با افزایش، کاهش و بازنشانی; tm ۶۰ = تایمر ثانیه‌ای با شروع، مکث و بازنشانی; vx sz ۲۴ sd ۷ = نمونهٔ سه‌بعدی آفلاین با پرواز، ساخت‌وساز، بلوک سفارشی و خروجی JSON. Other syntax: pg \"title\", ap \"name\", hd \"text\", tx \"text\", fg #67f5a5, bg #101410, num n = 0, var message = \"text\", var ready = tr, in name \"hint\", out \"Count: {n}\", bt \"Add\": n = n + 1, img \"asset.png\" alt \"description\". Message button: bt \"Start\" (ru240rn64yGi65G72): sy \"تو باختی\". Use a colon or on as the click separator. The capsule is optional: ru=horizontal pixels 1..8192, rn=vertical pixels 1..2048, y=deterministic solid two-color details. Sizes scale to available width; minimum target width 64px and minimum touch height 44px. Palette is case-sensitive: Gi65=#e66464, G72=#a5a7ae, B48=#5ca8f8, V36=#b29af5, N24=#67f5a5, D08=#20262d, W90=#f1f3f5, O52=#ffbd66. Choose two different codes, no color blending. Button actions: assignment to an existing variable, sy \"message\", or omitted for appearance only. Add voxel materials: bl \"Ruby\" #de3555. Named recipes: df \"name\", instructions, end; invoke with us \"name\". Minimal calculator: cal. Worlds are bounded creative demos, not Minecraft. Do not claim full Minecraft mods, infinite worlds, multiplayer, native APK compilation, arbitrary 100000 commands or unavailable libraries. Reply with actual abbreviated Nava source when code is requested.",
+  "buttonAppearance": {
+    "syntax": "(ru<width>rn<height>y<firstColor><secondColor>)",
+    "example": "(ru5736rn728yGi65G72)",
+    "widthPixels": [
+      1,
+      8192
+    ],
+    "heightPixels": [
+      1,
+      2048
+    ],
+    "palette": {
+      "Gi65": {
+        "color": "#e66464",
+        "name": "قرمز ملایم"
+      },
+      "G72": {
+        "color": "#a5a7ae",
+        "name": "توسی"
+      },
+      "B48": {
+        "color": "#5ca8f8",
+        "name": "آبی"
+      },
+      "V36": {
+        "color": "#b29af5",
+        "name": "بنفش"
+      },
+      "N24": {
+        "color": "#67f5a5",
+        "name": "سبز"
+      },
+      "D08": {
+        "color": "#20262d",
+        "name": "زغالی"
+      },
+      "W90": {
+        "color": "#f1f3f5",
+        "name": "سفید"
+      },
+      "O52": {
+        "color": "#ffbd66",
+        "name": "نارنجی"
+      }
+    },
+    "distinctColorsRequired": true,
+    "deterministicLayout": true,
+    "layoutCount": 4,
+    "colorMixing": false,
+    "responsive": true,
+    "minimumTargetWidth": 64,
+    "minimumTouchHeight": 44,
+    "actions": [
+      "assignment to existing variable",
+      "sy \"message\"",
+      "omitted = no action"
+    ]
+  },
+  "defaultSyntax": "abbreviated",
+  "backwardCompatible": true,
+  "keywordRegistry": [
+    {
+      "short": "pg",
+      "long": "صفحه",
+      "role": "command",
+      "meaning": "صفحه"
+    },
+    {
+      "short": "ap",
+      "long": "برنامه",
+      "role": "command",
+      "meaning": "نام برنامه"
+    },
+    {
+      "short": "hd",
+      "long": "عنوان",
+      "role": "command",
+      "meaning": "عنوان"
+    },
+    {
+      "short": "tx",
+      "long": "متن",
+      "role": "command",
+      "meaning": "متن"
+    },
+    {
+      "short": "fg",
+      "long": "رنگ",
+      "role": "command",
+      "meaning": "رنگ اصلی"
+    },
+    {
+      "short": "bg",
+      "long": "پس‌زمینه",
+      "role": "command",
+      "meaning": "پس‌زمینه",
+      "aliases": [
+        "پسزمینه"
+      ]
+    },
+    {
+      "short": "num",
+      "long": "عدد",
+      "role": "command",
+      "meaning": "متغیر عددی"
+    },
+    {
+      "short": "var",
+      "long": "متغیر",
+      "role": "command",
+      "meaning": "متغیر"
+    },
+    {
+      "short": "in",
+      "long": "ورودی",
+      "role": "command",
+      "meaning": "ورودی"
+    },
+    {
+      "short": "out",
+      "long": "نمایش",
+      "role": "command",
+      "meaning": "نمایش مقدار"
+    },
+    {
+      "short": "bt",
+      "long": "دکمه",
+      "role": "command",
+      "meaning": "دکمه"
+    },
+    {
+      "short": "img",
+      "long": "عکس",
+      "role": "command",
+      "meaning": "عکس"
+    },
+    {
+      "short": "alt",
+      "long": "توضیح",
+      "role": "option",
+      "meaning": "توضیح عکس"
+    },
+    {
+      "short": "sy",
+      "long": "بگو",
+      "role": "action",
+      "meaning": "نمایش پیام کلیک"
+    },
+    {
+      "short": "on",
+      "long": "وقتی زده شد",
+      "role": "separator",
+      "meaning": "فرمان کلیک؛ به‌جای :"
+    },
+    {
+      "short": "cal",
+      "long": "ماشین‌حساب",
+      "role": "command",
+      "meaning": "ماشین‌حساب",
+      "aliases": [
+        "ماشین حساب",
+        "ماشینحساب",
+        "calculator",
+        "ماشین-حساب"
+      ]
+    },
+    {
+      "short": "mb",
+      "long": "موبایل",
+      "role": "option",
+      "meaning": "قالب موبایل",
+      "aliases": [
+        "mobile"
+      ]
+    },
+    {
+      "short": "cnt",
+      "long": "شمارنده",
+      "role": "command",
+      "meaning": "شمارنده",
+      "aliases": [
+        "counter"
+      ]
+    },
+    {
+      "short": "tm",
+      "long": "تایمر",
+      "role": "command",
+      "meaning": "تایمر",
+      "aliases": [
+        "timer"
+      ]
+    },
+    {
+      "short": "vx",
+      "long": "جهان بلوکی",
+      "role": "command",
+      "meaning": "جهان بلوکی",
+      "aliases": [
+        "voxel"
+      ]
+    },
+    {
+      "short": "sz",
+      "long": "اندازه",
+      "role": "option",
+      "meaning": "اندازهٔ جهان"
+    },
+    {
+      "short": "sd",
+      "long": "بذر",
+      "role": "option",
+      "meaning": "بذر جهان"
+    },
+    {
+      "short": "bl",
+      "long": "بلوک",
+      "role": "command",
+      "meaning": "بلوک سفارشی"
+    },
+    {
+      "short": "df",
+      "long": "تعریف",
+      "role": "command",
+      "meaning": "تعریف بسته"
+    },
+    {
+      "short": "end",
+      "long": "پایان",
+      "role": "command",
+      "meaning": "پایان بسته"
+    },
+    {
+      "short": "us",
+      "long": "استفاده",
+      "role": "command",
+      "meaning": "استفاده از بسته"
+    },
+    {
+      "short": "tr",
+      "long": "درست",
+      "role": "literal",
+      "meaning": "مقدار درست",
+      "aliases": [
+        "true"
+      ]
+    },
+    {
+      "short": "fl",
+      "long": "نادرست",
+      "role": "literal",
+      "meaning": "مقدار نادرست",
+      "aliases": [
+        "false"
+      ]
+    }
+  ],
+  "literalRules": {
+    "quotedStrings": "preserved verbatim during compaction",
+    "identifiers": "preserved, never abbreviated",
+    "reservedBooleanNames": [
+      "tr",
+      "fl",
+      "درست",
+      "نادرست",
+      "true",
+      "false"
+    ],
+    "comments": "preserved",
+    "lineEndings": "preserved",
+    "normalization": "contextual, outside strings only"
+  }
+}

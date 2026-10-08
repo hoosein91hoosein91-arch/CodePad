@@ -18,7 +18,7 @@ const MAGIC = /^\s*@@@\s*jibpack\b[ \t]*(\d+)?[ \t]*(.*)$/i;
 const SECTION = /^@@@\s*(file|asset)\s+(.+?)\s*$/i;
 
 export function isPackText(text: string): boolean {
-  const first = text.replace(/^\uFEFF/, "").split(/\r?\n/).find((line) => line.trim());
+  const first = text.replace(/^﻿/, "").split(/\r?\n/).find((line) => line.trim());
   return !!first && MAGIC.test(first);
 }
 
@@ -36,7 +36,7 @@ export function fromBase64(text: string): Uint8Array<ArrayBuffer> | null {
 }
 
 export function parsePack(source: string): Pack | null {
-  const rows = source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n");
+  const rows = source.replace(/^﻿/, "").replace(/\r\n?/g, "\n").split("\n");
   const start = rows.findIndex((row) => row.trim());
   const head = start >= 0 ? rows[start].match(MAGIC) : null;
   if (!head) return null;

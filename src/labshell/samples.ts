@@ -1,4 +1,5 @@
 import { LANG_META, type LabFile, type Lang, type Project, type TemplateKind } from "@/labshell/types";
+import { NAVA_PRESETS } from "@/labshell/nava-kit";
 
 const FARSI = `# دماسنج — خود کد فارسی است
 # متغیر، اگر، چاپ، تابع، برای، بخوان، صفحه
@@ -153,20 +154,7 @@ const HTML = `<!doctype html>
 </html>
 `;
 
-const NAVA = `# نوا؛ هر خط یک دستور ساده است — «اجرا» را بزن
-برنامه "شمارندهٔ من"
-رنگ #c6f135
-عنوان "سلام! 👋"
-متن "با چند خط کوتاه یک برنامهٔ واقعی بساز. راهنما: NAVA-GUIDE.md"
-عدد شمارنده = ۰
-ذخیره شمارنده
-نمایش "تعداد کلیک: {شمارنده}"
-نمایش "🎉 به ده رسیدی!" اگر شمارنده >= ۱۰
-ردیف
-  دکمه "یکی اضافه کن": شمارنده += ۱؛ صدا ۶۶۰، ۶۰
-  دکمه "از اول": شمارنده = ۰
-پایان
-`;
+const NAVA = NAVA_PRESETS[0].code;
 
 const CSS = `body {
   margin: 0;
@@ -361,10 +349,10 @@ function fileFrom(lang: Lang, id: string): LabFile {
 }
 
 export const SEED_PROJECT: Project = {
-  id: "proj-jib",
-  name: "برنامهٔ ترکیبی",
-  activeFileId: "file-mix",
-  files: [fileFrom("mix", "file-mix"), fileFrom("english", "file-jib")],
+  id: "proj-nava",
+  name: "شروع با نوا",
+  activeFileId: "file-nava",
+  files: [fileFrom("nava", "file-nava")],
 };
 
 export function uid(prefix: string): string {
@@ -410,7 +398,7 @@ export function createFile(lang: Lang, takenNames: string[]): LabFile {
 }
 
 export const TEMPLATE_CHOICES: { kind: TemplateKind; title: string; detail: string }[] = [
-  { kind: "nava", title: "نوا", detail: "زبان سادهٔ فارسی: شرط، حلقه، کنش، زمان‌سنج، بوم، سه‌بعدی، ذخیره و هوش مصنوعی" },
+  { kind: "nava", title: "نوا", detail: "زبان فشرده با دستورهای کوتاه؛ متن برنامه فارسی یا هر زبان دلخواه" },
   { kind: "mix", title: "آزمایشگاه کامل", detail: "فایل ترکیبی، جیب، جیب فارسی و ماشین" },
   { kind: "english", title: "جیب", detail: "برنامه، لیست و ماشین ۰ و ۱" },
   { kind: "binary", title: "ماشین ۰ و ۱", detail: "دستورهای هشت‌بیتی و لامپ‌ها" },

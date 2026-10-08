@@ -10,8 +10,12 @@ const EXT: Record<string, Lang> = { nava: "nava", mix: "mix", fa: "farsi", jib: 
 const HELP = [
   "help                 این راهنما",
   "ls / pwd             فهرست فایل‌ها و پیوست‌ها / مسیر",
-  "cat f / touch f / rm f   خواندن / ساختن / حذف فایل (پسوند: nava mix fa jib bit py js c cpp css html)",
+  "cat f / touch f / rm f   خواندن / ساختن / حذف فایل (پسوند: mix fa jib bit py js c cpp css html)",
   "run [f]  (python f، node f)   اجرای فایل",
+  "termux <command>        ارسال دستور به Termux در Android (نشست جدا و با تأیید تو)",
+  "termux pkg install nmap   نصب ابزار Nmap در Termux",
+  "termux nmap -sn <شبکهٔ خصوصی>   کشف دستگاه‌های شبکهٔ محلی؛ فقط بازه‌های خصوصی IPv4",
+  "Termux: نصب بودن Termux، مجوز RUN_COMMAND و allow-external-apps=true لازم است؛ هر دستور جداگانه تأیید می‌شود.",
   "venv create|ls|activate|deactivate <name>   محیط مجازی جدا",
   "pkg list             زبان‌ها و موتورهای موجود",
   "echo / date / uname / clear",

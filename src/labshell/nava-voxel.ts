@@ -1,0 +1,121 @@
+export function createVoxelWorld(size: number, seed: number): Uint8Array {
+  const world = new Uint8Array(size * size * 20);
+  const put = (x: number, y: number, z: number, value: number) => { if (x >= 0 && x < size && z >= 0 && z < size && y >= 0 && y < 20) world[(y * size + z) * size + x] = value; };
+  let randomSeed = seed >>> 0;
+  const random = () => { randomSeed = (Math.imul(randomSeed, 1664525) + 1013904223) >>> 0; return randomSeed / 4294967296; };
+  for (let x = 0; x < size; x++) for (let z = 0; z < size; z++) {
+    const height = 4 + Math.floor(1.8 * Math.sin((x + seed % 37) * .26) + 1.4 * Math.cos(z * .31));
+    for (let y = 0; y <= height; y++) put(x, y, z, y === height ? 1 : y > height - 3 ? 2 : 3);
+    if (random() < .045 && Math.abs(x - size / 2) + Math.abs(z - size / 2) > 5) {
+      for (let y = height + 1; y <= height + 4; y++) put(x, y, z, 4);
+      for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (let dy = 3; dy <= 5; dy++) {
+        if (Math.abs(dx) + Math.abs(dz) < 4) put(x + dx, height + dy, z + dz, 5);
+      }
+    }
+  }
+  return world;
+}
+
+export function castVoxelRay(world: Uint8Array, size: number, origin: number[], direction: number[], max: number) {
+  let [x, y, z] = origin.map(Math.floor);
+  const [dx, dy, dz] = direction;
+  const step = [dx < 0 ? -1 : 1, dy < 0 ? -1 : 1, dz < 0 ? -1 : 1];
+  const delta = direction.map((value) => value === 0 ? Infinity : Math.abs(1 / value));
+  const next = [x, y, z].map((value, axis) => direction[axis] === 0 ? Infinity : ((value + (step[axis] > 0 ? 1 : 0)) - origin[axis]) / direction[axis]);
+  let distance = 0, face = 1, previous = [x, y, z];
+  for (let n = 0; n < 180 && distance <= max; n++) {
+    if (x < 0 || x >= size || z < 0 || z >= size || y < 0 || y >= 20) return null;
+    const id = world[(y * size + z) * size + x];
+    if (id) return { x, y, z, id, distance, face, previous };
+    previous = [x, y, z];
+    if (next[0] < next[1] && next[0] < next[2]) { distance = next[0]; next[0] += delta[0]; x += step[0]; face = 0; }
+    else if (next[1] < next[2]) { distance = next[1]; next[1] += delta[1]; y += step[1]; face = 1; }
+    else { distance = next[2]; next[2] += delta[2]; z += step[2]; face = 2; }
+  }
+  return null;
+}
+
+function mountVoxel(id: string, config: { size: number; seed: number; materials: { name: string; color: string }[] }, create: typeof createVoxelWorld, cast: typeof castVoxelRay) {
+  const root = document.getElementById(id)!;
+  const canvas = root.querySelector<HTMLCanvasElement>("canvas")!;
+  const ctx = canvas.getContext("2d", { alpha: false })!;
+  const world = create(config.size, config.seed);
+  const materials = [null, { name: "چمن", color: "#68a94b" }, { name: "خاک", color: "#957353" }, { name: "سنگ", color: "#8e9da5" }, { name: "چوب", color: "#795133" }, { name: "برگ", color: "#427d40" }, ...config.materials];
+  const palette = materials.map((m) => m ? [1, 3, 5].map((end) => parseInt(m.color.slice(end, end + 2), 16)) : [0, 0, 0]);
+  const select = root.querySelector<HTMLSelectElement>("select")!;
+  for (let i = 1; i < materials.length; i++) { const option = document.createElement("option"); option.value = String(i); option.textContent = materials[i]!.name; select.append(option); }
+  let x = config.size / 2 + .5, z = config.size / 2 + .5, y = 19, yaw = .55, pitch = -.25;
+  while (y > 0 && !world[(y * config.size + Math.floor(z)) * config.size + Math.floor(x)]) y--;
+  y = Math.min(18.5, y + 4);
+  const pressed = new Set<string>();
+  const forward = () => [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+  const edit = (remove: boolean) => {
+    const hit = cast(world, config.size, [x, y, z], forward(), 12);
+    if (!hit) return;
+    const cell = remove ? [hit.x, hit.y, hit.z] : hit.previous;
+    const [a, b, c] = cell;
+    if (b <= 0 || a < 0 || a >= config.size || c < 0 || c >= config.size || b >= 20) return;
+    world[(b * config.size + c) * config.size + a] = remove ? 0 : Number(select.value || 1);
+  };
+  root.querySelector('[data-voxel="break"]')!.addEventListener("click", () => edit(true));
+  root.querySelector('[data-voxel="place"]')!.addEventListener("click", () => edit(false));
+  root.querySelector('[data-voxel="export"]')!.addEventListener("click", () => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ format: "nava-world-1", ...config, blocks: Array.from(world) })], { type: "application/json" }));
+    const link = document.createElement("a"); link.href = url; link.download = "nava-world.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  root.querySelectorAll<HTMLElement>("[data-move]").forEach((button) => {
+    button.addEventListener("pointerdown", (event) => { event.preventDefault(); button.setPointerCapture(event.pointerId); pressed.add(button.dataset.move!); root.focus({ preventScroll: true }); });
+    const release = () => pressed.delete(button.dataset.move!);
+    button.addEventListener("pointerup", release); button.addEventListener("pointercancel", release); button.addEventListener("lostpointercapture", release);
+  });
+  root.addEventListener("keydown", (event) => { const key = event.key.toLowerCase(); if (["w", "a", "s", "d", "q", "e"].includes(key)) { event.preventDefault(); pressed.add(key); } });
+  root.addEventListener("keyup", (event) => pressed.delete(event.key.toLowerCase()));
+  window.addEventListener("blur", () => pressed.clear());
+  let drag: { x: number; y: number; id: number } | null = null;
+  canvas.addEventListener("pointerdown", (event) => { canvas.setPointerCapture(event.pointerId); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; root.focus({ preventScroll: true }); });
+  canvas.addEventListener("pointermove", (event) => { if (!drag || drag.id !== event.pointerId) return; yaw += (event.clientX - drag.x) * .009; pitch = Math.max(-1.4, Math.min(1.4, pitch - (event.clientY - drag.y) * .009)); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; });
+  canvas.addEventListener("pointerup", () => { drag = null; }); canvas.addEventListener("pointercancel", () => { drag = null; });
+  canvas.width = 120; canvas.height = 90;
+  const image = ctx.createImageData(canvas.width, canvas.height);
+  let last = 0;
+  const frame = (time: number) => {
+    requestAnimationFrame(frame);
+    if (document.hidden || time - last < 75) return;
+    const dt = Math.min(.12, (time - last) / 1000); last = time;
+    const move = (pressed.has("w") ? 1 : 0) - (pressed.has("s") ? 1 : 0), side = (pressed.has("d") ? 1 : 0) - (pressed.has("a") ? 1 : 0);
+    const speed = 4 * dt / (move && side ? Math.SQRT2 : 1);
+    x = Math.max(.1, Math.min(config.size - .1, x + (Math.sin(yaw) * move + Math.cos(yaw) * side) * speed));
+    z = Math.max(.1, Math.min(config.size - .1, z + (Math.cos(yaw) * move - Math.sin(yaw) * side) * speed));
+    y = Math.max(.5, Math.min(19.5, y + ((pressed.has("e") ? 1 : 0) - (pressed.has("q") ? 1 : 0)) * speed));
+    const front = forward(), right = [Math.cos(yaw), 0, -Math.sin(yaw)], up = [-Math.sin(yaw) * Math.sin(pitch), Math.cos(pitch), -Math.cos(yaw) * Math.sin(pitch)];
+    for (let py = 0; py < canvas.height; py++) for (let px = 0; px < canvas.width; px++) {
+      const sx = (px / canvas.width - .5) * 1.4, sy = (.5 - py / canvas.height) * 1.05;
+      const direction = front.map((v, axis) => v + right[axis] * sx + up[axis] * sy);
+      const norm = Math.hypot(...direction); for (let i = 0; i < 3; i++) direction[i] /= norm;
+      const hit = cast(world, config.size, [x, y, z], direction, 28);
+      const offset = (py * canvas.width + px) * 4;
+      const sky = [106 + 50 * py / canvas.height, 175 + 28 * py / canvas.height, 210 + 10 * py / canvas.height];
+      if (hit) {
+        const shade = hit.face === 1 ? 1 : hit.face === 0 ? .78 : .9, fog = Math.min(.85, hit.distance / 35);
+        const hx = x + direction[0] * hit.distance, hy = y + direction[1] * hit.distance, hz = z + direction[2] * hit.distance;
+        const fract = (n: number) => n - Math.floor(n);
+        const u = fract(hit.face === 0 ? hz : hx), v = fract(hit.face === 1 ? hz : hy);
+        const grain = 1 + (((Math.floor(u * 12) * 17 ^ Math.floor(v * 12) * 31 ^ hit.x * 13 ^ hit.z * 7) & 15) - 7) * .018;
+        const edge = u < .025 || u > .975 || v < .025 || v > .975 ? .88 : 1;
+        const color = hit.id === 1 && hit.face !== 1 && fract(hy) < .82 ? [144, 108, 72] : palette[hit.id];
+        for (let i = 0; i < 3; i++) image.data[offset + i] = color[i] * shade * grain * edge * (1 - fog) + sky[i] * fog;
+      } else for (let i = 0; i < 3; i++) image.data[offset + i] = sky[i];
+      image.data[offset + 3] = 255;
+    }
+    ctx.putImageData(image, 0, 0);
+  };
+  requestAnimationFrame(frame);
+}
+
+export function voxelKit(id: string, size: number, seed: number, materials: { name: string; color: string }[]) {
+  return {
+    html: `<section id="${id}" class="nv-voxel" tabindex="0"><div class="nv-voxel-view"><canvas aria-label="دنیای بلوکی سه‌بعدی"></canvas><div class="nv-cross">+</div><span class="nv-world-badge">دنیای بلوکی · پرواز آزاد</span></div><p class="nv-voxel-hint">روی تصویر بکش تا نگاه کنی. WASD حرکت و Q/E پایین و بالا.</p><select aria-label="بلوک انتخابی"></select><div class="nv-voxel-actions"><button data-voxel="break">شکستن</button><button data-voxel="place">گذاشتن</button><button data-voxel="export">خروجی جهان</button></div><div class="nv-moves" dir="ltr"><button data-move="a">←</button><button data-move="w">↑</button><button data-move="d">→</button><button data-move="q">پایین</button><button data-move="s">↓</button><button data-move="e">بالا</button></div></section>`,
+    css: `.nv-voxel{outline:none}.nv-voxel-view{position:relative;border-radius:18px;overflow:hidden;border:1px solid #ffffff25}.nv-voxel canvas{display:block;width:100%;aspect-ratio:4/3;image-rendering:pixelated;touch-action:none}.nv-cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-shadow:0 1px 2px #000;font:22px monospace;pointer-events:none}.nv-world-badge{position:absolute;top:10px;right:10px;padding:5px 9px;background:#0b1519aa;border-radius:8px;font-size:10px}.nv-voxel-hint{font-size:11px;line-height:1.8;color:#b8c6ba}.nv-voxel select{width:100%;height:40px;border:1px solid #ffffff25;background:#25342b;color:white;border-radius:10px;font:inherit}.nv-voxel-actions,.nv-moves{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.nv-voxel button{border:1px solid #ffffff20;background:#25342b;color:#e7f0e4;border-radius:12px;min-height:45px;font:inherit;cursor:pointer;touch-action:none}.nv-moves button{font-size:18px}.nv-moves button:active{background:#5b7536}`,
+    js: `(${mountVoxel.toString()})(${JSON.stringify(id)},${JSON.stringify({ size, seed, materials }).replace(/</g, "\\u003c")},${createVoxelWorld.toString()},${castVoxelRay.toString()});`,
+  };
+}

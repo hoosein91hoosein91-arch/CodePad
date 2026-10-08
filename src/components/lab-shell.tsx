@@ -1,3 +1,4 @@
+import { compactNavaSource } from "@/labshell/nava-short";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronDown, ChevronUp, Download, Eye, File as FileIcon, FolderOpen, Maximize2, Menu, Minimize2, Paperclip, Play, Plus, Redo2, Square, Terminal, Trash2, Undo2, X } from "lucide-react";
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
@@ -10,23 +11,21 @@ import { addAssets, assetUrlsFor, loadAssets, readAssetBlob, removeAsset, useAss
 import { formatSize } from "@/labshell/asset-refs";
 import { buildHtmlDoc, buildWebDoc, webText, withAssets } from "@/labshell/html-doc";
 import { langFromName, listenLaunchFiles, readOpened, takeSharedFiles } from "@/labshell/open-files";
-import { assetFile, parsePack, type Pack } from "@/labshell/pack";
-import { PACK_SAMPLES } from "@/labshell/pack-samples";
+import { assetFile } from "@/labshell/pack";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
 import { compileNava } from "@/labshell/nava";
-import { injectHead, jibosClient, readAppStore, writeAppStore } from "@/labshell/jibos";
-import { appAsk } from "@/labshell/gemini";
 import { isPythonWarm, runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
 import { LANG_META, LANG_ORDER, type Lang, type TermLine, type TermStream } from "@/labshell/types";
 import { CodeEditor } from "@/components/code-editor";
 import { editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/editor-commands";
 import { ThemePanel } from "@/components/theme-panel";
+import { LauncherButton } from "@/components/launcher-button";
 import { runShell } from "@/labshell/shell";
+import { runTermuxCommand } from "@/lib/termux-bridge";
 import type { LabFile } from "@/labshell/types";
 import { MachineView } from "@/components/machine-view";
-import { LauncherButton } from "@/components/launcher-button";
 
 const iconBtn =
   "grid size-10 shrink-0 place-items-center rounded-lab text-paper outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-lime disabled:opacity-40";
@@ -39,24 +38,20 @@ const MIX_BAR = [
   { label: "@@ ماشین", insert: "\n@@ ماشین\n" },
   { label: "@@ html", insert: "\n@@ html\n" },
 ];
-
 const NAVA_BAR = [
-  { label: "عنوان", insert: 'عنوان ""\n' },
-  { label: "متن", insert: 'متن ""\n' },
-  { label: "عدد", insert: "عدد امتیاز = ۰\n" },
-  { label: "لیست", insert: "لیست کارها\n" },
-  { label: "نمایش", insert: 'نمایش "امتیاز: {امتیاز}"\n' },
-  { label: "دکمه", insert: 'دکمه "افزایش": امتیاز += ۱\n' },
-  { label: "ورودی", insert: 'ورودی نام "نامت را بنویس"\n' },
-  { label: "اگر", insert: "اگر امتیاز > ۱۰\n  \nپایان\n" },
-  { label: "تکرار", insert: "تکرار ۳\n  \nپایان\n" },
-  { label: "کنش", insert: "کنش نام\n  \nپایان\n" },
-  { label: "هر ثانیه", insert: "هر ۱ ثانیه\n  \nپایان\n" },
-  { label: "بوم", insert: "بوم ۳۲۰، ۳۲۰\n" },
-  { label: "صحنه", insert: 'صحنه ۳۲۰، ۳۲۰\nمکعب جعبه "#67f5a5"\n' },
-  { label: "ذخیره", insert: "ذخیره امتیاز\n" },
-  { label: "بپرس", insert: "بپرس جواب = سوال\n" },
-  { label: "پایان", insert: "پایان\n" },
+  { label: "bt · دکمه", insert: 'bt "شروع" (ru240rn64yGi65G72): sy "تو باختی"\n' },
+  { label: "cal · ماشین‌حساب", insert: "cal mb\n" },
+  { label: "vx · جهان", insert: "vx sz ۲۴ sd ۷\n" },
+  { label: "pg · صفحه", insert: 'pg "برنامهٔ من"\n' },
+  { label: "tm · تایمر", insert: "tm ۶۰\n" },
+  { label: "cnt · شمارنده", insert: "cnt\n" },
+  { label: "hd · عنوان", insert: 'hd ""\n' },
+  { label: "tx · متن", insert: 'tx ""\n' },
+  { label: "num · عدد", insert: "num امتیاز = ۰\n" },
+  { label: "out · نمایش", insert: 'out "تعداد: {امتیاز}"\n' },
+  { label: "in · ورودی", insert: 'in نام "نامت را بنویس"\n' },
+  { label: "img · عکس", insert: 'img "تصویر.png" alt "توضیح تصویر"\n' },
+  { label: "df · بسته", insert: 'df "ابزار من"\ncal\nend\nus "ابزار من"\n' },
 ];
 
 const KEYS: { label: string; insert?: string; move?: "left" | "right" | "up" | "down" }[] = [
@@ -96,6 +91,21 @@ const STREAM_CLASS: Record<TermStream, string> = {
   out: "text-paper",
   err: "text-coral",
 };
+
+function isAllowedLocalNmap(command: string): boolean {
+  const parts = command.trim().split(/\s+/);
+  if (parts.length !== 3 || parts[0].toLowerCase() !== "nmap" || parts[1] !== "-sn") return false;
+  const [address, mask, extra] = parts[2].split("/");
+  if (extra !== undefined || (mask !== undefined && (!/^\d{1,2}$/.test(mask) || Number(mask) < 24 || Number(mask) > 32))) return false;
+  const octets = address.split(".");
+  if (octets.length !== 4 || octets.some((part) => !/^\d{1,3}$/.test(part) || Number(part) > 255)) return false;
+  const [a, b] = octets.map(Number);
+  return a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+}
+
+function isNmapInstall(command: string): boolean {
+  return /^pkg\s+install\s+nmap(?:\s+-y)?$/i.test(command.trim());
+}
 
 // متنی که صفحهٔ html از آن ساخته می‌شود (خودش + css و js هم‌پروژه‌ای که داخلش گذاشته می‌شوند)؛ برای پیدا کردن نام پیوست‌ها
 function htmlSourceText(file: LabFile, files: LabFile[]): string {
@@ -178,8 +188,6 @@ export function LabShell() {
   const [full, setFull] = useState(false);
   const splitRef = useRef<HTMLDivElement>(null);
   const showFrame = file.lang === "html" || ((file.lang === "mix" || file.lang === "nava") && mixPage?.fileId === file.id);
-  // رمز یک‌بارمصرف پل jibos برای پیش‌نمایش برنامه‌های نوا (حافظه، پیام، هوش مصنوعی)
-  const navaNonce = useRef("");
   const pickRef = useRef<HTMLInputElement>(null);
   const assetPickRef = useRef<HTMLInputElement>(null);
   const assetItems = useAssets((state) => state.items);
@@ -195,37 +203,33 @@ export function LabShell() {
     if (failed.length) state.pushLines([termLine("err", `ذخیره نشد: ${failed.join("، ")}`)]);
   }, []);
 
-  // «بستهٔ جیب»: هر بسته یک پروژهٔ تازه می‌شود؛ کدها داخل پروژه و عکس‌ها/فایل‌ها پیوست آن
-  // (هم برای فایل .jibpack که باز می‌شود و هم برای نمونه‌های آمادهٔ منوی «پروژهٔ تازه»)
-  const openPack = useCallback(async (pack: Pack) => {
-    const state = useLab.getState();
-    if (!pack.files.length) {
-      state.pushLines([termLine("err", `بستهٔ «${pack.name}» فایل کد نداشت.`)]);
-      return;
-    }
-    const projectId = state.importProject(
-      pack.name,
-      pack.files.map((item) => ({ name: item.name, lang: langFromName(item.name), content: item.content })),
-    );
-    const saved = await addAssets(projectId, pack.assets.map(assetFile));
-    state.pushLines([
-      termLine("sys", `بستهٔ «${pack.name}» باز شد: ${pack.files.length} فایل کد و ${saved.added.length + saved.replaced.length} پیوست. برای دیدن نتیجه «اجرا» را بزن.`),
-    ]);
-    const bad = [...pack.problems, ...saved.failed];
-    if (bad.length) state.pushLines([termLine("err", `در بسته ذخیره نشد: ${bad.join("، ")}`)]);
-  }, []);
-
   const bringIn = useCallback(async (files: File[]) => {
     if (!files.length) return;
     const { opened, assets, packs } = await readOpened(files);
     const state = useLab.getState();
-    for (const pack of packs) await openPack(pack);
+    // «بستهٔ جیب»: هر بسته یک پروژهٔ تازه می‌شود؛ کدها داخل پروژه و عکس‌ها/فایل‌ها پیوست آن
+    for (const pack of packs) {
+      if (!pack.files.length) {
+        state.pushLines([termLine("err", `بستهٔ «${pack.name}» فایل کد نداشت.`)]);
+        continue;
+      }
+      const projectId = state.importProject(
+        pack.name,
+        pack.files.map((item) => ({ name: item.name, lang: langFromName(item.name), content: item.content })),
+      );
+      const saved = await addAssets(projectId, pack.assets.map(assetFile));
+      state.pushLines([
+        termLine("sys", `بستهٔ «${pack.name}» باز شد: ${pack.files.length} فایل کد و ${saved.added.length + saved.replaced.length} پیوست. برای دیدن نتیجه «اجرا» را بزن.`),
+      ]);
+      const bad = [...pack.problems, ...saved.failed];
+      if (bad.length) state.pushLines([termLine("err", `در بسته ذخیره نشد: ${bad.join("، ")}`)]);
+    }
     if (opened.length) {
       state.importFiles(opened);
       state.pushLines([termLine("sys", `${opened.length} فایل باز شد: ${opened.map((item) => item.name).join("، ")}`)]);
     }
     if (assets.length) await attach(assets);
-  }, [attach, openPack]);
+  }, [attach]);
   const scroller = useRef<HTMLDivElement>(null);
   const wantsInput = file.lang === "mix" || file.lang === "farsi" || file.lang === "english" || file.lang === "binary" || file.lang === "python" || file.lang === "c" || file.lang === "cpp";
 
@@ -273,39 +277,8 @@ export function LabShell() {
       if (event.source !== frameRef.current?.contentWindow) return;
       useLab.getState().pushLines([termLine(data.k === "error" || data.k === "warn" ? "err" : "out", data.t.slice(0, 2000))]);
     };
-    // پل jibos برای پیش‌نمایش نوا: فقط پیام همین قاب و با همین رمز؛ فقط حافظه، پیام کوتاه و پرسش از Gemini
-    const onJibos = (event: MessageEvent) => {
-      const d = event.data as { jibos?: string; id?: number; cmd?: string; args?: unknown } | null;
-      const win = frameRef.current?.contentWindow;
-      if (!d || typeof d !== "object" || !navaNonce.current || d.jibos !== navaNonce.current || !win || event.source !== win || typeof d.cmd !== "string") return;
-      const reply = (ok: boolean, value?: unknown, error?: string) => win.postMessage({ jibosReply: navaNonce.current, id: d.id, ok, value, error }, "*");
-      const state = useLab.getState();
-      const storeName = `editor:${activeProject(state).name}`;
-      const list = Array.isArray(d.args) ? d.args : [];
-      (async () => {
-        switch (d.cmd) {
-          case "storage.get": return readAppStore(storeName)[String(d.args)] ?? null;
-          case "storage.set": { const store = readAppStore(storeName); store[String(list[0])] = list[1]; writeAppStore(storeName, store); return true; }
-          case "storage.remove": { const store = readAppStore(storeName); delete store[String(d.args)]; writeAppStore(storeName, store); return true; }
-          case "storage.keys": return Object.keys(readAppStore(storeName));
-          case "toast": state.pushLines([termLine("sys", `پیام برنامه: ${String(d.args).slice(0, 200)}`)]); return true;
-          case "ai": {
-            state.pushLines([termLine("sys", "برنامه از Gemini سؤال کرد…")]);
-            return appAsk(activeProject(state).name, String(d.args ?? ""));
-          }
-          default: throw new Error(`فرمان «${d.cmd}» در پیش‌نمایش ویرایشگر در دسترس نیست؛ برنامه را در لانچر نصب کن.`);
-        }
-      })().then(
-        (value) => reply(true, value),
-        (err) => reply(false, undefined, err instanceof Error ? err.message : String(err)),
-      );
-    };
-    window.addEventListener("message", onJibos);
     window.addEventListener("message", onMessage);
-    return () => {
-      window.removeEventListener("message", onMessage);
-      window.removeEventListener("message", onJibos);
-    };
+    return () => window.removeEventListener("message", onMessage);
   }, []);
 
   useEffect(() => {
@@ -351,10 +324,8 @@ export function LabShell() {
       if (token.current !== mine) return;
       const fresh = Math.random().toString(36).slice(2);
       htmlToken.current = fresh;
-      const nonce = crypto.getRandomValues(new Uint32Array(4)).join("-");
-      navaNonce.current = nonce;
-      setMixPage({ fileId: current.id, doc: injectHead(buildWebDoc(web, fresh), jibosClient(nonce, activeProject(state).name)), web });
-      state.pushLines([termLine("sys", "برنامهٔ نوا ساخته شد؛ نتیجه در «صفحه» است.")]);
+      setMixPage({ fileId: current.id, doc: buildWebDoc(web, fresh), web });
+      state.pushLines([termLine("sys", "برنامهٔ نوا ساخته شد. پیش‌نمایش را در صفحه ببین.")]);
       state.setPanel("stage");
       state.setRunning(false);
       return;
@@ -598,22 +569,6 @@ export function LabShell() {
                         >
                           <span className="text-sm">{choice.title}</span>
                           <span className="text-xs text-mist">{choice.detail}</span>
-                        </button>
-                      ))}
-                      {PACK_SAMPLES.map((sample) => (
-                        <button
-                          key={`pack-${sample.id}`}
-                          type="button"
-                          className="flex min-h-11 flex-col items-start justify-center rounded-lab bg-ink px-3 py-2 text-start"
-                          onClick={() => {
-                            setComposer(null);
-                            setMenu(false);
-                            const pack = parsePack(sample.text);
-                            if (pack) void openPack(pack);
-                          }}
-                        >
-                          <span className="text-sm">{sample.title}</span>
-                          <span className="text-xs text-mist">{sample.detail}</span>
                         </button>
                       ))}
                     </div>
@@ -960,6 +915,30 @@ export function LabShell() {
                 const text = shellInput.trim();
                 setShellInput("");
                 if (!text) return;
+                if (/^termux(?:\s|$)/i.test(text)) {
+                  const command = text.replace(/^termux\s*/i, "").trim();
+                  pushLines([termLine("cmd", `$ ${text}`)]);
+                  if (!command) {
+                    pushLines([termLine("sys", "کاربرد: termux <command> — دستور در نشست جداگانهٔ Termux باز می‌شود.")]);
+                    return;
+                  }
+                  if (/\bnmap\b/i.test(command) && !isNmapInstall(command) && !isAllowedLocalNmap(command)) {
+                    pushLines([termLine("err", "در این اتصال، nmap فقط با الگوی nmap -sn و برای IP خصوصیِ شبکهٔ محلی مجاز است؛ شبکهٔ CIDR باید /24 یا کوچک‌تر باشد.")]);
+                    return;
+                  }
+                  if (!window.confirm("این دستور در Termux و با دسترسی همان برنامه اجرا می‌شود و نتیجه به کنسول برمی‌گردد. برای این کار Termux باید نصب باشد، مجوز RUN_COMMAND را بدهی و allow-external-apps=true را در تنظیماتش آگاهانه فعال کنی. فقط دستور بررسی‌شده را اجرا کن. ادامه می‌دهی؟")) {
+                    pushLines([termLine("sys", "اجرا لغو شد.")]);
+                    return;
+                  }
+                  void runTermuxCommand(command)
+                    .then((result) => pushLines([
+                      ...(result.stdout ? result.stdout.replace(/\s+$/, "").split("\n").map((line) => termLine("out", line)) : []),
+                      ...(result.stderr ? result.stderr.replace(/\s+$/, "").split("\n").map((line) => termLine("err", line)) : []),
+                      termLine("sys", `${result.message} کد خروج: ${result.exitCode ?? "نامشخص"}`),
+                    ]))
+                    .catch((error) => pushLines([termLine("err", error instanceof Error ? error.message : String(error))]));
+                  return;
+                }
                 const out = runShell(text, () => hotkeys.run());
                 pushLines([termLine("cmd", `$ ${text}`), ...out.map((row) => termLine("out", row))]);
               }}
@@ -980,6 +959,7 @@ export function LabShell() {
         </section>
       </div>
       <div className="pb-safe flex min-w-0 shrink-0 gap-1 overflow-x-auto border-t border-line bg-panel px-2 py-1">
+        {file.lang === "nava" ? <button type="button" className="h-10 shrink-0 rounded-lab border border-lime/30 bg-lime/10 px-3 text-sm text-lime" title="دستورها مخفف می‌شوند؛ متن‌ها و نام‌ها حفظ می‌شوند" onClick={() => updateContent(compactNavaSource(file.content))}>مخفف‌کردن کد</button> : null}
         {[...(file.lang === "nava" ? NAVA_BAR : file.lang === "mix" ? MIX_BAR : file.lang === "farsi" ? FARSI_BAR : file.lang === "english" ? ENGLISH_BAR : file.lang === "binary" ? BINARY_BAR : []), ...KEYS].map((key) => (
           <button
             key={`${file.lang}-${key.label}`}

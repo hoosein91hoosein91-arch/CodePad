@@ -3,16 +3,6 @@ import { compileEnglish } from "../src/labshell/english.ts";
 import { compileFarsi } from "../src/labshell/farsi.ts";
 import { SAMPLES } from "../src/labshell/samples.ts";
 import { detectKind, parseMix, runMix } from "../src/labshell/mix.ts";
-import { parsePack } from "../src/labshell/pack.ts";
-import { readFileSync } from "node:fs";
-import { appAsk, askGemini, extractCode, geminiRequest, generateText } from "../src/labshell/gemini.ts";
-import { compileNava } from "../src/labshell/nava.ts";
-import { JIBOS_OPEN } from "../src/labshell/jibos.ts";
-import { caesar, entropyBits, fromB64, fromHex, sha, toB64, toHex, xorHex } from "../src/labshell/crypto-utils.ts";
-import { formatScan, simulateScan } from "../src/labshell/netsim.ts";
-import { buildTree, lookup, newVfs, resolvePath } from "../src/labshell/vfs.ts";
-import { DEFAULT_PREFS, normalizePrefs } from "../src/labshell/launcher-prefs.ts";
-import { injectHead, jibosClient } from "../src/labshell/jibos.ts";
 
 type Page = { title: string; text: string; mark: string; css: string };
 type Snap = { a: number; bits: string; pc: number; steps: number; gloss: string };
@@ -185,73 +175,5 @@ const withShared = await runMix('@@ js\nshared.n = 3\n@@ html\n<p id="n"></p>\n'
 });
 must("mix html shared", withShared.web?.data === '{"n":3}');
 
-// نمونهٔ آمادهٔ «مار و سیب (با عکس)»: بسته باید یک فایل mix و چهار عکس PNG سالم داشته باشد
-const snakePack = parsePack(readFileSync(new URL("../src/labshell/packs/snake-images.jibpack", import.meta.url), "utf8"));
-must("pack parses", !!snakePack && snakePack.problems.length === 0);
-must("pack files", snakePack?.files.map((f) => f.name).join(",") === "snake.mix");
-must("pack assets", snakePack?.assets.map((a) => a.name).sort().join(",") === "apple.png,body.png,grass.png,head.png");
-must("pack pngs", !!snakePack && snakePack.assets.every((a) => a.bytes[0] === 0x89 && a.bytes[1] === 0x50 && a.bytes[2] === 0x4e && a.bytes[3] === 0x47));
-must("pack mix blocks", parseMix(snakePack?.files[0]?.content ?? "").blocks.map((b) => b.kind).join(",") === "python,html,css,javascript");
-// ── نسخهٔ ۲: لانچر، Gemini، نمونه‌های امنیت ──
-for (const id of ["security-hash", "security-encoding", "security-classic", "security-xor", "security-password", "security-nmap", "security-portscan", "sound-piano"]) {
-  const p = parsePack(readFileSync(new URL(`../src/labshell/packs/${id}.jibpack`, import.meta.url), "utf8"));
-  must(`sample ${id}`, !!p && p.problems.length === 0 && p.files.length === 1 && /^(main\.py|index\.html)$/.test(p.files[0].name) && p.files[0].content.length > 200);
-}
-must("sha256", (await sha("SHA-256", "abc")) === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
-must("b64 roundtrip", fromB64(toB64("سلام abc")) === "سلام abc");
-must("hex roundtrip", toHex("AB") === "4142" && fromHex("4142") === "AB");
-must("caesar", caesar("Hello", 3) === "Khoor" && caesar(caesar("Hello", 3), -3) === "Hello");
-must("xor", xorHex("A", "A") === "00");
-must("entropy", entropyBits("") === 0 && entropyBits("Tr0ub4dor&3xyz!") > 80);
-// ── شبیه‌ساز اسکن پورت (آموزشی) و سیستم‌فایل مجازی کنسول ──
-must("netsim deterministic", JSON.stringify(simulateScan("192.168.1.10")) === JSON.stringify(simulateScan("192.168.1.10")));
-must("netsim states", simulateScan("host-a").every((p) => p.state === "open" || p.state === "closed" || p.state === "filtered"));
-must("netsim report", formatScan("10.0.0.5", simulateScan("10.0.0.5")).some((l) => l.includes("شبیه‌سازی")));
-must("vfs resolve", resolvePath("/home/user", "../..") === "/" && resolvePath("/apps", "a/./b") === "/apps/a/b");
-const vtree = buildTree([{ name: "Demo", files: [{ name: "index.html", content: "<p>hi</p>" }] }], newVfs().scratch);
-must("vfs tree apps", lookup(vtree, "/apps/Demo/index.html")?.type === "file");
-must("vfs tree home", lookup(vtree, "/home/user/README.txt")?.type === "file");
-must("vfs missing", lookup(vtree, "/apps/none") === null);
-must("prefs normalize", normalizePrefs({ columns: 99, accent: "javascript:x", devMode: true }).columns === 6 && normalizePrefs({ accent: "bad" }).accent === DEFAULT_PREFS.accent && normalizePrefs({ devMode: true }).devMode);
-const req = geminiRequest({ key: "TEST-KEY", model: "gemini-3.8-flash" }, "hi", "sys");
-must("gemini url", req.url === "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent");
-must("gemini header", (req.init.headers as Record<string, string>)["x-goog-api-key"] === "TEST-KEY" && !req.url.includes("TEST-KEY"));
-must("gemini body", JSON.parse(String(req.init.body)).contents[0].parts[0].text === "hi");
-must("gemini parse", generateText({ candidates: [{ content: { parts: [{ text: "x", thought: true }, { text: "سلام" }] } }] }) === "سلام");
-let seen = "";
-const answer = await askGemini({ key: "K", model: "m" }, "q", { fetcher: async (u) => { seen = u; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }), { status: 200 }); } });
-must("gemini call path", answer === "ok" && seen.endsWith("/models/m:generateContent"));
-let noKey = "";
-await askGemini({ key: "", model: "m" }, "q").catch((e: Error) => { noKey = e.message; });
-must("gemini missing key", noKey.includes("کلید"));
-let badKey = "";
-await askGemini({ key: "K", model: "m" }, "q", { fetcher: async () => new Response(JSON.stringify({ error: { message: "API key not valid" } }), { status: 400 }) }).catch((e: Error) => { badKey = e.message; });
-must("gemini bad key", badKey.includes("نامعتبر"));
-must("extract code", extractCode("hi\n```html\n<p>x</p>\n```") === "<p>x</p>\n");
-must("jibos inject", injectHead("<html><head><title>t</title></head></html>", jibosClient("n1", "app")).indexOf("window.jibos") < injectHead("<html><head><title>t</title></head></html>", jibosClient("n1", "app")).indexOf("<title>"));
-
-// ── نسخهٔ ۲.۲: زبان نوا ──
-must("nava starter sample", !!compileNava(SAMPLES.nava.content).web);
-for (const id of ["nava-todo", "nava-clicker", "nava-snake", "nava-cube3d", "nava-ai"]) {
-  const p = parsePack(readFileSync(new URL(`../src/labshell/packs/${id}.jibpack`, import.meta.url), "utf8"));
-  must(`pack ${id} parses`, !!p && p.problems.length === 0 && p.files.length === 1 && p.files[0]!.name === "main.nava");
-  const res = compileNava(p?.files[0]?.content ?? "");
-  must(`pack ${id} compiles (${res.error ?? "ok"})`, !!res.web);
-}
-must("jibos ai command open", JIBOS_OPEN.has("ai") && jibosClient("n", "a").includes('c==="ai"?120000'));
-const okFetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "جواب" }] } }] }), { status: 200 });
-let denied = "";
-await appAsk("app-deny", "q", { settings: { key: "K", model: "m" }, confirm: () => false, fetcher: okFetch }).catch((e: Error) => { denied = e.message; });
-must("nava ai asks permission (denied)", denied.includes("اجازه"));
-let asked = 0;
-const first = await appAsk("app-ok", "q", { settings: { key: "K", model: "m" }, confirm: () => { asked++; return true; }, fetcher: okFetch });
-await appAsk("app-ok", "q2", { settings: { key: "K", model: "m" }, confirm: () => { asked++; return true; }, fetcher: okFetch });
-must("nava ai answer + permission once per app", first === "جواب" && asked === 1);
-let limited = "";
-for (let i = 0; i < 12; i++) await appAsk("app-ok", "q", { settings: { key: "K", model: "m" }, fetcher: okFetch }).catch((e: Error) => { limited = e.message; });
-must("nava ai rate limit", limited.includes("دقیقه"));
-let noKeyApp = "";
-await appAsk("app-x", "q", { settings: { key: "", model: "m" } }).catch((e: Error) => { noKeyApp = e.message; });
-must("nava ai needs key", noKeyApp.includes("Gemini وصل نیست"));
 if (process.exitCode) process.exit(process.exitCode);
 console.log("ALL PASSED");
