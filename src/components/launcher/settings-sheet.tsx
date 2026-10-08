@@ -1,4 +1,4 @@
-import { ImagePlus, Palette, Settings2, ShieldAlert, Sparkles } from "lucide-react";
+import { Download, ImagePlus, LayoutGrid, Palette, Settings2, ShieldAlert, Sparkles, Upload } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { ACCENTS, applyPreset, THEMES, WALLPAPERS, type Preferences } from "@/labshell/launcher-prefs";
 import { imageData } from "@/labshell/image";
@@ -16,7 +16,7 @@ function Toggle({ label, checked, onChange, hint }: { label: string; checked: bo
   );
 }
 
-export function SettingsSheet({ open, onOpenChange, prefs, setPrefs, version, onOpenDev, onOpenGemini, geminiConnected }: {
+export function SettingsSheet({ open, onOpenChange, prefs, setPrefs, version, onOpenDev, onOpenGemini, geminiConnected, onExport, onImport }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   prefs: Preferences;
@@ -25,6 +25,8 @@ export function SettingsSheet({ open, onOpenChange, prefs, setPrefs, version, on
   onOpenDev: () => void;
   onOpenGemini: () => void;
   geminiConnected: boolean;
+  onExport: () => void;
+  onImport: (file: File) => void;
 }) {
   const [msg, setMsg] = useState("");
   const taps = useRef(0);
@@ -103,6 +105,20 @@ export function SettingsSheet({ open, onOpenChange, prefs, setPrefs, version, on
         <label className="block text-xs text-white/70">اندازهٔ آیکن: {prefs.iconSize}px<input className="mt-2 w-full" style={{ accentColor: prefs.accent }} type="range" min="44" max="84" step="2" value={prefs.iconSize} onChange={(e) => set({ iconSize: Number(e.target.value) })} /></label>
         <label className="block text-xs text-white/70">گردی آیکن: {prefs.roundness}px<input className="mt-2 w-full" style={{ accentColor: prefs.accent }} type="range" min="4" max="42" step="2" value={prefs.roundness} onChange={(e) => set({ roundness: Number(e.target.value) })} /></label>
         <label className="block text-xs text-white/70">نام دستگاه (در کنسول)<input className={`${field} mt-2 font-mono`} dir="ltr" value={prefs.hostname} onChange={(e) => set({ hostname: e.target.value.replace(/[^\w.-]/g, "").slice(0, 24) || "jibos" })} /></label>
+      </section>
+      <section className="space-y-2 border-t border-white/10 pt-4">
+        <h3 className="flex items-center gap-2 text-sm font-bold"><LayoutGrid className="size-4" style={{ color: prefs.accent }} />صفحه‌های خانه و پشتیبان</h3>
+        <div className="flex items-center justify-between gap-3 text-xs text-white/70">
+          <label htmlFor="jibos-pages">تعداد صفحه‌های خانه</label>
+          <select id="jibos-pages" data-testid="pages-count" className={`${field} w-28`} value={prefs.pages} onChange={(e) => set({ pages: Number(e.target.value) })}>
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n} صفحه</option>)}
+          </select>
+        </div>
+        <p className="text-[11px] text-white/40">بین صفحه‌ها می‌توانی بکشی (swipe). پس‌زمینهٔ هر صفحه را در حالت «ویرایش» صفحهٔ خانه جدا کن.</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" data-testid="export-backup" className={`${ghostBtn} flex items-center justify-center gap-2`} onClick={onExport}><Download className="size-4" />خروجی پشتیبان</button>
+          <label data-testid="import-backup" className={`${ghostBtn} flex cursor-pointer items-center justify-center gap-2`}><Upload className="size-4" />بازگردانی<input type="file" accept=".jibos,.json,application/json" aria-label="فایل پشتیبان" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onImport(f); }} /></label>
+        </div>
       </section>
       <section className="grid grid-cols-2 gap-2 border-t border-white/10 pt-4">
         <button type="button" className={`${ghostBtn} flex items-center justify-center gap-2`} onClick={onOpenGemini}><Sparkles className="size-4" style={{ color: prefs.accent }} />{geminiConnected ? "Gemini وصل است" : "اتصال Gemini"}</button>

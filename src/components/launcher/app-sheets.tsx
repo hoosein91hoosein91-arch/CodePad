@@ -11,14 +11,15 @@ import { imageData } from "@/labshell/image";
 const ICON_COLORS = ["#03140b", "#0b2a1a", "#10131f", "#1d0b2e", "#2a0b14", "#2a1d05", "#06222a", "#000000"];
 
 /** ظاهر یک برنامه: عکس یا ایموجی آیکن، رنگ زمینه، نام */
-export function AppCustomizeSheet({ app, onOpenChange, accent, devMode, onEditCode, onRemove }: { app: App | null; onOpenChange: (open: boolean) => void; accent: string; devMode: boolean; onEditCode: (app: App) => void; onRemove: (app: App) => void }) {
-  const [name, setName] = useState(""), [icon, setIcon] = useState("✦"), [color, setColor] = useState(ICON_COLORS[0]), [picture, setPicture] = useState("");
+export function AppCustomizeSheet({ app, onOpenChange, accent, devMode, pages, onEditCode, onRemove }: { app: App | null; onOpenChange: (open: boolean) => void; accent: string; devMode: boolean; pages: number; onEditCode: (app: App) => void; onRemove: (app: App) => void }) {
+  const [name, setName] = useState(""), [icon, setIcon] = useState("✦"), [color, setColor] = useState(ICON_COLORS[0]), [picture, setPicture] = useState(""), [page, setPage] = useState(0);
   useEffect(() => {
     if (app) {
       setName(app.name);
       setIcon(app.icon);
       setColor(app.iconColor ?? ICON_COLORS[0]);
       setPicture(app.iconImage ?? "");
+      setPage(app.page ?? 0);
     }
   }, [app]);
   if (!app) return null;
@@ -43,7 +44,14 @@ export function AppCustomizeSheet({ app, onOpenChange, accent, devMode, onEditCo
         {ICON_COLORS.map((c) => <button key={c} type="button" aria-label={`زمینهٔ ${c}`} className={`size-8 rounded-lg border ${color === c ? "border-white" : "border-white/15"}`} style={{ background: c }} onClick={() => setColor(c)} />)}
         <input type="color" aria-label="رنگ زمینهٔ آیکن" className="size-8 rounded-lg border-0 bg-transparent" value={color} onChange={(e) => setColor(e.target.value)} />
       </div>
-      <button type="button" className={primaryBtn} style={{ background: accent }} onClick={() => { useLauncher.getState().patch(app.id, { name: name.trim() || app.name, icon: icon || "✦", iconColor: color, iconImage: picture || undefined }); onOpenChange(false); }}>ذخیرهٔ تغییرات</button>
+      {pages > 1 ? (
+        <label className="text-xs text-white/55">صفحهٔ خانه
+          <select aria-label="صفحهٔ خانه" data-testid="app-page-select" className={`${field} mt-2`} value={page} onChange={(e) => setPage(Number(e.target.value))}>
+            {Array.from({ length: pages }, (_, i) => <option key={i} value={i}>{`صفحهٔ ${i + 1}`}</option>)}
+          </select>
+        </label>
+      ) : null}
+      <button type="button" className={primaryBtn} style={{ background: accent }} onClick={() => { useLauncher.getState().patch(app.id, { name: name.trim() || app.name, icon: icon || "✦", iconColor: color, iconImage: picture || undefined, page }); onOpenChange(false); }}>ذخیرهٔ تغییرات</button>
       <div className="grid grid-cols-2 gap-2">
         <button type="button" className={`${ghostBtn} flex items-center justify-center gap-2 disabled:opacity-40`} disabled={!devMode} title={devMode ? "" : "حالت توسعه‌دهنده لازم است"} onClick={() => onEditCode(app)}><Code2 className="size-4" />ویرایش کد</button>
         <button type="button" className={`${ghostBtn} flex items-center justify-center gap-2 text-rose-200`} onClick={() => onRemove(app)}><Trash2 className="size-4" />حذف برنامه</button>

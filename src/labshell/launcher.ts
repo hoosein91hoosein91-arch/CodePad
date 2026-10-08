@@ -6,7 +6,7 @@ import { assetFile, type Pack } from "@/labshell/pack";
 import type { Project } from "@/labshell/types";
 import { dropAppStore } from "@/labshell/jibos";
 
-export type App = { id: string; name: string; icon: string; iconImage?: string; iconColor?: string; files: { name: string; content: string }[]; installedAt: number };
+export type App = { id: string; name: string; icon: string; iconImage?: string; iconColor?: string; files: { name: string; content: string }[]; installedAt: number; page?: number };
 export const assetKey = (id: string) => `launcher-${id}`;
 
 const storage = {
@@ -39,7 +39,7 @@ async function install(name: string, files: App["files"], assets: File[]): Promi
   const old = useLauncher.getState().apps.find((a) => a.name === name);
   if (old) await removeProjectAssets(assetKey(old.id)); // نصب دوباره = به‌روزرسانی
   // نصب دوباره ظاهرِ شخصی‌سازی‌شدهٔ آیکن را نگه می‌دارد
-  const app: App = { id: Math.random().toString(36).slice(2) + Date.now().toString(36), name, icon: old?.icon ?? iconOf(name), iconImage: old?.iconImage, iconColor: old?.iconColor, files, installedAt: Date.now() };
+  const app: App = { id: Math.random().toString(36).slice(2) + Date.now().toString(36), name, icon: old?.icon ?? iconOf(name), iconImage: old?.iconImage, iconColor: old?.iconColor, files, installedAt: Date.now(), page: old?.page ?? 0 };
   await loadAssets();
   if (assets.length) await addAssets(assetKey(app.id), assets);
   useLauncher.getState().put(app);
@@ -70,7 +70,7 @@ export async function uninstall(id: string): Promise<void> {
 /** برنامهٔ تک‌فایلی HTML (مثلاً ساخته‌شده با Gemini یا در خود لانچر) */
 export function installHtml(name: string, html: string, icon?: string): App {
   const old = useLauncher.getState().apps.find((a) => a.name === name);
-  const app: App = { id: old?.id ?? `app-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`, name, icon: icon || old?.icon || iconOf(name), iconImage: old?.iconImage, iconColor: old?.iconColor, files: [{ name: "index.html", content: html }], installedAt: Date.now() };
+  const app: App = { id: old?.id ?? `app-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`, name, icon: icon || old?.icon || iconOf(name), iconImage: old?.iconImage, iconColor: old?.iconColor, files: [{ name: "index.html", content: html }], installedAt: Date.now(), page: old?.page ?? 0 };
   useLauncher.getState().put(app);
   return app;
 }
@@ -93,4 +93,51 @@ export async function exportPack(app: App): Promise<string> {
     out.push(`@@@ asset ${meta.name}`, ...(b64.match(/.{1,76}/g) ?? []));
   }
   return out.join("\n") + "\n";
+}
+
+// ── پشتیبان‌گیری/بازگردانی کل لانچر (برنامه‌ها + ظاهر) در یک فایل ─────────────
+function fromBase64(b64: string): ArrayBuffer {
+  const bin = atob(b64.replace(/\s+/g, ""));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+
+export type Backup = {
+  jibosBackup: 1;
+  exportedAt: number;
+  prefs: unknown;
+  apps: { name: string; icon: string; iconImage?: string; iconColor?: string; page?: number; files: { name: string; content: string }[]; assets: { name: string; type: string; b64: string }[] }[];
+};
+
+/** کل لانچر را به یک فایل JSON (.jibos) تبدیل می‌کند؛ عکس‌های پیوست هم داخل آن base64 می‌شوند */
+export async function exportBackup(prefs: unknown): Promise<string> {
+  await loadAssets();
+  const apps: Backup["apps"] = [];
+  for (const app of useLauncher.getState().apps) {
+    const assets: Backup["apps"][number]["assets"] = [];
+    for (const meta of assetsOf(assetKey(app.id))) {
+      const blob = await readAssetBlob(assetKey(app.id), meta.name);
+      if (!blob) continue;
+      assets.push({ name: meta.name, type: blob.type, b64: toBase64(new Uint8Array(await blob.arrayBuffer())) });
+    }
+    apps.push({ name: app.name, icon: app.icon, iconImage: app.iconImage, iconColor: app.iconColor, page: app.page ?? 0, files: app.files, assets });
+  }
+  const backup: Backup = { jibosBackup: 1, exportedAt: Date.now(), prefs, apps };
+  return JSON.stringify(backup, null, 2);
+}
+
+/** فایل پشتیبان را می‌خواند و برنامه‌ها را دوباره نصب می‌کند؛ prefs را برمی‌گرداند تا صفحهٔ لانچر اعمال کند */
+export async function importBackup(text: string): Promise<{ installed: number; prefs: unknown }> {
+  const data = JSON.parse(text) as Partial<Backup>;
+  if (data.jibosBackup !== 1 || !Array.isArray(data.apps)) throw new Error("فایل پشتیبان معتبر نیست.");
+  await loadAssets();
+  let installed = 0;
+  for (const a of data.apps) {
+    const files = a.assets.map((as) => new File([fromBase64(as.b64)], as.name, { type: as.type || "application/octet-stream" }));
+    const app = await install(a.name, a.files, files);
+    useLauncher.getState().patch(app.id, { icon: a.icon, iconImage: a.iconImage, iconColor: a.iconColor, page: a.page ?? 0 });
+    installed++;
+  }
+  return { installed, prefs: data.prefs };
 }

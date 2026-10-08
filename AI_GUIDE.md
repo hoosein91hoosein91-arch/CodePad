@@ -1,8 +1,8 @@
 # CodePad (جیب‌کد) — Guide for AI assistants
 
 This file is for an AI assistant (or a human) **writing programs that run inside the CodePad app**.
-Everything here comes from the source on `main` (CodePad v2.0.0: **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0, **JibOS launcher upgrade** §2.11 — neon-terminal theme, personalization, Gemini, `window.jibos`, developer mode, security samples — since v2.0.0: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
-Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later. Everything in §2.11 (Gemini, `window.jibos`, developer mode, wallpapers, custom icons, security samples) needs v2.0.0 or later.
+Everything here comes from the source on `main` (CodePad v2.1.0: **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0, **JibOS launcher upgrade** §2.11 since v2.0.0, and **v2.1.0 additions** §2.12 — terminal shell over a virtual filesystem, private browser, multi-page home + export, net-security samples, Termux hand-off: `src/labshell/*`, `src/lib/termux-bridge.ts`, `src/components/launcher/*`) and from tests run in headless Chrome at phone size.
+Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later. Everything in §2.11 (Gemini, `window.jibos`, developer mode, wallpapers, custom icons, security samples) needs v2.0.0 or later. Everything in §2.12 (terminal shell/virtual filesystem, private browser, multi-page home + export, simulated nmap/port-scan samples, Termux hand-off) needs v2.1.0 or later.
 If the code changes, re-check the files listed in [§9 Where things live](#9-where-things-live).
 
 > **The three rules that matter most**
@@ -303,12 +303,37 @@ Pyodide in CodePad has **no OpenSSL**: `hashlib.md5/sha1/sha256/sha512/blake2`, 
 All calls except `beep/melody/play` are async and go through `postMessage` with a random per-window token; the launcher answers only its own frame. A developer-mode call made while developer mode is off rejects with an error.
 Audio: Web Audio and `<audio>` work inside installed apps after a tap (autoplay rules). Background audio after leaving the app, microphone, camera, Bluetooth, notifications and widgets are **not** available.
 
-**Developer mode** (**ظاهر** → **حالت توسعه‌دهنده**, or tap **JibOS 2.0.0** seven times, or `dev on` in the console)
+**Developer mode** (**ظاهر** → **حالت توسعه‌دهنده**, or tap **JibOS 2.1.0** seven times, or `dev on` in the console)
 - This is **in-app** control only. It is **not** Android root and cannot root the phone; no normal app can.
 - Unlocks: editing any installed app's files (and adding files) from the launcher; a launcher configuration editor (JSON); custom CSS for the launcher; a JavaScript **boot script** that runs when the launcher opens with an `api` object (`apps()`, `launch(name)`, `prefs()`, `setPrefs({…})`, `toast(msg)`, `beep(hz, ms)`, `install(name, html)`, `uninstall(name)`, `gemini(prompt)`); the list of all apps with export to `.jibpack`, copy and delete; full JSON backup/restore (attachments are not in the JSON — export a `.jibpack` for those); reset; the developer-only `window.jibos` calls; and the console's `js` command.
 - Escape hatch: open `/launcher?safe=1` to skip custom CSS and the boot script.
 
-**Console** (dock → **کنسول**): a small in-app shell — `help`, `neofetch`, `ls`, `open <app>`, `theme <id>`, `matrix on|off`, `accent #hex`, `hash [sha1|sha256|sha512] text`, `b64`/`unb64`, `hex`/`unhex`, `xor key text`, `rot13`, `caesar n text`, `entropy password`, `passgen [len]`, `net`, `beep`, `gemini <question>`, `dev on|off`, `js <expression>` (developer mode). It runs nothing on the Android system.
+**Console** (dock → **کنسول**): since v2.1.0 this is a **simulated POSIX shell over a virtual in-app filesystem** plus the crypto/security helpers and an optional Termux hand-off — see §2.12. It still runs **no** native binary itself.
+
+### 2.12 v2.1.0 additions: terminal shell, private browser, multi-page home, net-security samples
+All of this runs inside the app's Android WebView. Honest limits are spelled out below and in §4.5.
+
+**Terminal / Termux-style console** (dock → **کنسول**) — now a **simulated POSIX shell over a virtual, in-app filesystem** (`src/labshell/vfs.ts`):
+- Navigation & files: `pwd`, `cd <path>`, `ls [path]`, `tree`, `cat`, `head [n]`, `grep <pattern> <file>`, `wc`, `touch`, `mkdir`, `rm`, and `echo text > file` / `>> file`.
+- The virtual tree has `/apps/<AppName>/<files>` (installed launcher apps + their attachments, **read-only**) and `/home/user` (a **writable scratch** area that lives only for the session and is cleared on close). It is **not** the Android filesystem.
+- Still present: `apps`, `open <app>`, `theme`, `accent`, `matrix`, `hash/b64/unb64/hex/unhex/xor/rot13/caesar`, `entropy`, `passgen`, `net`, `neofetch`, `whoami`, `dev on|off`, `date`, `beep`, `gemini <q>`, `js <expr>` (dev mode), `browser [url]`.
+- `nmap <host>` / `scan <host>`: an **educational, simulated** port scan over deterministic mock data (`src/labshell/netsim.ts`). It is clearly labelled; **no packet is ever sent and no socket is opened** — a WebView has no raw TCP/UDP.
+- `termux <command>`: an **optional hand-off** to the **real Termux app** (`src/lib/termux-bridge.ts`, native `TermuxBridgePlugin`). It only works in the installed Android build, when Termux is installed and the user has granted `com.termux.permission.RUN_COMMAND`, and only after the user types the command. On the web/preview it errors out. This is CodePad asking another app to run a command; CodePad itself still runs no native binaries. `nmap` through this bridge is restricted on the native side to private-range `nmap -sn` discovery and `pkg install nmap`.
+
+**Private / secure browser** (dock → **مرورگر**, or `browser` in the console) — `src/components/launcher/browser.tsx`:
+- An in-app **incognito tab**: a sandboxed `<iframe>` with `referrerPolicy="no-referrer"`; it keeps no history and clears when closed.
+- Honest, shown-in-app limits (also §4.5): it **cannot hide your real IP** (that needs a real VPN/Tor), it **cannot run Chrome-PC extensions** (the Android WebView engine has no extension support), and it **does not pretend to be a PC**. Many sites refuse to load in an iframe (`X-Frame-Options`); when that happens there is an **“open externally”** button that opens the page in the system browser / Tor Browser (via the Termux bridge’s `openExternal`/`openTorBrowser` on native, or `window.open` on web).
+
+**Multi-page, phone-like home** — `src/routes/launcher.tsx`, `src/labshell/launcher-prefs.ts`:
+- **Multiple home pages** with real horizontal **swipe/paging** (CSS scroll-snap) and page **dots**. **ویرایش** mode shows an **add-page** button (`+`, up to 8 pages) and a **per-page wallpaper** button; without a per-page image a page uses the global wallpaper.
+- Apps are assigned to a page in their personalization sheet (**صفحهٔ خانه**). `prefs.pages` and `prefs.pageWallpapers` are stored on the device like the rest of the prefs; `app.page` is stored with each app.
+- **Export / backup**: **ظاهر → خروجی پشتیبان** writes a single `.jibos` JSON file with the prefs and **every app including its attachments** (base64). **بازگردانی** reinstalls everything from such a file (`exportBackup` / `importBackup` in `src/labshell/launcher.ts`).
+
+**New educational security samples** (+ → **نمونه‌های آماده**):
+| Sample | Type | What it teaches |
+|---|---|---|
+| امنیت: اسکن پورت (nmap، آموزشی) | `main.py` | what a port scan is (open/closed/filtered, SYN/connect/host-discovery), plus an **offline simulation** over mock data — no real traffic |
+| امنیت: دمو اسکن پورت (تعاملی) | `index.html` | an interactive **simulated** scan with a progress bar over deterministic mock data |
 
 ---
 
@@ -462,6 +487,11 @@ Consequences (the first three were checked in headless Chrome):
 |---|---|---|
 | Root the phone / "rooted launcher" | **No** — an app cannot gain Android root | **Developer mode**: full control of the launcher, its apps and settings, inside the app (§2.11) |
 | Real hacking tools (port scans, sniffing, Wi-Fi attacks) | **No** — a WebView has no raw sockets or system access, and it would not be appropriate | Offline, educational **security & cryptography samples** (§2.11) |
+| Hide my real IP / look like I'm on a PC / change fingerprint | **No** — an app cannot spoof your IP or device at the system level; that needs a real VPN/Tor | A private **incognito tab** (no history/cookies, cleared on close) + an **open-externally** button to a real browser/Tor; the honest limit is shown in-app (§2.12) |
+| Run Chrome-PC extensions inside the browser | **No** — the Android WebView engine has no extension API | A simple private-browsing tab; for extensions use desktop Chrome (§2.12) |
+| Real `nmap` / port scanning / network control from the app | **No** — a WebView has no raw TCP/UDP sockets | An **educational simulated** `nmap`/scan over mock data (console + two samples); an optional hand-off to the **real Termux** app on native Android, restricted to private-range `nmap -sn` (§2.12) |
+| Anti-hack / anti-remote-control / device protection | **No** — blocking device takeover is an OS/root job, not a normal app's | Nothing claims to do this; the editor has an offline static **code review** (`بررسی`) that flags risky patterns only |
+| Run real Linux/Termux binaries or packages in the console | **No** — the console is a simulated shell in the WebView | A POSIX-ish shell over a **virtual** filesystem; `termux <cmd>` can hand a command to the real Termux app on native (§2.12) |
 | Gemini doing things "without being asked" | Not built — every request is a button press | One-time key, always connected; ask / build an app / improve a file on demand |
 | Be a real Android home-screen launcher | **No** — CodePad is a normal app | A phone-style home screen inside CodePad |
 | Background music, notifications, widgets, multi-window | No | Audio while the app is open; toasts |
@@ -807,7 +837,8 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 
 ## 7. Getting the Android app (APK)
 - Latest release: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest
-- Direct download, **v2.0.0** (JibOS launcher: neon-terminal theme, wallpapers, custom icons, Gemini, `window.jibos`, developer mode, security samples): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.0.0/CodePad.apk
+- Direct download, **v2.1.0** (adds terminal shell over a virtual filesystem, private browser, multi-page home + export/backup, simulated nmap/port-scan samples, optional Termux hand-off): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.1.0/CodePad.apk
+- v2.0.0 (JibOS launcher: neon-terminal theme, wallpapers, custom icons, Gemini, `window.jibos`, developer mode, security samples): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.0.0/CodePad.apk
 - v1.9.0 (adds the launcher): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.9.0/CodePad.apk
 - v1.8.0 (packs and the built-in image snake sample): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.8.0/CodePad.apk
 - v1.7.0 (attachments, no packs): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.7.0/CodePad.apk

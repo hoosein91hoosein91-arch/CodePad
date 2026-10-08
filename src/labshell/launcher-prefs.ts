@@ -32,6 +32,8 @@ export type Preferences = {
   devMode: boolean;
   customCss: string;
   bootScript: string;
+  pages: number;
+  pageWallpapers: string[];
 };
 
 export type ThemePreset = { id: string; name: string; wallpaper: string; accent: string; matrix: boolean; scanlines: boolean; grid: boolean; mono: boolean };
@@ -61,6 +63,8 @@ export const DEFAULT_PREFS: Preferences = {
   devMode: false,
   customCss: "",
   bootScript: "",
+  pages: 1,
+  pageWallpapers: [],
 };
 
 const clamp = (v: unknown, lo: number, hi: number, d: number) => (typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : d);
@@ -89,6 +93,8 @@ export function normalizePrefs(raw: unknown): Preferences {
     devMode: bool(o.devMode, d.devMode),
     customCss: str(o.customCss, d.customCss, 100_000),
     bootScript: str(o.bootScript, d.bootScript, 100_000),
+    pages: clamp(o.pages, 1, 8, d.pages),
+    pageWallpapers: Array.isArray(o.pageWallpapers) ? o.pageWallpapers.slice(0, 8).map((w) => str(w, "")) : d.pageWallpapers,
   };
 }
 

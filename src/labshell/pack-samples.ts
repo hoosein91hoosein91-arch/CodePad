@@ -7,6 +7,8 @@ import securityEncoding from "@/labshell/packs/security-encoding.jibpack?raw";
 import securityClassic from "@/labshell/packs/security-classic.jibpack?raw";
 import securityXor from "@/labshell/packs/security-xor.jibpack?raw";
 import securityPassword from "@/labshell/packs/security-password.jibpack?raw";
+import securityNmap from "@/labshell/packs/security-nmap.jibpack?raw";
+import securityPortscan from "@/labshell/packs/security-portscan.jibpack?raw";
 import soundPiano from "@/labshell/packs/sound-piano.jibpack?raw";
 
 export type PackSample = { id: string; title: string; detail: string; text: string; group: "fun" | "security" };
@@ -19,4 +21,6 @@ export const PACK_SAMPLES: PackSample[] = [
   { id: "security-classic", group: "security", title: "امنیت: رمز سزار و ویژنر", detail: "پایتون: رمز کلاسیک، امتحان همهٔ کلیدها، تحلیل فراوانی", text: securityClassic },
   { id: "security-xor", group: "security", title: "امنیت: رمز XOR", detail: "پایتون: XOR، حملهٔ متن معلوم، خطر کلید تکراری", text: securityXor },
   { id: "security-password", group: "security", title: "امنیت: سنجش قدرت رمز عبور", detail: "صفحهٔ وب: آنتروپی، زمان حدس، ساخت رمز تصادفی امن", text: securityPassword },
+  { id: "security-nmap", group: "security", title: "امنیت: اسکن پورت (nmap، آموزشی)", detail: "پایتون: مفهوم اسکن پورت + شبیه‌سازی آفلاین؛ بدون شبکهٔ واقعی", text: securityNmap },
+  { id: "security-portscan", group: "security", title: "امنیت: دمو اسکن پورت (تعاملی)", detail: "صفحهٔ وب: اسکن شبیه‌سازی‌شده روی دادهٔ ساختگی با نوار پیشرفت", text: securityPortscan },
 ];
