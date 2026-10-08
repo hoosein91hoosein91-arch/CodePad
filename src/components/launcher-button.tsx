@@ -25,7 +25,7 @@ export function LauncherButton() {
               <X className="size-5" />
             </Dialog.Close>
           </div>
-          <Dialog.Description className="text-sm text-mist">پروژهٔ فعال را مثل یک برنامه در لانچر نصب کن (نصب دوباره، نسخهٔ قبلی را به‌روز می‌کند).</Dialog.Description>
+          <Dialog.Description className="text-sm text-mist">فایل بازشده، همراه همهٔ فایل‌ها و پیوست‌های پروژه، اجرا می‌شود. پروژهٔ فعال را مثل یک برنامه در لانچر نصب کن (نصب دوباره، نسخهٔ قبلی را به‌روز می‌کند).</Dialog.Description>
           <button
             type="button"
             className="h-11 rounded-lab bg-lime px-4 font-semibold text-ink"

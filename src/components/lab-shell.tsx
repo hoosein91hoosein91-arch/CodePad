@@ -16,7 +16,7 @@ import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
 import { compileNava } from "@/labshell/nava";
-import { compactNavaSource } from "@/labshell/nava-short";
+import { packNavaSource } from "@/labshell/nava-lines";
 import { injectHead, jibosClient, readAppStore, writeAppStore } from "@/labshell/jibos";
 import { appAsk } from "@/labshell/gemini";
 import { isPythonWarm, runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
@@ -43,45 +43,19 @@ const MIX_BAR = [
 ];
 
 const NAVA_BAR = [
-  { label: "bt · دکمه", insert: 'bt "شروع" (ru240rn64yGi65G72): sy "تو باختی"\n' },
-  { label: "cal · ماشین‌حساب", insert: "cal mb\n" },
-  { label: "vx · جهان", insert: "vx sz ۲۴ sd ۷\n" },
-  { label: "pg · صفحه", insert: 'pg "برنامهٔ من"\n' },
-  { label: "tm · تایمر", insert: "tm ۶۰\n" },
-  { label: "cnt · شمارنده", insert: "cnt\n" },
-  { label: "hd · عنوان", insert: 'hd ""\n' },
-  { label: "tx · متن", insert: 'tx ""\n' },
-  { label: "num · عدد", insert: "num امتیاز = ۰\n" },
-  { label: "out · نمایش", insert: 'out "تعداد: {امتیاز}"\n' },
-  { label: "in · ورودی", insert: 'in نام "نامت را بنویس"\n' },
-  { label: "img · عکس", insert: 'img "تصویر.png" alt "توضیح تصویر"\n' },
-  { label: "df · بسته", insert: 'df "ابزار من"\ncal\nend\nus "ابزار من"\n' },
-  // Full-form commands from Nava 0.5 remain available alongside compact commands.
-  { label: "عنوان", insert: 'عنوان ""\n' },
-  { label: "متن", insert: 'متن ""\n' },
-  { label: "عدد", insert: "عدد امتیاز = ۰\n" },
-  { label: "لیست", insert: "لیست کارها\n" },
-  { label: "نمایش", insert: 'نمایش "امتیاز: {امتیاز}"\n' },
-  { label: "دکمه", insert: 'دکمه "افزایش": امتیاز += ۱\n' },
-  { label: "ورودی", insert: 'ورودی نام "نامت را بنویس"\n' },
-  { label: "اگر", insert: "اگر امتیاز > ۱۰\n  \nپایان\n" },
-  { label: "تکرار", insert: "تکرار ۳\n  \nپایان\n" },
-  { label: "کنش", insert: "کنش نام\n  \nپایان\n" },
-  { label: "هر ثانیه", insert: "هر ۱ ثانیه\n  \nپایان\n" },
-  { label: "بوم", insert: "بوم ۳۲۰، ۳۲۰\n" },
-  { label: "صحنه", insert: 'صحنه ۳۲۰، ۳۲۰\nمکعب جعبه "#67f5a5"\n' },
-  { label: "ذخیره", insert: "ذخیره امتیاز\n" },
-  { label: "بپرس", insert: "بپرس جواب = سوال\n" },
-  { label: "پایان", insert: "پایان\n" },
-  // مخفف‌ها و ابزارهای آمادهٔ نوا ۰٫۴
-  { label: "cal · ماشین‌حساب", insert: "cal mb\n" },
-  { label: "tm · تایمر", insert: "tm ۶۰\n" },
-  { label: "cnt · شمارنده", insert: "cnt\n" },
-  { label: "vx · دنیای بلوکی", insert: "vx sz ۲۴ sd ۷\n" },
-  { label: "bt · دکمهٔ کپسولی", insert: 'bt "شروع" (ru240rn64yGi65G72): sy "آفرین"\n' },
-  { label: "pg · صفحه", insert: 'pg "برنامهٔ من"\n' },
-  { label: "df · بسته", insert: 'df "ابزار من"\ncal\nend\nus "ابزار من"\n' },
-].filter((item, index, all) => all.findIndex((other) => other.label === item.label) === index);
+  { label: "Pg", insert: 'Pg "App"\n' },
+  { label: "Scene", insert: 'G9 | Scene N360,N480 | Ball Orb "#67f5a5" | Orbit Tr\n' },
+  { label: "Frame", insert: 'Frame | Rotate Orb N0,N30 * Dt,N0 | End\n' },
+  { label: "Mat", insert: 'Mat Orb N0d2,N0d7,N0\n' },
+  { label: "Torus", insert: 'Torus Ring "#b0a9ff"\n' },
+  { label: "Bt", insert: 'Bt "Start" (Ru180Rn56Rr): Sy "Done"\n' },
+  { label: "Cal", insert: 'Cal Mb\n' },
+  { label: "Vx", insert: 'Vx Sz N24 Sd N7\n' },
+  { label: "Num", insert: 'Num Score = N0\n' },
+  { label: "Out", insert: 'Out "Score: {Score}"\n' },
+  { label: "If", insert: 'If Score > N10\n  \nEnd\n' },
+  { label: "End", insert: 'End\n' },
+];
 
 const KEYS: { label: string; insert?: string; move?: "left" | "right" | "up" | "down" }[] = [
   { label: "←", move: "left" },
@@ -1044,8 +1018,8 @@ export function LabShell() {
       </div>
       <div className="pb-safe flex min-w-0 shrink-0 gap-1 overflow-x-auto border-t border-line bg-panel px-2 py-1">
         {file.lang === "nava" ? (
-          <button type="button" className="h-10 shrink-0 rounded-lab border border-lime/30 bg-lime/10 px-3 text-sm text-lime" title="دستورها مخفف می‌شوند؛ متن‌ها و نام‌ها حفظ می‌شوند" onClick={() => updateContent(compactNavaSource(file.content))}>
-            مخفف‌کردن کد
+          <button type="button" className="h-10 shrink-0 rounded-lab border border-lime/30 bg-lime/10 px-3 text-sm text-lime" title="خط‌ها با | فشرده می‌شوند؛ متن و توضیحات حفظ می‌شوند" onClick={() => updateContent(packNavaSource(file.content))}>
+            Pack |
           </button>
         ) : null}
         {[...(file.lang === "nava" ? NAVA_BAR : file.lang === "mix" ? MIX_BAR : file.lang === "farsi" ? FARSI_BAR : file.lang === "english" ? ENGLISH_BAR : file.lang === "binary" ? BINARY_BAR : []), ...KEYS].map((key) => (
