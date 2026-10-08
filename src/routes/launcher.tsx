@@ -206,10 +206,28 @@ function Launcher() {
     setPage((p) => (p === pi ? p : pi));
   }, []);
   const addPage = useCallback(() => {
-    const n = Math.min(8, prefs.pages + 1);
+    const n = Math.min(9, prefs.pages + 1);
     patchPrefs({ pages: n });
     window.setTimeout(() => goToPage(n - 1), 60);
   }, [prefs.pages, patchPrefs, goToPage]);
+
+  const renamePage = () => {
+    const name = window.prompt("نام صفحه", prefs.pageNames[page] || (page === 0 ? "خانه" : `صفحهٔ ${page + 1}`));
+    if (name === null || !name.trim()) return;
+    const next = [...prefs.pageNames];
+    next[page] = name.trim();
+    if (!patchPrefs({ pageNames: next })) showToast("حافظه پر است؛ نام صفحه ذخیره نشد.");
+  };
+  const removePage = () => {
+    if (page === 0 || !window.confirm("این صفحه حذف شود؟ برنامه‌هایش به خانه منتقل می‌شوند.")) return;
+    useLauncher.setState((state) => ({ apps: state.apps.map((app) => {
+      const index = app.page ?? app.pageIndex ?? 0;
+      const next = index === page ? 0 : index > page ? index - 1 : index;
+      return { ...app, page: next, pageIndex: next };
+    }) }));
+    patchPrefs({ pages: prefs.pages - 1, pageNames: prefs.pageNames.filter((_, i) => i !== page), pageWallpapers: prefs.pageWallpapers.filter((_, i) => i !== page) });
+    goToPage(0);
+  };
 
   const doExport = useCallback(async () => {
     try {
@@ -320,18 +338,21 @@ function Launcher() {
       )}
 
       {!searching ? (
-        <div className="relative z-10 flex shrink-0 items-center justify-center gap-2 py-1.5">
+        <div className="relative z-10 flex shrink-0 flex-wrap items-center justify-center gap-2 px-3 py-1.5">
           {edit ? (
             <>
+              <button type="button" className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70" onClick={renamePage} data-testid="rename-page">نام صفحه</button>
+              {page > 0 ? <button type="button" className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70" onClick={removePage} data-testid="remove-page">حذف صفحه</button> : null}
               <button type="button" className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70" onClick={() => pageWallpaperInput.current?.click()} data-testid="page-wallpaper"><ImagePlus className="inline size-3" /> پس‌زمینهٔ صفحه</button>
               {prefs.pageWallpapers[page] ? <button type="button" className="rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70" onClick={clearPageWallpaper}>سراسری</button> : null}
               <input ref={pageWallpaperInput} type="file" accept="image/*" aria-label="عکس پس‌زمینهٔ صفحه" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void pickPageWallpaper(f); }} />
             </>
           ) : null}
+          <span className="text-[10px] text-white/70">{prefs.pageNames[page] || (page === 0 ? "خانه" : `صفحهٔ ${page + 1}`)}</span>
           {pageList.map((pi) => (
-            <button key={pi} type="button" data-testid="page-dot" aria-label={`صفحهٔ ${pi + 1}`} className="size-2 rounded-full transition" style={{ background: pi === page ? accent : "rgba(255,255,255,.3)", boxShadow: pi === page ? `0 0 8px ${accent}` : undefined }} onClick={() => goToPage(pi)} />
+            <button key={pi} type="button" data-testid="page-dot" aria-label={prefs.pageNames[pi] || `صفحهٔ ${pi + 1}`} title={prefs.pageNames[pi] || `صفحهٔ ${pi + 1}`} className="size-2 rounded-full transition" style={{ background: pi === page ? accent : "rgba(255,255,255,.3)", boxShadow: pi === page ? `0 0 8px ${accent}` : undefined }} onClick={() => goToPage(pi)} />
           ))}
-          {edit && prefs.pages < 8 ? <button type="button" data-testid="add-page" aria-label="افزودن صفحه" className="grid size-5 place-items-center rounded-full border text-[11px]" style={{ borderColor: `${accent}66`, color: accent }} onClick={addPage}>+</button> : null}
+          {edit && prefs.pages < 9 ? <button type="button" data-testid="add-page" aria-label="افزودن صفحه" className="grid size-5 place-items-center rounded-full border text-[11px]" style={{ borderColor: `${accent}66`, color: accent }} onClick={addPage}>+</button> : null}
         </div>
       ) : null}
 
@@ -351,11 +372,11 @@ function Launcher() {
       {browser ? <Browser initialUrl={browser.url} accent={accent} onClose={() => setBrowser(null)} /> : null}
 
       <SettingsSheet open={sheet === "settings"} onOpenChange={(o) => setSheet(o ? "settings" : null)} prefs={prefs} setPrefs={setPrefs} version={JIBOS_VERSION} onOpenDev={() => setSheet("dev")} onOpenGemini={() => setSheet("gemini")} geminiConnected={!!gemini.key} onExport={() => void doExport()} onImport={(f) => void doImport(f)} />
-      <GeminiSheet open={sheet === "gemini"} onOpenChange={(o) => setSheet(o ? "gemini" : null)} settings={gemini} setSettings={setGemini} accent={accent} onInstallHtml={(name, html) => { installHtml(name, html, "✨"); showToast(`«${name}» نصب شد`); }} />
-      <InstallSheet open={sheet === "install"} onOpenChange={(o) => setSheet(o ? "install" : null)} accent={accent} onInstalled={(app, run) => { showToast(`«${app.name}» نصب شد`); if (run) { setSheet(null); setRunning(app); } }} />
+      <GeminiSheet open={sheet === "gemini"} onOpenChange={(o) => setSheet(o ? "gemini" : null)} settings={gemini} setSettings={setGemini} accent={accent} onInstallHtml={(name, html) => { const app = installHtml(name, html, "✨"); useLauncher.getState().patch(app.id, { page }); showToast(`«${name}» نصب شد`); }} />
+      <InstallSheet open={sheet === "install"} onOpenChange={(o) => setSheet(o ? "install" : null)} accent={accent} onInstalled={(app, run) => { useLauncher.getState().patch(app.id, { page }); showToast(`«${app.name}» نصب شد`); if (run) { setSheet(null); setRunning(app); } }} />
       <DevSheet open={sheet === "dev"} onOpenChange={(o) => setSheet(o ? "dev" : null)} prefs={prefs} setPrefs={(p) => void setPrefs(p)} runScript={runScript} onEditApp={(a) => { setSheet(null); setEditing(a); }} onOpenTerminal={() => { setSheet(null); setTerminal(true); }} />
       <AppCustomizeSheet app={customizing} onOpenChange={(o) => !o && setCustomizing(null)} accent={accent} devMode={prefs.devMode} pages={prefs.pages} onEditCode={(a) => { setCustomizing(null); setEditing(a); }} onRemove={(a) => { if (window.confirm(`«${a.name}» حذف شود؟`)) { void uninstall(a.id); setCustomizing(null); } }} />
-      <AppEditorSheet app={prefs.devMode ? editing : null} onOpenChange={(o) => !o && setEditing(null)} accent={accent} gemini={gemini} />
+      <AppEditorSheet app={editing} onOpenChange={(o) => !o && setEditing(null)} accent={accent} gemini={gemini} />
     </main>
   );
 }

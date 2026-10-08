@@ -361,10 +361,10 @@ function fileFrom(lang: Lang, id: string): LabFile {
 }
 
 export const SEED_PROJECT: Project = {
-  id: "proj-jib",
-  name: "برنامهٔ ترکیبی",
-  activeFileId: "file-mix",
-  files: [fileFrom("mix", "file-mix"), fileFrom("english", "file-jib")],
+  id: "proj-nava",
+  name: "شروع با نوا",
+  activeFileId: "file-nava",
+  files: [fileFrom("nava", "file-nava")],
 };
 
 export function uid(prefix: string): string {

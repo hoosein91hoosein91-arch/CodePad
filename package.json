@@ -17,11 +17,12 @@
     "typecheck": "tsc --noEmit",
     "examples:nava": "node --experimental-strip-types scripts/export-nava-examples.mts",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/labshell/nava.test.ts",
+    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/labshell/nava.test.ts src/labshell/launcher-compat.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "build:mobile": "VITE_AUTH_ENABLED=false vite build -c vite.mobile.config.ts",
-    "android:prepare": "node scripts/android-prepare.mjs"
+    "android:prepare": "node scripts/android-prepare.mjs",
+    "test:launcher": "node --experimental-strip-types --test src/labshell/nava.test.ts src/labshell/launcher-compat.test.ts && node --experimental-strip-types scripts/jib-selftest.mjs && node --experimental-vm-modules scripts/launcher-merge-selftest.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

@@ -5,8 +5,9 @@ import { addAssets, assetsOf, loadAssets, readAssetBlob, removeProjectAssets } f
 import { assetFile, type Pack } from "@/labshell/pack";
 import type { Project } from "@/labshell/types";
 import { dropAppStore } from "@/labshell/jibos";
+import { appPage, readLauncherBackup } from "@/labshell/launcher-compat";
 
-export type App = { id: string; name: string; icon: string; iconImage?: string; iconColor?: string; files: { name: string; content: string }[]; installedAt: number; page?: number };
+export type App = { id: string; name: string; icon: string; iconImage?: string; iconColor?: string; files: { name: string; content: string }[]; installedAt: number; page?: number; pageIndex?: number };
 export const assetKey = (id: string) => `launcher-${id}`;
 
 const storage = {
@@ -26,10 +27,15 @@ export const useLauncher = create<{ apps: App[]; put: (app: App) => void; patch:
     (set) => ({
       apps: [],
       put: (app) => set((s) => ({ apps: [...s.apps.filter((a) => a.name !== app.name), app] })),
-      patch: (id, changes) => set((s) => ({ apps: s.apps.map((a) => a.id === id ? { ...a, ...changes } : a) })),
+      patch: (id, changes) => set((s) => ({ apps: s.apps.map((a) => a.id === id ? { ...a, ...changes, ...(changes.page !== undefined || changes.pageIndex !== undefined ? { page: changes.page ?? changes.pageIndex, pageIndex: changes.page ?? changes.pageIndex } : {}) } : a) })),
       drop: (id) => set((s) => ({ apps: s.apps.filter((a) => a.id !== id) })),
     }),
-    { name: "jibcode-launcher", skipHydration: true, storage: createJSONStorage(() => storage) },
+    { name: "jibcode-launcher", skipHydration: true, storage: createJSONStorage(() => storage),
+      merge: (saved, current) => {
+        const data = saved as { apps?: App[] } | null;
+        return { ...current, ...(data ?? {}), apps: Array.isArray(data?.apps) ? data.apps.map((a) => ({ ...a, page: appPage(a) })) : current.apps };
+      },
+    },
   ),
 );
 
@@ -84,8 +90,13 @@ function toBase64(bytes: Uint8Array): string {
 /** برنامه را دوباره به «بستهٔ جیب» (.jibpack) تبدیل می‌کند؛ پیوست‌ها هم داخل بسته می‌روند */
 export async function exportPack(app: App): Promise<string> {
   await loadAssets();
-  const out = [`@@@ jibpack 1 ${app.name}`];
-  for (const f of app.files) out.push(`@@@ file ${f.name}`, f.content.replace(/\r\n?/g, "\n").replace(/\n+$/, ""));
+  const out = [`@@@ jibpack 1 ${app.name.replace(/[\r\n]/g, " ").trim() || "CodePad app"}`];
+  for (const f of app.files) {
+    if (!f.name || /[\r\n]/.test(f.name) || f.content.split(/\r\n?|\n/).some((line) => line.startsWith("@@@"))) {
+      throw new Error("یکی از فایل‌ها شامل خطی است که قالب jibpack رزرو کرده؛ آن خط را تغییر بده و دوباره خروجی بگیر.");
+    }
+    out.push(`@@@ file ${f.name}`, f.content.replace(/\r\n?/g, "\n").replace(/\n+$/, ""));
+  }
   for (const meta of assetsOf(assetKey(app.id))) {
     const blob = await readAssetBlob(assetKey(app.id), meta.name);
     if (!blob) continue;
@@ -94,6 +105,9 @@ export async function exportPack(app: App): Promise<string> {
   }
   return out.join("\n") + "\n";
 }
+
+/** Compatibility with the original launcher export API. */
+export const exportAppPack = exportPack;
 
 // ── پشتیبان‌گیری/بازگردانی کل لانچر (برنامه‌ها + ظاهر) در یک فایل ─────────────
 function fromBase64(b64: string): ArrayBuffer {
@@ -121,7 +135,7 @@ export async function exportBackup(prefs: unknown): Promise<string> {
       if (!blob) continue;
       assets.push({ name: meta.name, type: blob.type, b64: toBase64(new Uint8Array(await blob.arrayBuffer())) });
     }
-    apps.push({ name: app.name, icon: app.icon, iconImage: app.iconImage, iconColor: app.iconColor, page: app.page ?? 0, files: app.files, assets });
+    apps.push({ name: app.name, icon: app.icon, iconImage: app.iconImage, iconColor: app.iconColor, page: appPage(app), files: app.files, assets });
   }
   const backup: Backup = { jibosBackup: 1, exportedAt: Date.now(), prefs, apps };
   return JSON.stringify(backup, null, 2);
@@ -129,12 +143,12 @@ export async function exportBackup(prefs: unknown): Promise<string> {
 
 /** فایل پشتیبان را می‌خواند و برنامه‌ها را دوباره نصب می‌کند؛ prefs را برمی‌گرداند تا صفحهٔ لانچر اعمال کند */
 export async function importBackup(text: string): Promise<{ installed: number; prefs: unknown }> {
-  const data = JSON.parse(text) as Partial<Backup>;
-  if (data.jibosBackup !== 1 || !Array.isArray(data.apps)) throw new Error("فایل پشتیبان معتبر نیست.");
+  const data = readLauncherBackup(text);
   await loadAssets();
   let installed = 0;
-  for (const a of data.apps) {
-    const files = a.assets.map((as) => new File([fromBase64(as.b64)], as.name, { type: as.type || "application/octet-stream" }));
+  // Decode every attachment first: a malformed backup must not partially replace installed programs.
+  const prepared = data.apps.map((a) => ({ a, files: a.assets.map((as) => new File([fromBase64(as.b64)], as.name, { type: as.type || "application/octet-stream" })) }));
+  for (const { a, files } of prepared) {
     const app = await install(a.name, a.files, files);
     useLauncher.getState().patch(app.id, { icon: a.icon, iconImage: a.iconImage, iconColor: a.iconColor, page: a.page ?? 0 });
     installed++;

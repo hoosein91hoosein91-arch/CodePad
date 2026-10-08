@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> build:mobile
+> VITE_AUTH_ENABLED=false vite build -c vite.mobile.config.ts
+
+sh: 1: vite: not found
