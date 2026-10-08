@@ -8,6 +8,7 @@ import { buildHtmlDoc, buildWebDoc, webText, withAssets } from "@/labshell/html-
 import { injectHead, jibosClient, JIBOS_DEV, JIBOS_OPEN, readAppStore, writeAppStore } from "@/labshell/jibos";
 import { assetKey, type App } from "@/labshell/launcher";
 import { runMix } from "@/labshell/mix";
+import { launcherEntry } from "@/labshell/launcher-entry";
 import { compileNava } from "@/labshell/nava";
 import { appAsk } from "@/labshell/gemini";
 import { langFromName } from "@/labshell/open-files";
@@ -20,10 +21,6 @@ import type { Lang } from "@/labshell/types";
 
 const KIND: Partial<Record<Lang, string>> = { python: "python", javascript: "javascript", english: "jib", farsi: "farsi", c: "c", cpp: "cpp", binary: "binary" };
 
-function entryOf(app: App) {
-  const by = (test: (n: string, l: Lang) => boolean) => app.files.find((f) => test(f.name, langFromName(f.name)));
-  return by((n) => /^main\./i.test(n)) ?? by((_, l) => l === "nava") ?? by((_, l) => l === "mix") ?? by((_, l) => l === "html") ?? by((_, l) => l !== "css");
-}
 
 type View = { kind: "busy" } | { kind: "web"; doc: string } | { kind: "page"; doc: string } | { kind: "text"; out: string; err: string };
 
@@ -139,7 +136,7 @@ export function AppWindow({ app, host, accent, onClose }: { app: App; host: Brid
     (async () => {
       await loadAssets();
       const key = assetKey(app.id);
-      const entry = entryOf(app);
+      const entry = launcherEntry(app);
       if (!entry) return show({ kind: "text", out: "", err: "فایل قابل اجرا در این برنامه نیست." });
       const lang = langFromName(entry.name);
       if (lang === "html") {
