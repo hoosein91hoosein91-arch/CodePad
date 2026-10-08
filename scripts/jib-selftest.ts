@@ -5,6 +5,10 @@ import { SAMPLES } from "../src/labshell/samples.ts";
 import { detectKind, parseMix, runMix } from "../src/labshell/mix.ts";
 import { parsePack } from "../src/labshell/pack.ts";
 import { readFileSync } from "node:fs";
+import { askGemini, extractCode, geminiRequest, generateText } from "../src/labshell/gemini.ts";
+import { caesar, entropyBits, fromB64, fromHex, sha, toB64, toHex, xorHex } from "../src/labshell/crypto-utils.ts";
+import { DEFAULT_PREFS, normalizePrefs } from "../src/labshell/launcher-prefs.ts";
+import { injectHead, jibosClient } from "../src/labshell/jibos.ts";
 
 type Page = { title: string; text: string; mark: string; css: string };
 type Snap = { a: number; bits: string; pc: number; steps: number; gloss: string };
@@ -184,5 +188,33 @@ must("pack files", snakePack?.files.map((f) => f.name).join(",") === "snake.mix"
 must("pack assets", snakePack?.assets.map((a) => a.name).sort().join(",") === "apple.png,body.png,grass.png,head.png");
 must("pack pngs", !!snakePack && snakePack.assets.every((a) => a.bytes[0] === 0x89 && a.bytes[1] === 0x50 && a.bytes[2] === 0x4e && a.bytes[3] === 0x47));
 must("pack mix blocks", parseMix(snakePack?.files[0]?.content ?? "").blocks.map((b) => b.kind).join(",") === "python,html,css,javascript");
+// ── نسخهٔ ۲: لانچر، Gemini، نمونه‌های امنیت ──
+for (const id of ["security-hash", "security-encoding", "security-classic", "security-xor", "security-password", "sound-piano"]) {
+  const p = parsePack(readFileSync(new URL(`../src/labshell/packs/${id}.jibpack`, import.meta.url), "utf8"));
+  must(`sample ${id}`, !!p && p.problems.length === 0 && p.files.length === 1 && /^(main\.py|index\.html)$/.test(p.files[0].name) && p.files[0].content.length > 200);
+}
+must("sha256", (await sha("SHA-256", "abc")) === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+must("b64 roundtrip", fromB64(toB64("سلام abc")) === "سلام abc");
+must("hex roundtrip", toHex("AB") === "4142" && fromHex("4142") === "AB");
+must("caesar", caesar("Hello", 3) === "Khoor" && caesar(caesar("Hello", 3), -3) === "Hello");
+must("xor", xorHex("A", "A") === "00");
+must("entropy", entropyBits("") === 0 && entropyBits("Tr0ub4dor&3xyz!") > 80);
+must("prefs normalize", normalizePrefs({ columns: 99, accent: "javascript:x", devMode: true }).columns === 6 && normalizePrefs({ accent: "bad" }).accent === DEFAULT_PREFS.accent && normalizePrefs({ devMode: true }).devMode);
+const req = geminiRequest({ key: "TEST-KEY", model: "gemini-3.8-flash" }, "hi", "sys");
+must("gemini url", req.url === "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent");
+must("gemini header", (req.init.headers as Record<string, string>)["x-goog-api-key"] === "TEST-KEY" && !req.url.includes("TEST-KEY"));
+must("gemini body", JSON.parse(String(req.init.body)).contents[0].parts[0].text === "hi");
+must("gemini parse", generateText({ candidates: [{ content: { parts: [{ text: "x", thought: true }, { text: "سلام" }] } }] }) === "سلام");
+let seen = "";
+const answer = await askGemini({ key: "K", model: "m" }, "q", { fetcher: async (u) => { seen = u; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }), { status: 200 }); } });
+must("gemini call path", answer === "ok" && seen.endsWith("/models/m:generateContent"));
+let noKey = "";
+await askGemini({ key: "", model: "m" }, "q").catch((e: Error) => { noKey = e.message; });
+must("gemini missing key", noKey.includes("کلید"));
+let badKey = "";
+await askGemini({ key: "K", model: "m" }, "q", { fetcher: async () => new Response(JSON.stringify({ error: { message: "API key not valid" } }), { status: 400 }) }).catch((e: Error) => { badKey = e.message; });
+must("gemini bad key", badKey.includes("نامعتبر"));
+must("extract code", extractCode("hi\n```html\n<p>x</p>\n```") === "<p>x</p>\n");
+must("jibos inject", injectHead("<html><head><title>t</title></head></html>", jibosClient("n1", "app")).indexOf("window.jibos") < injectHead("<html><head><title>t</title></head></html>", jibosClient("n1", "app")).indexOf("<title>"));
 if (process.exitCode) process.exit(process.exitCode);
 console.log("ALL PASSED");

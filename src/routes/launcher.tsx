@@ -1,224 +1,263 @@
-import * as Dialog from "@radix-ui/react-dialog";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { compileEnglish } from "@/labshell/english";
-import { compileFarsi } from "@/labshell/farsi";
-import { runBinary } from "@/labshell/binary";
-import { assetUrlsFor, loadAssets } from "@/labshell/assets";
-import { buildHtmlDoc, buildWebDoc, webText, withAssets } from "@/labshell/html-doc";
-import { assetKey, installPack, uninstall, useLauncher, type App } from "@/labshell/launcher";
-import { runMix } from "@/labshell/mix";
-import { langFromName } from "@/labshell/open-files";
-import { parsePack } from "@/labshell/pack";
-import { runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
-import { stageSrcDoc } from "@/labshell/stage-doc";
+import { Code2, Palette, Plus, Search, ShieldAlert, Sparkles, SquareTerminal, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { AppCustomizeSheet, AppEditorSheet, InstallSheet } from "@/components/launcher/app-sheets";
+import { AppWindow, type BridgeHost } from "@/components/launcher/app-window";
+import { DevSheet } from "@/components/launcher/dev-sheet";
+import { GeminiSheet } from "@/components/launcher/gemini-sheet";
+import { MatrixRain } from "@/components/launcher/matrix-rain";
+import { SettingsSheet } from "@/components/launcher/settings-sheet";
+import { Terminal, type LauncherApi } from "@/components/launcher/terminal";
+import { loadAssets } from "@/labshell/assets";
+import { askGemini, loadGemini, saveGemini, type GeminiSettings } from "@/labshell/gemini";
+import { installHtml, uninstall, useLauncher, type App } from "@/labshell/launcher";
+import { loadPrefs, normalizePrefs, savePrefs, type Preferences } from "@/labshell/launcher-prefs";
 import { applyTheme, useTheme } from "@/labshell/theme";
-import type { Lang } from "@/labshell/types";
 
 export const Route = createFileRoute("/launcher")({ component: Launcher });
 
-const KIND: Partial<Record<Lang, string>> = { python: "python", javascript: "javascript", english: "jib", farsi: "farsi", c: "c", cpp: "cpp", binary: "binary" };
+const JIBOS_VERSION = "2.0.0";
 
-function entryOf(app: App) {
-  const by = (test: (n: string, l: Lang) => boolean) => app.files.find((f) => test(f.name, langFromName(f.name)));
-  return by((n) => /^main\./i.test(n)) ?? by((_, l) => l === "mix") ?? by((_, l) => l === "html") ?? by((_, l) => l !== "css");
+let audio: AudioContext | null = null;
+function beep(freq = 880, ms = 140) {
+  try {
+    const A = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!A) return;
+    audio ??= new A();
+    if (audio.state === "suspended") void audio.resume();
+    const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime;
+    o.type = "square";
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.08, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+    o.connect(g);
+    g.connect(audio.destination);
+    o.start(t);
+    o.stop(t + ms / 1000 + 0.03);
+  } catch {
+    /* صدا در دسترس نیست */
+  }
 }
 
-type View = { kind: "busy" } | { kind: "web"; doc: string } | { kind: "page"; doc: string } | { kind: "text"; out: string; err: string };
-
-function AppWindow({ app, onClose }: { app: App; onClose: () => void }) {
-  const [view, setView] = useState<View>({ kind: "busy" });
+function useBattery() {
+  const [level, setLevel] = useState<number | null>(null);
   useEffect(() => {
-    let dead = false;
-    const show = (v: View) => !dead && setView(v);
-    (async () => {
-      await loadAssets();
-      const key = assetKey(app.id);
-      const entry = entryOf(app);
-      if (!entry) return show({ kind: "text", out: "", err: "فایل قابل اجرا در این برنامه نیست." });
-      const lang = langFromName(entry.name);
-      if (lang === "html") {
-        const files = app.files.map((f) => ({ id: f.name, name: f.name, lang: langFromName(f.name), content: f.content, stdin: "" }));
-        const urls = await assetUrlsFor(key, files.map((f) => f.content).join("\n"));
-        return show({ kind: "web", doc: buildHtmlDoc(entry.content, files, null, urls) });
-      }
-      const source = lang === "mix" ? entry.content : `@@ ${KIND[lang] ?? "jib"}\n${entry.content}`;
-      const result = await runMix(source, "", {
-        python: (code, stdin) => runPython(code, stdin, key),
-        javascript: runJavaScript,
-        jib: async (code, stdin, farsi): Promise<RunResult> => {
-          const c = farsi ? compileFarsi(code) : compileEnglish(code);
-          return c.ok ? runFarsi(c.js, stdin) : { stdout: "", stderr: c.error, aborted: false };
-        },
-        c: runCpp,
-        cpp: runCpp,
-        binary: async (code, stdin): Promise<RunResult> => {
-          const r = runBinary(code, stdin);
-          return r.ok ? { stdout: r.lines.join("\n"), stderr: "", aborted: false } : { stdout: "", stderr: r.error, aborted: false };
-        },
-      });
-      if (dead || result.aborted) return;
-      if (result.web) {
-        const web = withAssets(result.web, await assetUrlsFor(key, webText(result.web)));
-        return show({ kind: "web", doc: buildWebDoc(web, null) });
-      }
-      // کارت «صفحه» فقط وقتی برنامه واقعاً page { } ساخته باشد؛ چاپ‌ها هم روی کارت می‌آیند (لانچر ترمینال ندارد)
-      const page = result.page;
-      if (page && !result.stderr.trim() && (page.title || page.text || page.mark || page.css)) {
-        const lines = result.stdout.split("\n").filter((line) => line && !line.startsWith("── "));
-        return show({ kind: "page", doc: stageSrcDoc(page.css ?? "", { ...page, title: page.title || app.name, text: page.text || "", mark: page.mark || "JIB", lines }) });
-      }
-      show({ kind: "text", out: result.stdout, err: result.stderr });
-    })().catch((e) => show({ kind: "text", out: "", err: String(e) }));
-    return () => {
-      dead = true;
-      stopRuntimes();
-    };
-  }, [app]);
-
-  return (
-    <div className="fixed inset-0 z-30 flex flex-col bg-ink pt-[env(safe-area-inset-top)]">
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-line bg-panel px-2">
-        <button type="button" className="grid size-10 place-items-center" aria-label="بازگشت به خانه" onClick={onClose}>
-          <ArrowRight className="size-5" />
-        </button>
-        <span className="truncate text-sm font-semibold">{app.name}</span>
-      </header>
-      {view.kind === "busy" ? <p className="p-4 text-mist">در حال اجرا…</p> : null}
-      {view.kind === "web" ? <iframe title={app.name} className="min-h-0 flex-1 bg-white" sandbox="allow-scripts allow-modals allow-forms" srcDoc={view.doc} /> : null}
-      {view.kind === "page" ? <iframe title={app.name} className="min-h-0 flex-1" sandbox="allow-same-origin" srcDoc={view.doc} /> : null}
-      {view.kind === "text" ? (
-        <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-4 font-mono text-sm">
-          {view.out}
-          {view.err ? <span className="text-[#ff6a3d]">{"\n" + view.err}</span> : null}
-        </pre>
-      ) : null}
-    </div>
-  );
+    const nav = navigator as Navigator & { getBattery?: () => Promise<{ level: number; addEventListener: (e: string, f: () => void) => void }> };
+    let alive = true;
+    void nav.getBattery?.().then((b) => {
+      const up = () => alive && setLevel(Math.round(b.level * 100));
+      up();
+      b.addEventListener("levelchange", up);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  return level;
 }
 
-function InstallDialog() {
-  const [url, setUrl] = useState("");
-  const [msg, setMsg] = useState("");
-  const done = async (text: string) => {
-    const pack = parsePack(text);
-    if (!pack) return setMsg("این فایل بستهٔ جیب (.jibpack) نیست.");
-    const app = await installPack(pack);
-    setMsg(`«${app.name}» نصب شد.` + (pack.problems.length ? ` مشکل: ${pack.problems.join("، ")}` : ""));
+function AppIcon({ app, prefs, edit, onOpen, onLong }: { app: App; prefs: Preferences; edit: boolean; onOpen: () => void; onLong: () => void }) {
+  const timer = useRef<number | null>(null);
+  const longFired = useRef(false);
+  const start = () => {
+    longFired.current = false;
+    timer.current = window.setTimeout(() => { longFired.current = true; onLong(); }, 520);
   };
-  const field = "h-11 w-full rounded-lab bg-panel-2 px-3 text-sm outline-none";
+  const cancel = () => { if (timer.current) window.clearTimeout(timer.current); timer.current = null; };
   return (
-    <Dialog.Root onOpenChange={() => setMsg("")}>
-      <Dialog.Trigger asChild>
-        <button type="button" className="grid size-14 place-items-center rounded-full bg-lime text-ink" aria-label="نصب برنامه">
-          <Plus className="size-7" />
-        </button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-3 rounded-t-2xl bg-panel p-4 outline-none">
-          <div className="flex items-center justify-between">
-            <Dialog.Title className="text-lg font-semibold">نصب برنامه</Dialog.Title>
-            <Dialog.Close className="grid size-10 place-items-center" aria-label="بستن">
-              <X className="size-5" />
-            </Dialog.Close>
-          </div>
-          <Dialog.Description className="text-sm text-mist">فایل بستهٔ جیب (.jibpack) را انتخاب کن یا نشانی دانلودش را بده.</Dialog.Description>
-          <input
-            type="file"
-            accept=".jibpack,.txt,text/plain"
-            className="text-sm"
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              if (f) await done(await f.text()).catch((x) => setMsg(String(x)));
-              e.target.value = "";
-            }}
-          />
-          <input className={field} dir="ltr" placeholder="https://…/app.jibpack" value={url} onChange={(e) => setUrl(e.target.value)} />
-          <button
-            type="button"
-            className="h-11 rounded-lab bg-panel-2 text-sm"
-            onClick={async () => {
-              try {
-                setMsg("در حال دانلود…");
-                const r = await fetch(url);
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                await done(await r.text());
-              } catch (e) {
-                setMsg(`دانلود نشد (${e instanceof Error ? e.message : e}). اگر سایت اجازهٔ دسترسی نمی‌دهد، فایل را دانلود کن و از «انتخاب فایل» نصب کن.`);
-              }
-            }}
-          >
-            دانلود و نصب
-          </button>
-          {msg ? <p className="text-sm">{msg}</p> : null}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <div className="relative flex min-w-0 flex-col items-center gap-1.5">
+      <button
+        type="button"
+        data-testid="app-icon"
+        className={`jibos-icon relative grid place-items-center overflow-hidden text-2xl font-bold transition active:scale-90 ${edit ? "jibos-wiggle" : ""}`}
+        style={{ width: prefs.iconSize, height: prefs.iconSize, borderRadius: prefs.roundness, backgroundColor: app.iconColor ?? "rgba(2,16,9,.82)", border: `1px solid ${prefs.accent}40`, boxShadow: `0 0 0 1px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.45), 0 0 16px ${prefs.accent}26, inset 0 1px 0 rgba(255,255,255,.1)` }}
+        onPointerDown={start}
+        onPointerUp={cancel}
+        onPointerLeave={cancel}
+        onContextMenu={(e) => e.preventDefault()}
+        onClick={() => { if (!longFired.current) onOpen(); }}
+        aria-label={`${edit ? "شخصی‌سازی" : "اجرای"} ${app.name}`}
+      >
+        {app.iconImage ? <img src={app.iconImage} alt="" className="size-full object-cover" draggable={false} /> : <><span className="absolute inset-0 bg-gradient-to-br from-white/12 to-transparent" /><span className="relative" style={{ textShadow: `0 0 12px ${prefs.accent}88` }}>{app.icon}</span></>}
+      </button>
+      {prefs.labels ? <span className="max-w-full truncate text-center text-[11px] font-medium text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,.9)]">{app.name}</span> : null}
+    </div>
   );
 }
 
 function Launcher() {
   const apps = useLauncher((s) => s.apps);
+  const [prefs, setPrefsState] = useState<Preferences>(() => normalizePrefs({}));
+  const [gemini, setGeminiState] = useState<GeminiSettings>({ key: "", model: "" });
   const [running, setRunning] = useState<App | null>(null);
+  const [customizing, setCustomizing] = useState<App | null>(null);
+  const [editing, setEditing] = useState<App | null>(null);
   const [edit, setEdit] = useState(false);
+  const [sheet, setSheet] = useState<null | "settings" | "gemini" | "install" | "dev">(null);
+  const [terminal, setTerminal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [toast, setToast] = useState("");
   const [now, setNow] = useState(() => new Date());
+  const [ready, setReady] = useState(false);
+  const battery = useBattery();
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
+  const safe = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("safe");
+
   useEffect(() => {
     void Promise.resolve(useLauncher.persist.rehydrate());
     void loadAssets();
     void Promise.resolve(useTheme.persist.rehydrate()).then(() => applyTheme(useTheme.getState()));
-    const timer = window.setInterval(() => setNow(new Date()), 30000);
+    setPrefsState(loadPrefs());
+    setGeminiState(loadGemini());
+    setReady(true);
+    const timer = window.setInterval(() => setNow(new Date()), 15000);
     return () => window.clearInterval(timer);
   }, []);
 
+  const setPrefs = useCallback((next: Preferences) => {
+    const clean = normalizePrefs(next);
+    setPrefsState(clean);
+    return savePrefs(clean);
+  }, []);
+  const patchPrefs = useCallback((patch: Partial<Preferences>) => setPrefs({ ...prefsRef.current, ...patch }), [setPrefs]);
+  const setGemini = (s: GeminiSettings) => { saveGemini(s); setGeminiState(loadGemini()); };
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast((t) => (t === msg ? "" : t)), 2600);
+  }, []);
+  const launch = useCallback((name: string) => {
+    const app = useLauncher.getState().apps.find((a) => a.name === name || a.name.includes(name));
+    if (!app) return false;
+    setTerminal(false);
+    setRunning(app);
+    return true;
+  }, []);
+
+  const api: LauncherApi = useMemo(() => ({
+    version: JIBOS_VERSION,
+    apps: () => useLauncher.getState().apps,
+    launch,
+    prefs: () => prefsRef.current,
+    setPrefs: (patch) => void patchPrefs(patch),
+    toast: showToast,
+    beep,
+    install: (name, html, icon) => installHtml(name, html, icon),
+    uninstall: async (name) => { const a = useLauncher.getState().apps.find((x) => x.name === name); if (!a) return false; await uninstall(a.id); return true; },
+    gemini: (prompt) => askGemini(loadGemini(), prompt),
+  }), [launch, patchPrefs, showToast]);
+
+  const runScript = useCallback(async (code: string) => {
+    try {
+      const fn = new Function("api", `"use strict"; return (async () => {\n${code}\n})()`) as (a: LauncherApi) => Promise<unknown>;
+      const v = await fn(api);
+      return v === undefined ? "✓ اجرا شد" : typeof v === "string" ? v : JSON.stringify(v, null, 2);
+    } catch (e) {
+      return `خطا: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }, [api]);
+
+  // اسکریپت راه‌اندازی (فقط حالت توسعه‌دهنده، و نه در ?safe=1)
+  const booted = useRef(false);
+  useEffect(() => {
+    if (!ready || booted.current || safe || !prefs.devMode || !prefs.bootScript.trim()) return;
+    booted.current = true;
+    void runScript(prefs.bootScript).then((r) => r.startsWith("خطا") && showToast(`اسکریپت راه‌اندازی: ${r}`));
+  }, [ready, safe, prefs.devMode, prefs.bootScript, runScript, showToast]);
+
+  const host: BridgeHost = {
+    version: JIBOS_VERSION,
+    devMode: prefs.devMode,
+    theme: prefs.theme,
+    toast: showToast,
+    apps: () => useLauncher.getState().apps.map((a) => a.name),
+    launch,
+    setWallpaper: (v) => { if (/^(data:image\/|linear-gradient|radial-gradient|#)/.test(v)) patchPrefs({ wallpaper: v }); else throw new Error("پس‌زمینه باید data:image یا gradient باشد"); },
+    setAccent: (c) => void patchPrefs({ accent: c }),
+  };
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLocaleLowerCase("fa");
+    return [...apps].sort((a, b) => a.installedAt - b.installedAt).filter((a) => !q || a.name.toLocaleLowerCase("fa").includes(q));
+  }, [apps, search]);
+
+  const isImage = prefs.wallpaper.startsWith("data:");
+  const accent = prefs.accent;
+  const style = {
+    "--launcher-accent": accent,
+    backgroundImage: isImage ? `linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.7)),url("${prefs.wallpaper}")` : prefs.wallpaper,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  } as CSSProperties;
+  const time = now.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+  const glass = prefs.glass ? "bg-black/35 backdrop-blur-xl" : "bg-black/75";
+
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-ink pt-[env(safe-area-inset-top)] text-paper">
-      <div className="flex h-10 shrink-0 items-center justify-between px-5 text-sm">
-        <span>{now.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</span>
-        <Link to="/" className="text-mist">
-          جیب‌کد
-        </Link>
+    <main data-testid="launcher" data-theme={prefs.theme} className={`jibos relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-black pt-[env(safe-area-inset-top)] text-white`} style={style}>
+      {prefs.customCss && prefs.devMode && !safe ? <style>{prefs.customCss}</style> : null}
+      {prefs.matrix ? <MatrixRain color={accent} paused={!!running || terminal} opacity={isImage ? 0.28 : 0.42} /> : null}
+      {prefs.grid ? <div className="jibos-grid pointer-events-none absolute inset-0" /> : null}
+      {prefs.scanlines ? <div className="jibos-scan pointer-events-none absolute inset-0 z-20" /> : null}
+
+      <div className="relative z-10 flex h-8 shrink-0 items-center justify-between px-5 font-mono text-[11px] text-white/85">
+        <span>{time}</span>
+        <span className="flex items-center gap-2">
+          {prefs.devMode ? <span className="rounded px-1.5 py-px text-[9px] font-bold text-black" style={{ background: accent }}>DEV</span> : null}
+          <span className="tracking-widest" style={{ color: accent }}>▂▄▆█</span>
+          {battery !== null ? <span>{battery.toLocaleString("fa-IR")}٪</span> : null}
+        </span>
       </div>
-      <div className="flex shrink-0 items-center justify-between px-5 py-2">
-        <h1 className="text-xl font-bold">برنامه‌ها</h1>
-        <button type="button" className="h-9 rounded-full bg-panel px-4 text-sm" onClick={() => setEdit((v) => !v)}>
-          {edit ? "تمام" : "ویرایش"}
-        </button>
+
+      <section className="jibos-clock relative z-10 shrink-0 px-6 pb-3 pt-4 text-center">
+        <p className="font-mono text-[11px] tracking-[.3em] text-white/55" dir="ltr">{prefs.hostname}@jibos:~$ <span className="jibos-caret" /></p>
+        <p className={`jibos-glow mt-1 text-6xl font-light tracking-tight ${prefs.mono ? "font-mono" : ""}`} style={{ color: accent }}>{time}</p>
+        <p className="mt-1 text-xs text-white/70">{now.toLocaleDateString("fa-IR", { weekday: "long", day: "numeric", month: "long" })}</p>
+      </section>
+
+      <div className="relative z-10 mx-4 mb-3 flex shrink-0 items-center gap-2">
+        <label className={`flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border px-3 ${glass}`} style={{ borderColor: `${accent}33` }}>
+          <Search className="size-4 text-white/50" />
+          <input aria-label="جست‌وجوی برنامه‌ها" className="w-full bg-transparent text-sm outline-none placeholder:text-white/40" placeholder="جست‌وجو…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          {search ? <button type="button" aria-label="پاک کردن جست‌وجو" onClick={() => setSearch("")}><X className="size-4 text-white/50" /></button> : null}
+        </label>
+        <button type="button" className={`h-10 shrink-0 rounded-2xl px-3 text-xs ${edit ? "font-bold text-black" : `border text-white/80 ${glass}`}`} style={edit ? { background: accent } : { borderColor: `${accent}33` }} onClick={() => setEdit((v) => !v)}>{edit ? "تمام" : "ویرایش"}</button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-        {apps.length === 0 ? (
-          <p className="p-6 text-center text-mist">هنوز برنامه‌ای نصب نشده. با دکمهٔ + یک بستهٔ جیب نصب کن، یا از ویرایشگر پروژه را نصب کن.</p>
+
+      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        {visible.length === 0 ? (
+          <div className={`jibos-pop mx-auto mt-2 max-w-xs rounded-3xl border p-6 text-center ${glass}`} style={{ borderColor: `${accent}33` }} data-testid="empty-state">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl border font-mono text-xl" style={{ borderColor: `${accent}55`, color: accent, boxShadow: `0 0 24px ${accent}44` }}>&gt;_</div>
+            <h3 className="mt-3 font-bold">{search ? "برنامه‌ای پیدا نشد" : "صفحهٔ خانه خالی است"}</h3>
+            <p className="mt-2 text-xs leading-6 text-white/60">{search ? "نام دیگری را جست‌وجو کن." : "یک نمونهٔ آماده نصب کن، با Gemini برنامه بساز، یا پروژه‌ات را از ویرایشگر به لانچر بفرست."}</p>
+            {!search ? <button type="button" className="mt-4 h-10 rounded-xl px-4 text-sm font-bold text-black" style={{ background: accent }} onClick={() => setSheet("install")}>افزودن اولین برنامه</button> : null}
+          </div>
         ) : (
-          <div className="grid grid-cols-4 gap-y-6 pt-2">
-            {apps.map((app) => {
-              const hue = [...app.name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
-              return (
-                <div key={app.id} className="relative flex flex-col items-center gap-1">
-                  <button type="button" className={`grid size-16 place-items-center rounded-2xl text-3xl font-bold text-white ${edit ? "animate-pulse" : ""}`} style={{ background: `hsl(${hue} 55% 38%)` }} onClick={() => (edit ? undefined : setRunning(app))}>
-                    {app.icon}
-                  </button>
-                  <span className="w-full truncate text-center text-xs">{app.name}</span>
-                  {edit ? (
-                    <button
-                      type="button"
-                      aria-label="حذف"
-                      className="absolute -top-2 end-1 grid size-6 place-items-center rounded-full bg-red-600 text-white"
-                      onClick={() => window.confirm(`«${app.name}» حذف شود؟`) && void uninstall(app.id)}
-                    >
-                      <X className="size-4" />
-                    </button>
-                  ) : null}
-                </div>
-              );
-            })}
+          <div className="grid gap-y-5 pt-1" style={{ gridTemplateColumns: `repeat(${prefs.columns}, minmax(0, 1fr))` }}>
+            {visible.map((app) => (
+              <AppIcon key={app.id} app={app} prefs={prefs} edit={edit} onOpen={() => (edit ? setCustomizing(app) : setRunning(app))} onLong={() => { setEdit(true); setCustomizing(app); }} />
+            ))}
           </div>
         )}
       </div>
-      <div className="flex shrink-0 justify-center bg-panel/70 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <InstallDialog />
-      </div>
-      {running ? <AppWindow app={running} onClose={() => setRunning(null)} /> : null}
+
+      <nav className={`relative z-10 mx-3 mb-2 flex shrink-0 items-center justify-around rounded-[26px] border px-2 py-2.5 ${glass}`} style={{ borderColor: `${accent}33`, boxShadow: `0 0 30px ${accent}14` }} aria-label="داک">
+        <Link to="/" className="flex w-14 flex-col items-center gap-1 text-white/75"><Code2 className="size-5" /><span className="text-[10px]">ویرایشگر</span></Link>
+        <button type="button" className="flex w-14 flex-col items-center gap-1 text-white/75" onClick={() => setSheet("gemini")}><Sparkles className="size-5" style={{ color: accent }} /><span className="text-[10px]">Gemini{gemini.key ? " ●" : ""}</span></button>
+        <button type="button" aria-label="افزودن برنامه" className="grid size-14 place-items-center rounded-[20px] text-black transition active:scale-95" style={{ background: accent, boxShadow: `0 0 24px ${accent}88` }} onClick={() => setSheet("install")}><Plus className="size-7" /></button>
+        {prefs.terminal ? <button type="button" className="flex w-14 flex-col items-center gap-1 text-white/75" onClick={() => setTerminal(true)}><SquareTerminal className="size-5" /><span className="text-[10px]">کنسول</span></button> : <button type="button" className="flex w-14 flex-col items-center gap-1 text-white/75" onClick={() => setSheet("dev")}><ShieldAlert className="size-5" /><span className="text-[10px]">توسعه</span></button>}
+        <button type="button" className="flex w-14 flex-col items-center gap-1 text-white/75" onClick={() => setSheet("settings")}><Palette className="size-5" /><span className="text-[10px]">ظاهر</span></button>
+      </nav>
+      <div className="relative z-10 mx-auto mb-[max(6px,env(safe-area-inset-bottom))] h-1 w-28 shrink-0 rounded-full" style={{ background: `${accent}99` }} />
+
+      {toast ? <div role="status" className="jibos-pop fixed inset-x-0 bottom-28 z-[60] mx-auto w-max max-w-[86vw] rounded-2xl border bg-black/90 px-4 py-2 text-sm" style={{ borderColor: `${accent}66`, color: accent }}>{toast}</div> : null}
+
+      {running ? <AppWindow key={running.id + running.installedAt} app={running} host={host} accent={accent} onClose={() => setRunning(null)} /> : null}
+      {terminal ? <Terminal api={api} hostname={prefs.hostname} devMode={prefs.devMode} setDevMode={(on) => void patchPrefs({ devMode: on })} onClose={() => setTerminal(false)} accent={accent} /> : null}
+
+      <SettingsSheet open={sheet === "settings"} onOpenChange={(o) => setSheet(o ? "settings" : null)} prefs={prefs} setPrefs={setPrefs} version={JIBOS_VERSION} onOpenDev={() => setSheet("dev")} onOpenGemini={() => setSheet("gemini")} geminiConnected={!!gemini.key} />
+      <GeminiSheet open={sheet === "gemini"} onOpenChange={(o) => setSheet(o ? "gemini" : null)} settings={gemini} setSettings={setGemini} accent={accent} onInstallHtml={(name, html) => { installHtml(name, html, "✨"); showToast(`«${name}» نصب شد`); }} />
+      <InstallSheet open={sheet === "install"} onOpenChange={(o) => setSheet(o ? "install" : null)} accent={accent} onInstalled={(app, run) => { showToast(`«${app.name}» نصب شد`); if (run) { setSheet(null); setRunning(app); } }} />
+      <DevSheet open={sheet === "dev"} onOpenChange={(o) => setSheet(o ? "dev" : null)} prefs={prefs} setPrefs={(p) => void setPrefs(p)} runScript={runScript} onEditApp={(a) => { setSheet(null); setEditing(a); }} onOpenTerminal={() => { setSheet(null); setTerminal(true); }} />
+      <AppCustomizeSheet app={customizing} onOpenChange={(o) => !o && setCustomizing(null)} accent={accent} devMode={prefs.devMode} onEditCode={(a) => { setCustomizing(null); setEditing(a); }} onRemove={(a) => { if (window.confirm(`«${a.name}» حذف شود؟`)) { void uninstall(a.id); setCustomizing(null); } }} />
+      <AppEditorSheet app={prefs.devMode ? editing : null} onOpenChange={(o) => !o && setEditing(null)} accent={accent} gemini={gemini} />
     </main>
   );
 }

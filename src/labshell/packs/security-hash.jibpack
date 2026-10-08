@@ -1,0 +1,45 @@
+@@@ jibpack 1 آزمایشگاه هش 🔐
+@@@ file main.py
+# آزمایشگاه هش (Hash) — آموزشی و کاملاً آفلاین
+# هش یک «اثر انگشت» یک‌طرفه از داده است: از متن به هش می‌رسیم، ولی برعکسش ممکن نیست.
+import hashlib, hmac, os
+
+text = "سلام CodePad"
+print("متن:", text)
+for name in ["md5", "sha1", "sha256", "sha512"]:
+    h = hashlib.new(name, text.encode("utf-8")).hexdigest()
+    print(f"{name:7} ({len(h) * 4:3} بیت): {h[:64]}{'…' if len(h) > 64 else ''}")
+
+# اثر بهمنی: فقط یک حرف عوض شود، هش کاملاً تغییر می‌کند
+a = hashlib.sha256(b"password1").hexdigest()
+b = hashlib.sha256(b"password2").hexdigest()
+same = sum(x == y for x, y in zip(a, b))
+print("\nاثر بهمنی:")
+print("password1 →", a[:32], "…")
+print("password2 →", b[:32], "…")
+print(f"نویسه‌های یکسان در یک جای مشابه: {same} از {len(a)} (تقریباً تصادفی)")
+
+# چرا برای ذخیرهٔ رمز عبور «نمک» (salt) و تابع کند لازم است
+# PBKDF2 را خودمان با HMAC می‌سازیم (در نسخهٔ موبایلی پایتون، hashlib.pbkdf2_hmac نیست)
+def pbkdf2_sha256(password: bytes, salt: bytes, rounds: int) -> bytes:
+    u = hmac.new(password, salt + b"\x00\x00\x00\x01", hashlib.sha256).digest()
+    acc = int.from_bytes(u, "big")
+    for _ in range(rounds - 1):
+        u = hmac.new(password, u, hashlib.sha256).digest()
+        acc ^= int.from_bytes(u, "big")
+    return acc.to_bytes(32, "big")
+
+salt = os.urandom(16)
+slow = pbkdf2_sha256(b"my-password", salt, 2000)
+print("\nذخیرهٔ امن رمز عبور با PBKDF2-SHA256 (۲۰۰۰ دور؛ در سرور واقعی صدها هزار دور):")
+print("salt :", salt.hex())
+print("hash :", slow.hex())
+print("بررسی با بردار آزمون استاندارد:", pbkdf2_sha256(b"password", b"salt", 2).hex()[:16] == "ae4d0c95af6b46d3")
+
+# HMAC: اثبات اینکه پیام دست‌نخورده است (با کلید مشترک)
+tag = hmac.new(b"shared-key", b"amount=1000", hashlib.sha256).hexdigest()
+print("\nHMAC پیام amount=1000:", tag[:32], "…")
+print("درست است؟", hmac.compare_digest(tag, hmac.new(b"shared-key", b"amount=1000", hashlib.sha256).hexdigest()))
+print("پیام عوض‌شده درست است؟", hmac.compare_digest(tag, hmac.new(b"shared-key", b"amount=9000", hashlib.sha256).hexdigest()))
+
+print("\nنکته: MD5 و SHA-1 برای امنیت شکسته شده‌اند؛ فقط برای مقایسهٔ فایل یا آموزش. برای امنیت SHA-256 به بالا.")

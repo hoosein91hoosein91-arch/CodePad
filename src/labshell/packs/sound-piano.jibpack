@@ -1,0 +1,65 @@
+@@@ jibpack 1 پیانوی نئون 🎹
+@@@ file index.html
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پیانوی نئون</title>
+<style>
+  body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0,#063d22,#000 70%);color:#d6ffe9;font-family:system-ui,Tahoma,sans-serif;display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 12px;box-sizing:border-box}
+  h1{font:600 1.15rem ui-monospace,monospace;color:#00ff9c;text-shadow:0 0 14px #00ff9c99;margin:0}
+  .keys{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;width:100%;max-width:420px;direction:ltr}
+  .k{height:150px;border-radius:12px;border:1px solid #00ff9c55;background:linear-gradient(#0b2a1a,#03100a);color:#00ff9c;font:600 .8rem ui-monospace,monospace;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;user-select:none;touch-action:manipulation}
+  .k.on{background:#00ff9c;color:#001a0c;box-shadow:0 0 24px #00ff9c}
+  button{padding:12px 16px;border:0;border-radius:14px;background:#00ff9c;color:#001a0c;font-weight:700}
+  .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  p{font-size:.85rem;opacity:.75;text-align:center;line-height:1.7;max-width:420px}
+</style>
+</head>
+<body>
+<h1>&gt; neon_piano.app</h1>
+<div class="keys" id="keys"></div>
+<div class="row">
+  <button id="melody">♪ ملودی</button>
+  <button id="file">پخش فایل صوتی پیوست</button>
+  <button id="save">ذخیرهٔ امتیاز</button>
+</div>
+<p id="info">صدا با Web Audio در خود برنامه ساخته می‌شود (بدون اینترنت). برای «پخش فایل»، یک فایل صوتی با نام <b>sound.mp3</b> را در ویرایشگر به پروژه پیوست کن و دوباره در لانچر نصب کن.</p>
+<script>
+const NOTES = [["C",262],["D",294],["E",330],["F",349],["G",392],["A",440],["B",494],["C5",523]];
+let ctx = null, plays = 0;
+function tone(f, ms){
+  // اگر لانچر پل jibos را گذاشته باشد از آن استفاده می‌کنیم، وگرنه مستقیم Web Audio
+  if (window.jibos) return jibos.beep(f, ms, "triangle", 0.2);
+  ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+  o.type = "triangle"; o.frequency.value = f;
+  g.gain.setValueAtTime(0.2, t); g.gain.exponentialRampToValueAtTime(0.0001, t + ms/1000);
+  o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + ms/1000 + 0.05);
+}
+const box = document.getElementById("keys");
+NOTES.forEach(([n,f]) => {
+  const k = document.createElement("div"); k.className = "k"; k.textContent = n;
+  k.addEventListener("pointerdown", () => { k.classList.add("on"); tone(f, 400); plays++; });
+  ["pointerup","pointerleave"].forEach(e => k.addEventListener(e, () => k.classList.remove("on")));
+  box.appendChild(k);
+});
+document.getElementById("melody").onclick = () => {
+  const song = [262,262,392,392,440,440,392,0,349,349,330,330,294,294,262];
+  if (window.jibos) return jibos.melody(song, 260);
+  song.forEach((f,i) => f && setTimeout(() => tone(f, 240), i*260));
+};
+document.getElementById("file").onclick = async () => {
+  try { await new Audio("sound.mp3").play(); }
+  catch (e) { document.getElementById("info").textContent = "فایل sound.mp3 پیوست نشده یا پخش نشد: " + e.message; }
+};
+document.getElementById("save").onclick = async () => {
+  if (!window.jibos) return alert("این دکمه فقط وقتی برنامه داخل لانچر نصب شده کار می‌کند.");
+  const best = Math.max(plays, Number(await jibos.storage.get("best")) || 0);
+  await jibos.storage.set("best", best);
+  jibos.toast("بیشترین تعداد نت ذخیره شد: " + best);
+};
+</script>
+</body>
+</html>
