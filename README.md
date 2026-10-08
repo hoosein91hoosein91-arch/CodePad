@@ -1,5 +1,7 @@
 # CodePad (جیب‌کد)
 
+**2.5.0 / Nava Studio 0.6**: Latin starter/completions, multiple instructions per line with `|`, frame animations, seven WebGL primitives, materials, fog, lighting, pinch/drag camera, and correct active-file installation in the launcher. Existing languages and legacy Nava remain supported.
+
 An offline, multi-language coding workshop for phones. It runs Python (Pyodide), JavaScript, C/C++, the Jib teaching language (English and Farsi keywords), an 8-bit binary machine, HTML and CSS, plus **mix files** that combine several languages in one file and can render a live HTML/canvas page.
 
 - **Writing code for CodePad (for AI assistants and humans): see [AI_GUIDE.md](AI_GUIDE.md).** It covers the languages, the mix-file format (`@@` blocks, `shared`), attachments (upload any file — images, CSV/JSON/text, binary, audio, fonts — and use it in code by its file name), `.jibpack` packs (code + images in one file; built-in sample «مار و سیب (با عکس)»), the launcher (run projects as apps), limitations and worked examples.
