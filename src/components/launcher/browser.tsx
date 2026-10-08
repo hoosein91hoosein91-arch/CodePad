@@ -1,8 +1,8 @@
 import { ArrowRight, Lock, RotateCw, Shield, ExternalLink } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
-import { openExternalBrowser } from "@/lib/termux-bridge";
+import { openExternalBrowser, openTorBrowser } from "@/lib/termux-bridge";
 
-// مرورگر امن درون‌برنامه‌ای با حالت ناشناس: تاریخچه/کوکی نگه نمی‌دارد و با بستن پاک می‌شود.
+// History stays in this component; iframe cookies belong to the browser/WebView and are not isolated here.
 // محدودیت‌های صادقانه (در یادداشت داخل صفحه هم نوشته شده‌اند):
 //  • IP واقعی تو را پنهان نمی‌کند (برای آن به VPN/Tor واقعی نیاز است).
 //  • افزونه‌های کروم PC را اجرا نمی‌کند؛ موتور WebView اندروید از آن‌ها پشتیبانی نمی‌کند.
@@ -26,7 +26,17 @@ export function Browser({ onClose, accent, initialUrl }: { onClose: () => void; 
   const [reloadKey, setReloadKey] = useState(0);
   const [blocked, setBlocked] = useState(false);
   const [note, setNote] = useState(true);
+  const [status, setStatus] = useState("");
   const frame = useRef<HTMLIFrameElement>(null);
+  const openOutside = async (tor = false) => {
+    setStatus("");
+    try {
+      const result = tor ? await openTorBrowser(src) : await openExternalBrowser(src);
+      setStatus(result.opened ? "نشانی در مرورگر بیرونی باز شد." : "مرورگر باز نشد.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : String(error));
+    }
+  };
 
   const go = (e?: FormEvent) => {
     e?.preventDefault();
@@ -44,7 +54,7 @@ export function Browser({ onClose, accent, initialUrl }: { onClose: () => void; 
           <ArrowRight className="size-5" />
         </button>
         <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: `${accent}22`, color: accent }} data-testid="incognito-badge">
-          <Shield className="size-3" /> ناشناس
+          <Shield className="size-3" /> بدون تاریخچه
         </span>
         <form onSubmit={go} className="flex min-w-0 flex-1 items-center gap-1 rounded-full border bg-black/60 px-3" style={{ borderColor: `${accent}33` }}>
           <Lock className="size-3.5 shrink-0 text-white/50" />
@@ -67,7 +77,7 @@ export function Browser({ onClose, accent, initialUrl }: { onClose: () => void; 
 
       {note ? (
         <div className="shrink-0 border-b border-white/10 bg-black/60 px-3 py-2 text-[11px] leading-5 text-white/70" data-testid="browser-note">
-          این یک تب ناشناس درون‌برنامه است: تاریخچه و کوکی ذخیره نمی‌شود و با بستن پاک می‌شود. ولی{" "}
+          تاریخچهٔ این تب با بستن پاک می‌شود؛ کوکی‌ها و دادهٔ سایت ممکن است در مرورگر دستگاه باقی بمانند. این قاب پروفایل ناشناس جداگانه ندارد. {" "}
           <b className="text-white/90">IP واقعی‌ات را پنهان نمی‌کند</b>، افزونهٔ کروم PC اجرا نمی‌کند و خودش را به‌جای PC جا نمی‌زند. برای IP: VPN/Tor واقعی لازم است.{" "}
           <button type="button" className="underline" onClick={() => setNote(false)}>
             متوجه شدم
@@ -77,10 +87,10 @@ export function Browser({ onClose, accent, initialUrl }: { onClose: () => void; 
 
       <div className="relative min-h-0 flex-1 bg-white">
         {blocked ? (
-          <div className="grid h-full place-items-center p-6 text-center" data-testid="browser-blocked">
+          <div className="grid h-full place-items-center bg-[#0a0a0a] p-6 text-center" data-testid="browser-blocked">
             <div className="max-w-xs text-white/80">
               <p className="text-sm">این سایت اجازهٔ نمایش داخل برنامه را نمی‌دهد (X-Frame-Options).</p>
-              <button type="button" className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-black" style={{ background: accent }} onClick={() => void openExternalBrowser(src).catch(() => {})}>
+              <button type="button" className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-black" style={{ background: accent }} onClick={() => void openOutside()}>
                 <ExternalLink className="size-4" /> باز کردن بیرونی
               </button>
             </div>
@@ -99,11 +109,13 @@ export function Browser({ onClose, accent, initialUrl }: { onClose: () => void; 
           />
         )}
       </div>
-      <div className="absolute inset-x-0 bottom-0 grid place-items-center bg-black/80 py-1">
-        <button type="button" className="text-[11px] text-white/60 underline" onClick={() => void openExternalBrowser(src).catch(() => {})}>
-          باز کردن در مرورگر بیرونی (Tor/مرورگر اصلی)
-        </button>
-      </div>
+      <footer className="shrink-0 bg-black/80 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="flex flex-wrap justify-center gap-4">
+          <button type="button" className="text-[11px] text-white/75 underline" onClick={() => void openOutside()}>مرورگر اصلی</button>
+          <button type="button" data-testid="open-tor" className="text-[11px] text-white/75 underline" onClick={() => void openOutside(true)}>Tor در Android</button>
+        </div>
+        {status ? <p role="status" className="mt-2 text-center text-[11px] text-white/75">{status}</p> : null}
+      </footer>
     </div>
   );
 }

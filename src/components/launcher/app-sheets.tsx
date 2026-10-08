@@ -1,7 +1,8 @@
-import { Code2, ImagePlus, Pencil, Plus, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import { Code2, Download, ImagePlus, Pencil, Plus, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { askGemini, extractCode, fixPrompt, type GeminiSettings } from "@/labshell/gemini";
-import { installPack, useLauncher, type App } from "@/labshell/launcher";
+import { exportAppPack, installPack, useLauncher, type App } from "@/labshell/launcher";
+import { downloadText } from "@/labshell/download";
 import { langFromName } from "@/labshell/open-files";
 import { parsePack } from "@/labshell/pack";
 import { PACK_SAMPLES } from "@/labshell/pack-samples";
@@ -55,17 +56,17 @@ export function AppCustomizeSheet({ app, onOpenChange, accent, devMode, pages, o
       ) : null}
       <button type="button" className={primaryBtn} style={{ background: accent }} onClick={() => { useLauncher.getState().patch(app.id, { name: name.trim() || app.name, icon: icon || "✦", iconColor: color, iconImage: picture || undefined, page }); onOpenChange(false); }}>ذخیرهٔ تغییرات</button>
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" className={`${ghostBtn} flex items-center justify-center gap-2 disabled:opacity-40`} disabled={!devMode} title={devMode ? "" : "حالت توسعه‌دهنده لازم است"} onClick={() => onEditCode(app)}><Code2 className="size-4" />ویرایش کد</button>
+        <button type="button" className={`${ghostBtn} flex items-center justify-center gap-2`} onClick={() => onEditCode(app)}><Code2 className="size-4" />ویرایش کد</button>
         <button type="button" className={`${ghostBtn} flex items-center justify-center gap-2 text-rose-200`} onClick={() => onRemove(app)}><Trash2 className="size-4" />حذف برنامه</button>
       </div>
-      {!devMode ? <p className="text-[11px] text-white/40">برای ویرایش کد برنامه از داخل لانچر، «حالت توسعه‌دهنده» را در شخصی‌سازی روشن کن.</p> : null}
+      {!devMode ? <p className="text-[11px] text-white/40">برای تغییر کد پوسته و امکانات پیشرفتهٔ لانچر، «حالت توسعه‌دهنده» را در شخصی‌سازی روشن کن.</p> : null}
     </Sheet>
   );
 }
 
-/** ویرایش کد برنامهٔ نصب‌شده (فقط حالت توسعه‌دهنده) */
+/** ویرایش کد برنامهٔ نصب‌شده؛ دسترسی‌های پیشرفتهٔ پوسته همچنان به حالت توسعه‌دهنده نیاز دارند. */
 export function AppEditorSheet({ app, onOpenChange, accent, gemini }: { app: App | null; onOpenChange: (open: boolean) => void; accent: string; gemini: GeminiSettings }) {
-  const [fileName, setFileName] = useState(""), [code, setCode] = useState(""), [result, setResult] = useState(""), [newFile, setNewFile] = useState(""), [busy, setBusy] = useState(false);
+  const [fileName, setFileName] = useState(""), [code, setCode] = useState(""), [result, setResult] = useState(""), [newFile, setNewFile] = useState(""), [busy, setBusy] = useState(false), [exporting, setExporting] = useState(false);
   useEffect(() => {
     if (app) {
       const file = app.files.find((f) => langFromName(f.name) !== "css") ?? app.files[0];
@@ -110,6 +111,17 @@ export function AppEditorSheet({ app, onOpenChange, accent, gemini }: { app: App
       setBusy(false);
     }
   };
+  const exportDraft = async () => {
+    setExporting(true);
+    try {
+      const files = live.files.some((f) => f.name === fileName) ? live.files.map((f) => f.name === fileName ? { ...f, content: code } : f) : [...live.files, { name: fileName, content: code }];
+      const pack = await exportAppPack({ ...live, files });
+      downloadText(`${app.id}.jibpack`, pack);
+      setResult("بستهٔ برنامه و پیوست‌ها ساخته شد؛ متن فعلی ویرایشگر هم داخل آن است.");
+    } catch (error) {
+      setResult(error instanceof Error ? error.message : String(error));
+    } finally { setExporting(false); }
+  };
   return (
     <Sheet title={`کد ${app.name}`} icon={<Code2 className="size-5" style={{ color: accent }} />} open={!!app} onOpenChange={onOpenChange} testId="editor-sheet">
       <div className="flex gap-2">
@@ -123,11 +135,13 @@ export function AppEditorSheet({ app, onOpenChange, accent, gemini }: { app: App
         <button type="button" aria-label="فایل تازه" className={`${ghostBtn} shrink-0`} onClick={() => { const n = newFile.trim(); if (!n) return; setFileName(n); setCode(""); setNewFile(""); }}><Plus className="size-4" /></button>
       </div>
       <textarea aria-label="کد برنامه" dir="ltr" spellCheck={false} className={`${codeArea} min-h-[42dvh]`} value={code} onChange={(e) => setCode(e.target.value)} />
+      {langFromName(fileName) === "nava" ? <button type="button" className={ghostBtn} onClick={() => setCode(compactNavaSource(code))}>مخفف‌کردن کد نوا</button> : null}
       <div className="grid grid-cols-3 gap-2">
         <button type="button" className={`${ghostBtn} flex items-center justify-center gap-1`} onClick={scan}><ShieldCheck className="size-4" />بررسی</button>
         <button type="button" disabled={busy || !gemini.key} title={gemini.key ? "" : "اول Gemini را وصل کن"} className={`${ghostBtn} flex items-center justify-center gap-1 disabled:opacity-40`} onClick={() => void improve()}><Sparkles className="size-4" />{busy ? "…" : "Gemini"}</button>
         <button type="button" className={primaryBtn} style={{ background: accent }} onClick={save}>ذخیره</button>
       </div>
+      <button type="button" data-testid="export-editor-pack" disabled={exporting} className={`${ghostBtn} flex items-center justify-center gap-2 disabled:opacity-40`} onClick={() => void exportDraft()}><Download className="size-4" />{exporting ? "در حال ساخت…" : "خروجی برنامه (.jibpack)"}</button>
       {result ? <pre dir="auto" className="whitespace-pre-wrap rounded-xl border border-white/10 bg-black/40 p-3 text-xs leading-6" style={{ color: accent }}>{result}</pre> : null}
     </Sheet>
   );

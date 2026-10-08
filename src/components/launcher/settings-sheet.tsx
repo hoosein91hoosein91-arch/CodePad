@@ -111,7 +111,7 @@ export function SettingsSheet({ open, onOpenChange, prefs, setPrefs, version, on
         <div className="flex items-center justify-between gap-3 text-xs text-white/70">
           <label htmlFor="jibos-pages">تعداد صفحه‌های خانه</label>
           <select id="jibos-pages" data-testid="pages-count" className={`${field} w-28`} value={prefs.pages} onChange={(e) => set({ pages: Number(e.target.value) })}>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n} صفحه</option>)}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => <option key={n} value={n}>{n} صفحه</option>)}
           </select>
         </div>
         <p className="text-[11px] text-white/40">بین صفحه‌ها می‌توانی بکشی (swipe). پس‌زمینهٔ هر صفحه را در حالت «ویرایش» صفحهٔ خانه جدا کن.</p>
