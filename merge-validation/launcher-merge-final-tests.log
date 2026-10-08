@@ -1,0 +1,149 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> test:launcher
+> node --experimental-strip-types --test src/labshell/nava.test.ts src/labshell/launcher-compat.test.ts && node --experimental-strip-types scripts/jib-selftest.mjs && node --experimental-vm-modules scripts/launcher-merge-selftest.mjs
+
+✔ old nine-page preferences migrate without losing names, wallpapers or selected apps (3.527078ms)
+✔ the actual localStorage load/save path upgrades old preferences and preserves hidden pages (0.827224ms)
+✔ original JSON backup keeps literal code, icons, images and pageIndex (0.684108ms)
+✔ 2.4 backup preserves attachments, explicit page and custom developer settings (0.466618ms)
+✔ invalid backup rows reject before an installer can mutate storage (0.736497ms)
+✔ compact Nava stays LTR and full Persian Nava stays RTL, ignoring comments (0.394558ms)
+✔ old Nava programs still compile and behave (counter, old button form, input) (44.990351ms)
+✔ conditionals: اگر / وگرنه اگر / وگرنه, inline if, و/یا/نه and = as comparison (5.152881ms)
+✔ lists and loops: literal, index from 1, add/remove, برای هر، برای از تا، تکرار، تا وقتی (15.019167ms)
+✔ کنش with inputs, تابع with نتیجه, recursion and برگرد (10.269622ms)
+✔ timers: هر … ثانیه, بعد از … ثانیه, توقف and ادامه (1.21529ms)
+✔ canvas drawing, touch and key/swipe events (4.319783ms)
+✔ 3D scene: shapes, start position, rotation, move, size and camera (4.012614ms)
+✔ ذخیره restores saved values and saves only when they change (10.471946ms)
+✔ بپرس (AI): placeholder while waiting, then the answer or a readable error (9.764975ms)
+✔ sound, message, speech, file text and every built-in function (10.709181ms)
+✔ UI: rows, lists with delete, input kinds, conditional display, dynamic title (2.669906ms)
+✔ Persian, line-aware errors at compile time (4.099253ms)
+✔ runtime errors are reported with line numbers and stop timers (division by zero, endless loop, bad index) (49.071201ms)
+✔ compiled page is safe: user text escaped, no user code becomes JavaScript (0.825672ms)
+✔ all built-in Nava sample packs compile (19.962445ms)
+✔ every example in NAVA-GUIDE.md compiles, and the guide's canvas loop + function runs (7.303592ms)
+✔ all abbreviated commands produce the same program as their full equivalents (3.829558ms)
+✔ compaction preserves literal bytes, identifiers, comments and CRLF (1.424626ms)
+✔ short message actions work without abbreviating what the user sees (0.941101ms)
+✔ compact boolean expressions and variable names sharing command codes work (1.956426ms)
+✔ compact recipes keep source locations, limits and cycle checks (4.420422ms)
+✔ recipes can hold full Nava 2.2 blocks (اگر/تکرار/دکمه … پایان) and mix with short forms (4.455889ms)
+✔ keyword registry is unique, compact and only rewrites grammar positions (0.369396ms)
+✔ packed appearance accepts the exact requested code and stays deterministic (0.59328ms)
+✔ packed buttons reject malformed sizes, palettes and injected styles (1.017007ms)
+✔ one-line button includes appearance, colon-bearing label and a working message (0.5221ms)
+✔ packed state actions and older natural button syntax remain compatible (1.005234ms)
+✔ one-line pages and short high-level presets generate valid offline programs (9.89773ms)
+✔ calculator arithmetic includes precedence, mobile percentages and errors (1.091283ms)
+✔ generated calculator responds to keypad, history, sign and keyboard (3.2241ms)
+✔ recipes expand reusable components, reject cycles and retain source line errors (1.42939ms)
+✔ component resource bounds and voxel custom materials are validated (4.346027ms)
+✔ voxel terrain is deterministic and raycasts hit editable blocks (2.979324ms)
+✔ timer counts elapsed time, pauses and resets (1.649572ms)
+✔ generated voxel runtime draws a scene and responds to camera movement (78.005687ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 589.242187
+sum: 42
+product: 360
+list total: 84
+7 = 00000111
+register: 7
+ok sum
+ok product
+ok list
+ok lamps print
+ok register
+ok machine a
+ok page
+ok break
+ok farsi compiles
+سلسیوس: 38.2
+فارنهایت: 100.76
+وضعیت: تب
+جمع یک تا دوازده: 78
+ok farsi ran
+ok binary
+ok bad bits english
+ok machine read
+ok html alias
+ok html alias fa
+ok html detect
+ok html detect doc
+ok not html: c include
+ok not html: jib compare
+ok mix html page
+ok mix html shared
+ok pack parses
+ok pack files
+ok pack assets
+ok pack pngs
+ok pack mix blocks
+ok sample security-hash
+ok sample security-encoding
+ok sample security-classic
+ok sample security-xor
+ok sample security-password
+ok sample security-nmap
+ok sample security-portscan
+ok sample sound-piano
+ok sha256
+ok b64 roundtrip
+ok hex roundtrip
+ok caesar
+ok xor
+ok entropy
+ok netsim deterministic
+ok netsim states
+ok netsim report
+ok vfs resolve
+ok vfs tree apps
+ok vfs tree home
+ok vfs missing
+ok prefs normalize
+ok gemini url
+ok gemini header
+ok gemini body
+ok gemini parse
+ok gemini call path
+ok gemini missing key
+ok gemini bad key
+ok extract code
+ok jibos inject
+ok nava starter sample
+ok nava short calculator
+ok nava short = long
+ok nava recipe with block
+ok nava fixPrompt guide
+ok pack nava-todo parses
+ok pack nava-todo compiles (ok)
+ok pack nava-clicker parses
+ok pack nava-clicker compiles (ok)
+ok pack nava-snake parses
+ok pack nava-snake compiles (ok)
+ok pack nava-cube3d parses
+ok pack nava-cube3d compiles (ok)
+ok pack nava-ai parses
+ok pack nava-ai compiles (ok)
+ok pack nava-kits parses
+ok pack nava-kits compiles (ok)
+ok pack nava-voxel parses
+ok pack nava-voxel compiles (ok)
+ok jibos ai command open
+ok nava ai asks permission (denied)
+ok nava ai answer + permission once per app
+ok nava ai rate limit
+ok nava ai needs key
+ALL PASSED
+PASS launcher integration: hydration, legacy page API, pack export/assets, both backups, invalid-backup nonmutation.
+(node:55) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
