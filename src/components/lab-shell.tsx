@@ -23,6 +23,7 @@ import { ThemePanel } from "@/components/theme-panel";
 import { runShell } from "@/labshell/shell";
 import type { LabFile } from "@/labshell/types";
 import { MachineView } from "@/components/machine-view";
+import { LauncherButton } from "@/components/launcher-button";
 
 const iconBtn =
   "grid size-10 shrink-0 place-items-center rounded-lab text-paper outline-none hover:bg-panel-2 focus-visible:outline-2 focus-visible:outline-lime disabled:opacity-40";
@@ -659,6 +660,7 @@ export function LabShell() {
           </p>
         </div>
         <ThemePanel />
+        <LauncherButton />
         <input
           ref={pickRef}
           type="file"

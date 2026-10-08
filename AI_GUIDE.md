@@ -1,8 +1,8 @@
 # CodePad (جیب‌کد) — Guide for AI assistants
 
 This file is for an AI assistant (or a human) **writing programs that run inside the CodePad app**.
-Everything here comes from the source on `main` (CodePad v1.8.0: **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
-Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later.
+Everything here comes from the source on `main` (CodePad v1.9.0: **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0: `src/labshell/*`, `src/components/lab-shell.tsx`) and from tests run in headless Chrome at phone size.
+Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later.
 If the code changes, re-check the files listed in [§9 Where things live](#9-where-things-live).
 
 > **The three rules that matter most**
@@ -231,6 +231,28 @@ How to produce one:
 **Built-in example (v1.8.0+):** menu (☰) → **پروژهٔ تازه** → **مار و سیب (با عکس)** opens the snake-and-apple game as a pack. You get a new project «مار و سیب» with `snake.mix` and four 64×64 sprite attachments (`apple.png`, `head.png`, `body.png`, `grass.png`). Press **اجرا** and the game draws with the images. It works offline, and the images can be replaced by uploading files with the same names.
 - How it works: Python puts the image **names** in `shared["images"]`, and the page JS loads them with `new Image()`. CodePad replaces the names with the images themselves (§2.8). If an image is missing, the game falls back to plain shapes.
 - The pack file itself is in the repository at `src/labshell/packs/snake-images.jibpack` (about 27 KB). Use it as a template for your own packs.
+
+
+### 2.10 Launcher (v1.9.0+): run projects as apps
+The launcher is a home screen at `/launcher`. It shows a clock, a grid of installed apps and a **+** button.
+- **Installing:**
+  - From the editor: toolbar button **لانچر** (four squares) → **نصب پروژهٔ فعال در لانچر**. This copies the active project's code files and attachments into an app. Installing again with the same project name **updates** that app.
+  - From the launcher: **+** (**نصب برنامه**) → pick a `.jibpack` file (§2.9) or paste a download URL. The download only works if the site allows cross-origin requests; otherwise download the file and pick it.
+- **Running:** tap an icon. The app runs fullscreen with the normal CodePad engine, and the back button in its header returns home. **ویرایش** shows delete buttons.
+- **Which file runs (the entry file):**
+  1. a file named `main.*`
+  2. otherwise the first `.mix`
+  3. otherwise the first `.html`
+  4. otherwise the first non-CSS file
+
+  To control this, name the entry file `main.mix` / `main.html` / `main.py`.
+- **What the user sees:**
+  - A page (HTML, or a mix file with `@@ html`) fills the screen.
+  - A Jib program with `page { }` shows its card, with the printed lines on it.
+  - Anything else shows its text output.
+  - There is no output panel, so a page's `console.log` is not visible in the launcher.
+- **Data:** app code is stored in `localStorage` (key `jibcode-launcher`). App attachments live in IndexedDB, separate from the editor project, so editing the project later does not change the installed app until you install it again.
+- **Sandbox:** pages run in the same sandboxed iframe as in the editor, but without the editor's CSP. Still write offline, self-contained code (§4.2) so the app also works in the editor.
 
 ---
 
@@ -717,7 +739,8 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 
 ## 7. Getting the Android app (APK)
 - Latest release: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest
-- Direct download, v1.8.0 (adds `.jibpack` packs and the built-in image snake sample): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.8.0/CodePad.apk
+- Direct download, v1.9.0 (adds the launcher): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.9.0/CodePad.apk
+- v1.8.0 (packs and the built-in image snake sample): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.8.0/CodePad.apk
 - v1.7.0 (attachments, no packs): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.7.0/CodePad.apk
 - Previous version, v1.6.0 (no attachments): https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v1.6.0/CodePad.apk
 - Source: https://github.com/hoosein91hoosein91-arch/CodePad
@@ -749,6 +772,7 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 | `src/labshell/pack.ts` | `.jibpack` parser: code files + base64 attachments in one text file |
 | `src/labshell/pack-samples.ts`, `src/labshell/packs/*.jibpack` | built-in pack samples shown under **پروژهٔ تازه** (e.g. «مار و سیب (با عکس)») |
 | `scripts/make-pack.mjs` | builds a `.jibpack` from a folder |
+| `src/routes/launcher.tsx`, `src/labshell/launcher.ts`, `src/components/launcher-button.tsx` | launcher home screen, installed-apps store, editor toolbar button |
 | `src/labshell/asset-refs.ts` | pure helpers: finding and replacing attachment names in code, `assetText`/`assetBytes` page helpers |
 | `src/labshell/samples.ts` | built-in samples and project templates |
 | `src/components/lab-shell.tsx` | UI, Run button, tabs, sandboxed iframe |
