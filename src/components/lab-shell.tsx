@@ -16,6 +16,7 @@ import { stageSrcDoc } from "@/labshell/stage-doc";
 import { activeFile, activeProject, termLine, useLab } from "@/labshell/store";
 import { runMix } from "@/labshell/mix";
 import { compileNava } from "@/labshell/nava";
+import { compactNavaSource } from "@/labshell/nava-short";
 import { injectHead, jibosClient, readAppStore, writeAppStore } from "@/labshell/jibos";
 import { appAsk } from "@/labshell/gemini";
 import { isPythonWarm, runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
@@ -57,6 +58,14 @@ const NAVA_BAR = [
   { label: "ذخیره", insert: "ذخیره امتیاز\n" },
   { label: "بپرس", insert: "بپرس جواب = سوال\n" },
   { label: "پایان", insert: "پایان\n" },
+  // مخفف‌ها و ابزارهای آمادهٔ نوا ۰٫۴
+  { label: "cal · ماشین‌حساب", insert: "cal mb\n" },
+  { label: "tm · تایمر", insert: "tm ۶۰\n" },
+  { label: "cnt · شمارنده", insert: "cnt\n" },
+  { label: "vx · دنیای بلوکی", insert: "vx sz ۲۴ sd ۷\n" },
+  { label: "bt · دکمهٔ کپسولی", insert: 'bt "شروع" (ru240rn64yGi65G72): sy "آفرین"\n' },
+  { label: "pg · صفحه", insert: 'pg "برنامهٔ من"\n' },
+  { label: "df · بسته", insert: 'df "ابزار من"\ncal\nend\nus "ابزار من"\n' },
 ];
 
 const KEYS: { label: string; insert?: string; move?: "left" | "right" | "up" | "down" }[] = [
@@ -980,6 +989,11 @@ export function LabShell() {
         </section>
       </div>
       <div className="pb-safe flex min-w-0 shrink-0 gap-1 overflow-x-auto border-t border-line bg-panel px-2 py-1">
+        {file.lang === "nava" ? (
+          <button type="button" className="h-10 shrink-0 rounded-lab border border-lime/30 bg-lime/10 px-3 text-sm text-lime" title="دستورها مخفف می‌شوند؛ متن‌ها و نام‌ها حفظ می‌شوند" onClick={() => updateContent(compactNavaSource(file.content))}>
+            مخفف‌کردن کد
+          </button>
+        ) : null}
         {[...(file.lang === "nava" ? NAVA_BAR : file.lang === "mix" ? MIX_BAR : file.lang === "farsi" ? FARSI_BAR : file.lang === "english" ? ENGLISH_BAR : file.lang === "binary" ? BINARY_BAR : []), ...KEYS].map((key) => (
           <button
             key={`${file.lang}-${key.label}`}

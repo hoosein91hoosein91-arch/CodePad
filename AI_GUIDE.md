@@ -1,8 +1,8 @@
 # CodePad (جیب‌کد) — Guide for AI assistants
 
 This file is for an AI assistant (or a human) **writing programs that run inside the CodePad app**.
-Everything here comes from the source on `main` (CodePad v2.2.0: **Nava language** §2.13 since v2.2.0, **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0, **JibOS launcher upgrade** §2.11 since v2.0.0, and **v2.1.0 additions** §2.12 — terminal shell over a virtual filesystem, private browser, multi-page home + export, net-security samples, Termux hand-off: `src/labshell/*`, `src/lib/termux-bridge.ts`, `src/components/launcher/*`) and from tests run in headless Chrome at phone size.
-Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later. Everything in §2.11 (Gemini, `window.jibos`, developer mode, wallpapers, custom icons, security samples) needs v2.0.0 or later. Everything in §2.12 (terminal shell/virtual filesystem, private browser, multi-page home + export, simulated nmap/port-scan samples, Termux hand-off) needs v2.1.0 or later. The Nava language (§2.13, `.nava`) needs v2.2.0 or later.
+Everything here comes from the source on `main` (CodePad v2.4.0: **Nava short keywords, ready-made components, button capsules and recipes** §2.13.1 since v2.4.0, **Nava language** §2.13 since v2.2.0, **attachments** §2.8 since v1.7.0, **packs** §2.9 since v1.8.0, **launcher** §2.10 since v1.9.0, **JibOS launcher upgrade** §2.11 since v2.0.0, and **v2.1.0 additions** §2.12 — terminal shell over a virtual filesystem, private browser, multi-page home + export, net-security samples, Termux hand-off: `src/labshell/*`, `src/lib/termux-bridge.ts`, `src/components/launcher/*`) and from tests run in headless Chrome at phone size.
+Attachments exist only in v1.7.0 and later. In older APKs (v1.6.0 and earlier), file names in code are not replaced, and nothing in §2.8 works. Packs (`.jibpack`, §2.9) and the built-in image snake sample need v1.8.0 or later. The launcher (§2.10) needs v1.9.0 or later. Everything in §2.11 (Gemini, `window.jibos`, developer mode, wallpapers, custom icons, security samples) needs v2.0.0 or later. Everything in §2.12 (terminal shell/virtual filesystem, private browser, multi-page home + export, simulated nmap/port-scan samples, Termux hand-off) needs v2.1.0 or later. The Nava language (§2.13, `.nava`) needs v2.2.0 or later; Nava short keywords, components (`cal`, `cnt`, `tm`, `vx`), button capsules and `df`/`us` recipes (§2.13.1) need v2.4.0 or later.
 If the code changes, re-check the files listed in [§9 Where things live](#9-where-things-live).
 
 > **The three rules that matter most**
@@ -39,7 +39,7 @@ If the code changes, re-check the files listed in [§9 Where things live](#9-whe
 
 | Language | Internal id | File extension(s) | Engine | Input (stdin) | Time limit |
 |---|---|---|---|---|---|
-| **Nava (نوا)** — Persian one-line commands → full web app | `nava` | `.nava` | compiled to a JSON program + a small embedded interpreter (no `eval`), shown in the **صفحه** tab; see §2.13 and [NAVA-GUIDE.md](NAVA-GUIDE.md) | `ورودی` boxes in the page | 100 000 loop turns, 3 M steps per event |
+| **Nava (نوا)** — Persian one-line commands (or 2–3-letter short forms) → full web app | `nava` | `.nava` | compiled to a JSON program + a small embedded interpreter (no `eval`), shown in the **صفحه** tab; see §2.13, §2.13.1 and [NAVA-GUIDE.md](NAVA-GUIDE.md) | `ورودی` boxes in the page | 100 000 loop turns, 3 M steps per event |
 | Mix (several languages in one file) | `mix` | `.mix` (and any unknown extension, e.g. `.txt`) | per block, see §3 | per block | per block |
 | Python | `python` | `.py` | Pyodide (CPython 3.14 compiled to WebAssembly) in a Web Worker | `input()` opens a popup; or pre-fill the **ورودی** box | 25 s |
 | JavaScript (console) | `javascript` | `.js`, `.mjs` | Web Worker, `"use strict"`, **no DOM** | none | 2.5 s |
@@ -382,7 +382,26 @@ Example (a persistent counter game with a canvas, a function, a loop and a timer
 - **Attachments**: refer by flat name (`عکس "cat.png"`, `تصویر "ship.png"، …`, `صدا "win.mp3"`, `فایل("words.txt")`) exactly as in §2.8.
 - **AI (`بپرس`)**: goes through the `window.jibos` bridge command `ai` → `appAsk` in `src/labshell/gemini.ts`, using the user's own Gemini key (**ظاهر → اتصال Gemini**). It asks the user's permission once per app, is limited to 12 requests per minute per app and 4000 characters per prompt, needs internet, and has a 120 s timeout. While waiting the variable shows «… در حال فکر کردن»; errors come back as readable Persian text. Not available in a standalone HTML export.
 - **Honest limits:** 3D is a **lightweight raw-WebGL renderer** (cube, sphere, pyramid, plane, one directional light, a perspective camera) — no model files (glTF/OBJ), textures, shadows, physics or AAA graphics; tens of shapes, not thousands. AI is **only a call to the hosted Gemini model** — no on-device model and **no model training** (that needs servers/GPUs). No classes/objects/dictionaries/modules/arbitrary network. Nava apps are web pages: no SMS, calls, phone files, Bluetooth or background execution. "500 Python lines → 50 Nava lines" holds for UI apps and small games, not for heavy algorithms.
-- Built-in samples (`src/labshell/packs/nava-*.jibpack`): **نوا: کارهای من** (35 lines), **نوا: معدن طلا** (clicker, 41), **نوا: مار** (snake on canvas, 52), **نوا: صحنهٔ سه‌بعدی** (WebGL, 27), **نوا: دستیار هوشمند** (Gemini, 17).
+- Built-in samples (`src/labshell/packs/nava-*.jibpack`): **نوا: کارهای من** (35 lines), **نوا: معدن طلا** (clicker, 41), **نوا: مار** (snake on canvas, 52), **نوا: صحنهٔ سه‌بعدی** (WebGL, 27), **نوا: دستیار هوشمند** (Gemini, 17), and since v2.4.0 **نوا: ابزارهای آماده (مخفف)** (21) and **نوا: دنیای بلوکی سه‌بعدی** (6).
+
+#### 2.13.1 Nava 0.5 (v2.4.0+): short keywords, ready-made components, button capsules, recipes
+Every keyword above still works. In addition (sources: `src/labshell/nava-short.ts`, `nava-modules.ts`, `nava-kit.ts`, `nava-calculator.ts`, `nava-voxel.ts`, `nava-appearance.ts`; machine-readable spec: **[NAVA-AI-SPEC.json](NAVA-AI-SPEC.json)**):
+- **Short keywords** (2–3 lowercase letters, case-sensitive) are expanded to the full Persian keyword before parsing, so a short line has exactly the same power as the long one: `pg`=صفحه (title + heading), `ap`=برنامه, `hd`=عنوان, `tx`=متن, `fg`=رنگ, `bg`=پس‌زمینه, `num`=عدد, `var`=متغیر, `in`=ورودی, `out`=نمایش, `bt`=دکمه, `img`=عکس, `alt`=توضیح, `sy`=بگو, `on`=وقتی زده شد, `cal`=ماشین‌حساب, `mb`=موبایل, `cnt`=شمارنده, `tm`=تایمر, `vx`=جهان بلوکی, `sz`=اندازه, `sd`=بذر, `bl`=بلوک, `df`=تعریف, `end`=پایان, `us`=استفاده, `tr`=درست, `fl`=نادرست. Quoted text and user identifiers are never abbreviated; a line that starts with `name =` is always an assignment. The editor bar and the launcher quick-create have a **«مخفف‌کردن کد»** button (`compactNavaSource`), which rewrites only keywords in grammar positions and keeps strings, names, comments and line endings.
+- **Ready-made components (one line each, top level only, ≤ 32 per page, ≤ 2 voxel worlds):** `cal [mb]` offline calculator (precedence, parentheses, mobile-style percent `200+10%`=220, sign, history, keyboard), `cnt` counter, `tm N` timer (1–86400 s), `vx [sz 12–48] [sd seed]` small voxel world (software-rendered, drag to look, WASD/QE or touch buttons, place/break, JSON export) with custom blocks `bl "name" #rrggbb` (≤ 32). Each component is its own offline HTML/CSS/JS and keeps its own state.
+- **Button capsule:** `bt "label" (ru<w>rn<h>y<C1><C2>): action` — requested width 1–8192 and height 1–2048 px (scaled to the screen, min 64×44), two different palette codes `Gi65 G72 B48 V36 N24 D08 W90 O52` (body, detail). Any normal button action works (one line after `:`/`on`, statements separated by `؛`). A capsule with **no** action makes an appearance-only button; without a capsule and without `:` the following lines up to `پایان`/`end` are the button body, as before. `sy`/`بگو` now also shows the message under the app card (role=status) as well as speaking it.
+- **Recipes:** `df "name"` … `end` defines reusable lines, `us "name"` pastes them (expanded before parsing, error lines point into the definition). Recipes can contain full blocks (`اگر … پایان`); cycles, nested definitions and unknown names are errors; limits: 1 000 000 characters, 10 000 expanded lines, depth 32.
+```
+pg "جعبه‌ابزار"
+fg #67f5a5
+cal mb
+tm ۶۰
+num امتیاز = ۰
+out "امتیاز: {امتیاز}"
+bt "+۱" (ru240rn64yN24D08): امتیاز += ۱
+bt "پیام" (ru240rn64yGi65G72): sy "آفرین!"
+```
+- When the launcher's **«اصلاح با Gemini»** is used on a `.nava` file, `NAVA_AI_GUIDE` (all short and full keywords + honest limits) is sent with the request. Standalone examples (`.nava`, `.html`, `.jibpack`) are in `examples/nava/` and are regenerated with `npm run examples:nava`.
+- **Honest limits:** the voxel world is a bounded educational demo (no physics/collision, survival, mobs, multiplayer, infinite terrain, world re-import or Minecraft mods). The short forms do not add new capabilities beyond what is listed here.
 
 ## 3. Mix files (`.mix`) — full format
 

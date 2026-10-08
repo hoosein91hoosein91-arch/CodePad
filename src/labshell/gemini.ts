@@ -3,6 +3,8 @@
 // (پس بعد از بستن و باز کردن برنامه هم «وصل» است تا وقتی خودش پاکش کند).
 // درخواست: REST رسمی generateContent روی generativelanguage.googleapis.com (کلید در سرآیند x-goog-api-key).
 
+import { NAVA_AI_GUIDE } from "./nava-kit.ts";
+
 export const GEMINI_KEY = "jibcode-gemini-key";
 export const GEMINI_MODEL_KEY = "jibcode-gemini-model";
 export const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
@@ -115,6 +117,8 @@ export function appPrompt(description: string): string {
 export function fixPrompt(fileName: string, code: string, wish: string): string {
   return [
     `Improve this file (${fileName}) of a small app that runs in a sandboxed webview. Request: ${wish.trim() || "fix bugs and improve it"}.`,
+    // فایل نوا: راهنمای کامل زبان همراه درخواست می‌رود تا Gemini دستور ساختگی ننویسد
+    ...(/\.nava$/i.test(fileName) ? [NAVA_AI_GUIDE] : []),
     "Return ONLY the full updated file in one fenced code block.",
     "```",
     code.slice(0, 24000),

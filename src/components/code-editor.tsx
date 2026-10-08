@@ -21,6 +21,7 @@ import { tags } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
 import { FARSI_KEYWORDS } from "@/labshell/farsi";
 import { NAVA_FUNCTIONS, NAVA_KEYWORDS } from "@/labshell/nava";
+import { NAVA_SHORT_WORDS } from "@/labshell/nava-short";
 import { ENGLISH_KEYWORDS } from "@/labshell/english";
 import type { Lang } from "@/labshell/types";
 import { detectKind, kindOf } from "@/labshell/mix";
@@ -152,7 +153,7 @@ const mixLanguage = StreamLanguage.define({
   },
 });
 
-const navaWords = new Set(NAVA_KEYWORDS);
+const navaWords = new Set<string>([...NAVA_KEYWORDS, ...NAVA_SHORT_WORDS.map((word) => word.short), "جهان", "بلوکی", "بذر"]);
 const navaFns = new Set(NAVA_FUNCTIONS);
 const navaLanguage = StreamLanguage.define({
   token(stream) {
@@ -162,6 +163,8 @@ const navaLanguage = StreamLanguage.define({
       return "comment";
     }
     if (stream.match(/^"(?:[^"\\]|\\.)*"?/) || stream.match(/^«[^»]*»?/) || stream.match(/^'(?:[^'\\]|\\.)*'?/)) return "string";
+    // کپسول ظاهر دکمه: (ru240rn64yGi65G72)
+    if (stream.match(/^\(ru[0-9۰-۹]+rn[0-9۰-۹]+y[A-Z][a-z]?[0-9۰-۹]{2}[A-Z][a-z]?[0-9۰-۹]{2}\)/)) return "number";
     if (stream.match(/^#[0-9a-fA-F]{3,8}\b/)) return "number";
     if (stream.match(/^[0-9۰-۹٠-٩]+(?:[.٫][0-9۰-۹٠-٩]+)?/)) return "number";
     if (stream.match(/^[\p{L}_][\p{L}\p{N}_\u200c]*/u)) {
@@ -217,6 +220,15 @@ const SNIPPETS: Record<string, Completion[]> = {
     snippetCompletion("کنش ${نام}\n  ${}\nپایان", { label: "کنش", detail: "کار چندمرحله‌ای", boost: 3 }),
     snippetCompletion("هر ${۱} ثانیه\n  ${}\nپایان", { label: "هر ثانیه", detail: "زمان‌سنج", boost: 3 }),
     snippetCompletion("دکمه \"${متن}\"\n  ${}\nپایان", { label: "دکمه", detail: "دکمه با چند کار", boost: 3 }),
+    // مخفف‌های نوا ۰٫۴ (pg، bt، cal، …) — هر کدام همان دستور کامل است
+    ...NAVA_SHORT_WORDS.filter((word) => !["bt", "pg", "num", "df", "cal", "vx", "tm"].includes(word.short)).map((word) => ({ label: word.short, detail: `${word.long} · ${word.meaning}`, type: "keyword", boost: 1 })),
+    snippetCompletion('bt "${شروع}" (ru${240}rn${64}yGi65G72): sy "${آفرین}"', { label: "bt", detail: "دکمه: اندازه، رنگ و کار در یک خط", boost: 2 }),
+    snippetCompletion('pg "${برنامهٔ من}"', { label: "pg", detail: "صفحه (نام + عنوان)", boost: 2 }),
+    snippetCompletion("num ${امتیاز} = ${0}", { label: "num", detail: "متغیر عددی", boost: 2 }),
+    snippetCompletion('df "${ابزار من}"\n${cal}\nend\nus "${ابزار من}"', { label: "df", detail: "تعریف بسته و استفاده", boost: 2 }),
+    snippetCompletion("cal mb", { label: "cal", detail: "ماشین‌حساب آماده", boost: 2 }),
+    snippetCompletion("vx sz ${24} sd ${7}", { label: "vx", detail: "دنیای بلوکی سه‌بعدی", boost: 2 }),
+    snippetCompletion("tm ${60}", { label: "tm", detail: "تایمر ثانیه‌ای", boost: 2 }),
   ],
   python: [snippetCompletion("def ${name}(${args}):\n    ${}", { label: "def", detail: "function", boost: 3 }), snippetCompletion("for ${i} in range(${10}):\n    ${}", { label: "for", detail: "loop", boost: 3 })],
   javascript: [snippetCompletion("function ${name}(${args}) {\n  ${}\n}", { label: "function", detail: "function", boost: 3 })],
@@ -264,6 +276,7 @@ export function CodeEditor({
   onChange: (content: string) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const view = useRef<EditorView | null>(null);
   const ac = useTheme((state) => state.autocomplete);
   const onChangeRef = useRef(onChange);
   const contentRef = useRef(content);
@@ -319,12 +332,22 @@ export function CodeEditor({
         ],
       }),
     });
+    view.current = next;
     setActiveView(next);
     return () => {
+      view.current = null;
       next.destroy();
       clearActiveView(next);
     };
   }, [fileId, lang, ac]);
+
+  // وقتی متن از بیرون عوض شود (مثلاً «مخفف‌کردن کد» نوا)، ویرایشگر هم به‌روز می‌شود
+  useEffect(() => {
+    const editor = view.current;
+    if (editor && editor.state.doc.toString() !== content) {
+      editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: content } });
+    }
+  }, [content, fileId, lang, ac]);
 
   return <div ref={host} className="h-full min-h-0 overflow-hidden" dir={lang === "farsi" || lang === "nava" ? "rtl" : "ltr"} />;
 }

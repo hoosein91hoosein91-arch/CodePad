@@ -5,8 +5,9 @@ import { SAMPLES } from "../src/labshell/samples.ts";
 import { detectKind, parseMix, runMix } from "../src/labshell/mix.ts";
 import { parsePack } from "../src/labshell/pack.ts";
 import { readFileSync } from "node:fs";
-import { appAsk, askGemini, extractCode, geminiRequest, generateText } from "../src/labshell/gemini.ts";
+import { appAsk, askGemini, extractCode, fixPrompt, geminiRequest, generateText } from "../src/labshell/gemini.ts";
 import { compileNava } from "../src/labshell/nava.ts";
+import { compactNavaSource } from "../src/labshell/nava-short.ts";
 import { JIBOS_OPEN } from "../src/labshell/jibos.ts";
 import { caesar, entropyBits, fromB64, fromHex, sha, toB64, toHex, xorHex } from "../src/labshell/crypto-utils.ts";
 import { formatScan, simulateScan } from "../src/labshell/netsim.ts";
@@ -232,7 +233,12 @@ must("jibos inject", injectHead("<html><head><title>t</title></head></html>", ji
 
 // ── نسخهٔ ۲.۲: زبان نوا ──
 must("nava starter sample", !!compileNava(SAMPLES.nava.content).web);
-for (const id of ["nava-todo", "nava-clicker", "nava-snake", "nava-cube3d", "nava-ai"]) {
+// ── نوا ۰٫۵: مخفف‌ها، ابزارهای آماده، کپسول دکمه، بسته‌ها ──
+must("nava short calculator", /nava-kit-0/.test(compileNava("cal").web?.html ?? ""));
+must("nava short = long", JSON.stringify(compileNava(compactNavaSource('صفحه "x"\nعدد n = ۰\nدکمه "y" (ru240rn64yGi65G72): n += ۱')).web) === JSON.stringify(compileNava('صفحه "x"\nعدد n = ۰\nدکمه "y" (ru240rn64yGi65G72): n += ۱').web));
+must("nava recipe with block", !!compileNava('df "r"\nbt "b"\n  اگر ۱ > ۰: پیام "!"\nend\nend\nus "r"').web);
+must("nava fixPrompt guide", fixPrompt("main.nava", "cal", "").includes("cal=ماشین‌حساب") && !fixPrompt("index.html", "<p>", "").includes("cal=ماشین‌حساب"));
+for (const id of ["nava-todo", "nava-clicker", "nava-snake", "nava-cube3d", "nava-ai", "nava-kits", "nava-voxel"]) {
   const p = parsePack(readFileSync(new URL(`../src/labshell/packs/${id}.jibpack`, import.meta.url), "utf8"));
   must(`pack ${id} parses`, !!p && p.problems.length === 0 && p.files.length === 1 && p.files[0]!.name === "main.nava");
   const res = compileNava(p?.files[0]?.content ?? "");

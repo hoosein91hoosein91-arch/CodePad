@@ -4,6 +4,9 @@
  * موتور nava-runtime تفسیر می‌کند. هیچ کدی از کاربر به JavaScript تبدیل یا eval نمی‌شود؛ متن‌ها همیشه escape می‌شوند.
  */
 import { navaDom, navaEngine } from "./nava-runtime.ts";
+import { expandNava } from "./nava-modules.ts";
+import { APPEARANCE_CSS, appearanceAttributes, parseAppearance, type ButtonAppearance } from "./nava-appearance.ts";
+import { buildNavaKit, kitCommand, type KitRequest } from "./nava-kit.ts";
 
 export type NavaWeb = { html: string; css: string; js: string };
 export type NavaResult = { web?: NavaWeb; error?: string };
@@ -23,7 +26,8 @@ type UI =
   | { k: "image"; src: string; alt: string }
   | { k: "input"; n: string; hint: string; type: "text" | "number" | "password" | "multi" }
   | { k: "show"; i: number; cls: "value" | "copy" | "title" }
-  | { k: "button"; i: number; label: string }
+  | { k: "button"; i: number; label: string; appearance?: ButtonAppearance }
+  | { k: "kit"; i: number }
   | { k: "list"; i: number }
   | { k: "canvas" | "scene"; w: number; h: number }
   | { k: "row"; items: UI[] };
@@ -59,9 +63,10 @@ export const NAVA_KEYWORDS = [
   "اگر", "وگرنه", "پایان", "تکرار", "بار", "برای", "تا", "افزودن", "به", "اول", "آخر", "شماره", "حذف", "خالی", "پیام", "صدا", "آهنگ",
   "بگو", "بپرس", "پاک", "دایره", "مستطیل", "خط", "نوشته", "تصویر", "بچرخان", "جابجا", "حرکت", "اندازه", "دوربین", "اجرا", "توقف",
   "ادامه", "برگرد", "نتیجه", "تابع", "و", "یا", "نه", "درست", "نادرست", "با", "رمز", "چندخطی", "زده", "شد",
+  "صفحه", "ماشین‌حساب", "ماشینحساب", "شمارنده", "تایمر", "بلوک", "تعریف", "استفاده", "موبایل",
 ];
 /** واژه‌هایی که داخل عبارت معنای خاص دارند و نام متغیر نمی‌شوند */
-const EXPR_WORDS = new Set(["و", "یا", "نه", "درست", "نادرست", "true", "false", "__proto__", "constructor", "prototype"]);
+const EXPR_WORDS = new Set(["و", "یا", "نه", "درست", "نادرست", "true", "false", "tr", "fl", "__proto__", "constructor", "prototype"]);
 /** نام‌هایی که برای متغیر/کنش/ورودی مجاز نیستند (ساختار بلوک‌ها را به‌هم می‌ریزند) */
 const RESERVED = new Set([...EXPR_WORDS, "اگر", "وگرنه", "پایان", "برای", "تکرار", "تا", "هر", "وقتی", "کنش", "تابع", "اجرا", "نتیجه", "برگرد", "توقف", "ادامه"]);
 /** خطی که با «نام =» یا «نام +=» یا «نام[…] =» شروع می‌شود همیشه انتساب است (حتی اگر نام شبیه دستور باشد) */
@@ -208,8 +213,8 @@ export function parseExpr(src: string, line: number): Expr {
     const s = quoted(tok);
     if (s !== null) return post(template(s, line));
     if (/^[0-9۰-۹٠-٩]/.test(tok)) return { k: "v", v: Number(toAscii(tok)) };
-    if (tok === "درست" || tok === "true") return { k: "v", v: true };
-    if (tok === "نادرست" || tok === "false") return { k: "v", v: false };
+    if (tok === "درست" || tok === "true" || tok === "tr") return { k: "v", v: true };
+    if (tok === "نادرست" || tok === "false" || tok === "fl") return { k: "v", v: false };
     if (IDENT.test(tok)) {
       if (peek() === "(") {
         at++;
@@ -250,9 +255,39 @@ const parseArgs = (src: string, line: number) => splitOuter(src, ",،").filter((
 // ───────────── خط‌ها و بلوک‌ها ─────────────
 type Row = { text: string; n: number };
 
+/** آیا این خط (بعد از تبدیل مخفف‌ها) بلوکی باز می‌کند که با «پایان» بسته می‌شود؟ (برای «تعریف … پایان») */
+function opensBlock(text: string): boolean {
+  if (/^ردیف\s*:?$/u.test(text)) return true;
+  const colon = findOuter(text, ":");
+  const inlineBody = colon >= 0 && !!text.slice(colon + 1).trim();
+  const button = /^دکمه\s+(.+)$/u.exec(text);
+  if (button) {
+    const lead = leadingQuoted(button[1]!);
+    if (!lead) return false;
+    let rest = lead[1];
+    const capsule = /^\([^)]*\)/.exec(rest);
+    if (capsule) rest = rest.slice(capsule[0].length).trim();
+    rest = rest.replace(/^وقتی\s+زده\s+شد\s*/u, "");
+    if (!rest) return !capsule;
+    return rest.startsWith(":") && !rest.slice(1).trim();
+  }
+  if (!/^(اگر|تکرار|برای|تا\s+وقتی|کنش|تابع|هر|بعد\s+از|وقتی\s+(?:لمس|کلید))(\s|:|$)/u.test(text)) return false;
+  return !inlineBody;
+}
+
+/** مخفف‌ها (pg، bt، cal، …) به شکل کامل برمی‌گردند و «تعریف/استفاده» باز می‌شوند؛ شمارهٔ خط اصلی حفظ می‌شود */
+function sourceRows(source: string): Row[] {
+  const expanded = expandNava(source, opensBlock);
+  if (expanded.error) {
+    const m = /^خط (\d+): (.*)$/su.exec(expanded.error);
+    throw new NavaError(m ? Number(m[1]) : 1, m ? m[2]! : expanded.error);
+  }
+  return expanded.lines.map((row) => ({ text: row.text.trim(), n: row.line }));
+}
+
 export function parseNava(source: string): { program?: NavaProgram; error?: string } {
   try {
-    return { program: new Parser(source).program() };
+    return { program: new Parser(sourceRows(source)).program() };
   } catch (e) {
     if (e instanceof NavaError) return { error: `خط ${e.line}: ${e.message}` };
     return { error: e instanceof Error ? e.message : String(e) };
@@ -270,8 +305,12 @@ class Parser {
   actionLines = new Map<string, number>();
   listLines: [string, number][] = [];
 
-  constructor(source: string) {
-    this.rows = source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n").map((text, i) => ({ text: text.trim(), n: i + 1 }));
+  /** ابزارهای آماده (ماشین‌حساب، شمارنده، تایمر، جهان بلوکی) و بلوک‌های سفارشی جهان */
+  kits: KitRequest[] = [];
+  materials: { name: string; color: string }[] = [];
+
+  constructor(rows: Row[]) {
+    this.rows = rows;
   }
 
   next(): Row | null {
@@ -290,7 +329,7 @@ class Parser {
 
   program(): NavaProgram {
     for (let row = this.next(); row; row = this.next()) this.top(row);
-    if (!this.ui.length) oops(this.rows.length || 1, "برنامه چیزی برای نمایش ندارد. یک «عنوان»، «متن»، «دکمه» یا «بوم» اضافه کن.");
+    if (!this.ui.length) oops(this.rows[this.rows.length - 1]?.n || 1, "برنامه چیزی برای نمایش ندارد. یک «عنوان»، «متن»، «دکمه» یا «بوم» اضافه کن.");
     this.check();
     return this.P;
   }
@@ -300,6 +339,24 @@ class Parser {
     const { text, n } = row;
     let m: RegExpExecArray | null;
     if (LEAD_ASSIGN.test(text)) { this.P.start.push(...this.statement(row, true)); return; }
+    const kit = kitCommand(text);
+    if (kit?.error) oops(n, kit.error);
+    if (kit?.request) {
+      this.kits.push(kit.request);
+      if (this.kits.length > 32 || this.kits.filter((k) => k.kind === "voxel").length > 2) oops(n, "در هر صفحه حداکثر ۳۲ ابزار آماده و دو دنیای بلوکی قرار بده.");
+      this.ui.push({ k: "kit", i: this.kits.length - 1 });
+      return;
+    }
+    if ((m = /^صفحه\s+(.+)$/u.exec(text))) {
+      const v = quoted(m[1]!); if (v === null) oops(n, 'نام صفحه را داخل گیومه بنویس؛ مثل صفحه "برنامهٔ من" (یا pg "برنامهٔ من").');
+      this.P.title = v!; this.ui.push({ k: "title", v: v! }); return;
+    }
+    if ((m = /^بلوک\s+(.+)$/u.exec(text))) {
+      const b = /^"([^"\n]+)"\s+(#[\da-f]{6})$/i.exec(m[1]!.trim());
+      if (!b) oops(n, 'بلوک سفارشی: بلوک "یاقوت" #dc477b');
+      if (this.materials.length >= 32 || this.materials.some((x) => x.name === b![1])) oops(n, "بیش از ۳۲ بلوک سفارشی یا نام تکراری مجاز نیست.");
+      this.materials.push({ name: b![1]!, color: b![2]! }); return;
+    }
     if ((m = /^برنامه\s+(.+)$/u.exec(text))) {
       const v = quoted(m[1]!); if (v === null) oops(n, 'نام برنامه را داخل گیومه بنویس؛ مثل برنامه "شمارنده".'); this.P.title = v!; return;
     }
@@ -418,13 +475,23 @@ class Parser {
     if ((m = /^دکمه\s+(.+)$/u.exec(text))) {
       const lead = leadingQuoted(m[1]!);
       if (!lead) oops(n, 'متن دکمه را داخل گیومه بنویس؛ مثل دکمه "افزایش": شمارنده += ۱');
-      const rest = lead![1].replace(/^وقتی\s+زده\s+شد\s*/u, "");
+      let rest = lead![1];
+      // کپسول ظاهر اختیاری: دکمه "شروع" (ru240rn64yGi65G72): بگو "…"
+      let appearance: ButtonAppearance | undefined;
+      const capsule = /^\([^)]*\)/.exec(rest);
+      if (capsule) {
+        const parsed = parseAppearance(capsule[0]);
+        if (!parsed.value) oops(n, parsed.error!);
+        appearance = parsed.value;
+        rest = rest.slice(capsule[0].length).trim();
+      }
+      rest = rest.replace(/^وقتی\s+زده\s+شد\s*/u, "");
       let body: Stmt[];
-      if (!rest) body = this.block("دکمه", n);
+      if (!rest) body = appearance ? [] : this.block("دکمه", n);
       else if (rest.startsWith(":")) body = rest.slice(1).trim() ? this.inline(rest.slice(1), n) : this.block("دکمه", n);
       else return oops(n, 'بعد از متن دکمه «:» و کار دکمه را بنویس؛ مثل دکمه "افزایش": شمارنده += ۱');
       this.P.buttons.push(body);
-      return { k: "button", i: this.P.buttons.length - 1, label: lead![0] };
+      return { k: "button", i: this.P.buttons.length - 1, label: lead![0], appearance };
     }
     if ((m = re("^فهرست\\s+ID(\\s+با\\s+حذف)?$").exec(text))) {
       this.P.lists.push({ n: m[1]!, del: !!m[2] });
@@ -545,7 +612,7 @@ class Parser {
     if ((m = /^تا\s+وقتی(?:\s+که)?\s+(.+)$/u.exec(text))) {
       return [{ k: "while", line: n, c: parseExpr(m[1]!, n), body: body("تا وقتی") }];
     }
-    if (/^(کنش|هر|بعد\s+از|وقتی|عنوان|متن|نمایش|ورودی|دکمه|عکس|فهرست|ردیف|بوم|صحنه|مکعب|کره|هرم|زمین|برنامه|رنگ|پس‌زمینه|ذخیره|تابع)(\s|$)/u.test(text)) {
+    if (/^(کنش|هر|بعد\s+از|وقتی|عنوان|متن|نمایش|ورودی|دکمه|عکس|فهرست|ردیف|بوم|صحنه|مکعب|کره|هرم|زمین|برنامه|رنگ|پس‌زمینه|ذخیره|تابع|صفحه|بلوک)(\s|$)/u.test(text) || kitCommand(text)) {
       const word = text.split(/\s+/)[0];
       return oops(n, `«${word}» فقط در سطح بیرونی برنامه (نه داخل بلوک یا بعد از «:») نوشته می‌شود.`);
     }
@@ -688,8 +755,9 @@ class Parser {
 }
 
 // ───────────── ساخت صفحه ─────────────
-function uiHtml(item: UI): string {
+function uiHtml(item: UI, kitHtml: (i: number) => string): string {
   switch (item.k) {
+    case "kit": return kitHtml(item.i);
     case "title": return `<h1>${html(item.v)}</h1>`;
     case "text": return `<p class="nv-copy">${html(item.v)}</p>`;
     case "image": return `<img class="nv-image" src="${html(item.src)}" alt="${html(item.alt)}">`;
@@ -701,11 +769,13 @@ function uiHtml(item: UI): string {
       return `<input type="text" ${common}>`;
     }
     case "show": return item.cls === "title" ? `<h1 data-nv-show="${item.i}"></h1>` : `<p class="nv-${item.cls}" data-nv-show="${item.i}"></p>`;
-    case "button": return `<button type="button" class="nv-button" data-nv-btn="${item.i}">${html(item.label)}</button>`;
+    case "button": return item.appearance
+      ? `<button type="button" class="nv-button nv-packed" data-nv-btn="${item.i}" ${appearanceAttributes(item.appearance)}><span class="nv-button-label">${html(item.label)}</span></button>`
+      : `<button type="button" class="nv-button" data-nv-btn="${item.i}">${html(item.label)}</button>`;
     case "list": return `<ul class="nv-list" data-nv-list="${item.i}"></ul>`;
     case "canvas": return `<canvas id="nv-canvas" class="nv-canvas" style="aspect-ratio:${item.w}/${item.h};max-width:${item.w * 2}px" aria-label="بوم"></canvas>`;
     case "scene": return `<canvas id="nv-scene" class="nv-canvas nv-scene" style="aspect-ratio:${item.w}/${item.h};max-width:${item.w * 2}px" aria-label="صحنهٔ سه‌بعدی"></canvas>`;
-    case "row": return `<div class="nv-row">${item.items.map(uiHtml).join("")}</div>`;
+    case "row": return `<div class="nv-row">${item.items.map((x) => uiHtml(x, kitHtml)).join("")}</div>`;
   }
 }
 
@@ -715,15 +785,20 @@ export function compileNava(source: string): NavaResult {
   let parser: Parser;
   let P: NavaProgram;
   try {
-    parser = new Parser(source);
+    parser = new Parser(sourceRows(source));
     P = parser.program();
   } catch (e) {
     if (e instanceof NavaError) return { error: `خط ${e.line}: ${e.message}` };
     return { error: e instanceof Error ? e.message : String(e) };
   }
   const accent = P.accent, background = parser.background;
-  const webHtml = `<main class="nv-app"><div class="nv-card"><div class="nv-brand">${html(P.title)}</div>\n${parser.ui.map(uiHtml).join("\n")}\n<div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main>`;
+  // ابزارهای آماده: هر کدام HTML/CSS/JS آفلاین خودش را دارد (بدون eval و بدون کتابخانهٔ بیرونی)
+  const kitParts = parser.kits.map((request, i) => buildNavaKit(request, `nava-kit-${i}`, parser.materials));
+  const kitHtml = (i: number) => kitParts[i]!.html;
+  const webHtml = `<main class="nv-app"><div class="nv-card"><div class="nv-brand">${html(P.title)}</div>\n${parser.ui.map((item) => uiHtml(item, kitHtml)).join("\n")}\n<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main>`;
   const css = `:root{color-scheme:dark}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%;background:${background};color:#edf4ed;font-family:Vazirmatn,Tahoma,sans-serif}body{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,color-mix(in srgb,${accent} 15%,${background}),${background} 65%)}.nv-app{min-height:100vh;display:grid;place-items:center;padding:20px}.nv-card{width:min(100%,460px);padding:24px;border:1px solid #ffffff20;border-radius:28px;background:#171e19ef;box-shadow:0 24px 80px #0008;display:flex;flex-direction:column;gap:14px}.nv-brand{color:${accent};font-size:12px;letter-spacing:.08em}h1{font-size:26px;line-height:1.4;margin:0}.nv-copy{color:#b8c6ba;line-height:1.9;margin:0;white-space:pre-wrap}.nv-value{font-size:22px;font-weight:700;margin:2px 0;white-space:pre-wrap;line-height:1.7}.nv-input{width:100%;padding:13px 15px;border:1px solid #ffffff25;border-radius:14px;background:#0e130f;color:#fff;font:inherit;outline:none;resize:vertical}.nv-input:focus{border-color:${accent};box-shadow:0 0 0 3px color-mix(in srgb,${accent} 22%,transparent)}.nv-button{min-height:48px;padding:11px 16px;border:0;border-radius:14px;background:${accent};color:#11170e;font:inherit;font-weight:700;cursor:pointer;transition:transform .15s,filter .15s;touch-action:manipulation}.nv-button:active{transform:scale(.97);filter:brightness(.9)}.nv-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.nv-row>*{flex:1 1 0;min-width:0}.nv-image{width:100%;max-height:260px;object-fit:cover;border-radius:18px}.nv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.nv-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0e130f;border:1px solid #ffffff14}.nv-list li span{flex:1;overflow-wrap:anywhere}.nv-list .nv-empty{color:#7f8f82;justify-content:center}.nv-del{border:0;background:#ff6a7a22;color:#ff8f9b;border-radius:10px;width:32px;height:32px;font:inherit;cursor:pointer}.nv-canvas{display:block;width:100%;margin:0 auto;border-radius:18px;background:#05090699;border:1px solid #ffffff18;touch-action:none}.nv-scene{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,${accent} 18%,#0b1220),#05070d)}.nv-error{padding:12px 14px;border-radius:14px;background:#3a1016;color:#ffb3bc;font-size:14px;line-height:1.8}.nv-toast{position:fixed;inset-inline:0;bottom:28px;margin:auto;width:max-content;max-width:86vw;padding:10px 16px;border-radius:14px;background:#000d;color:${accent};border:1px solid color-mix(in srgb,${accent} 50%,transparent);font-weight:700;box-shadow:0 10px 40px #0009}`;
   const js = `(()=>{const P=${safeJson(P)};const navaEngine=(${navaEngine.toString()});(${navaDom.toString()})(P,navaEngine);})();`;
-  return { web: { html: webHtml, css, js } };
+  const kitCss = [...new Set(kitParts.map((part) => part.css))].join("\n");
+  const kitJs = kitParts.map((part) => part.js).join("\n");
+  return { web: { html: webHtml, css: `:root{--nava-accent:${accent}}\n${css}\n${APPEARANCE_CSS}${kitCss ? "\n" + kitCss : ""}`, js: kitJs ? `${js}\n${kitJs}` : js } };
 }

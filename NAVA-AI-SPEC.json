@@ -1,0 +1,526 @@
+{
+  "language": "Nava",
+  "version": "0.5",
+  "extension": ".nava",
+  "caseSensitive": true,
+  "oneInstructionPerLine": true,
+  "components": [
+    {
+      "id": "calculator",
+      "command": "cal",
+      "aliases": [
+        "ماشین‌حساب",
+        "ماشین حساب",
+        "ماشینحساب",
+        "calculator"
+      ],
+      "example": "cal mb",
+      "description": "ماشین‌حساب آفلاین با محاسبات، پرانتز، درصد، تاریخچه و صفحه‌کلید"
+    },
+    {
+      "id": "counter",
+      "command": "cnt",
+      "aliases": [
+        "شمارنده",
+        "counter"
+      ],
+      "example": "cnt",
+      "description": "شمارندهٔ آماده با افزایش، کاهش و بازنشانی"
+    },
+    {
+      "id": "timer",
+      "command": "tm",
+      "aliases": [
+        "تایمر",
+        "timer"
+      ],
+      "example": "tm ۶۰",
+      "description": "تایمر ثانیه‌ای با شروع، مکث و بازنشانی"
+    },
+    {
+      "id": "voxel",
+      "command": "vx",
+      "aliases": [
+        "جهان بلوکی",
+        "voxel"
+      ],
+      "example": "vx sz ۲۴ sd ۷",
+      "description": "نمونهٔ سه‌بعدی آفلاین با پرواز، ساخت‌وساز، بلوک سفارشی و خروجی JSON"
+    }
+  ],
+  "examples": [
+    {
+      "id": "calculator",
+      "title": "ماشین‌حساب",
+      "code": "pg \"ماشین‌حساب\"\nfg #67f5a5\ncal mb\n"
+    },
+    {
+      "id": "voxel",
+      "title": "دنیای بلوکی",
+      "code": "pg \"دنیای من\"\nvx sz ۲۴ sd ۷\nbl \"یاقوت\" #dc477b\n"
+    },
+    {
+      "id": "timer",
+      "title": "تایمر",
+      "code": "pg \"یک دقیقه\"\ntm ۶۰\n"
+    },
+    {
+      "id": "packed-button",
+      "title": "دکمهٔ فشرده",
+      "code": "bt \"شروع\" (ru240rn64yGi65G72): sy \"تو باختی\"\n"
+    },
+    {
+      "id": "counter",
+      "title": "شمارنده",
+      "code": "pg \"امتیاز من\"\ncnt\n"
+    }
+  ],
+  "primitives": [
+    "pg \"title\"",
+    "ap \"name\"",
+    "hd \"text\"",
+    "tx \"text\"",
+    "fg #67f5a5",
+    "bg #101410",
+    "num n = 0",
+    "var message = \"text\"",
+    "in name \"hint\"",
+    "out \"Count: {n}\"",
+    "bt \"Add\": n = n + 1",
+    "img \"asset.png\"",
+    "bl \"Ruby\" #dc477b",
+    "bt \"Hello\" (ru240rn64yGi65G72): sy \"Hello!\""
+  ],
+  "recipes": {
+    "define": "df \"name\"",
+    "end": "end",
+    "use": "us \"name\"",
+    "nestedDefinitions": false,
+    "cycles": false
+  },
+  "limits": {
+    "sourceCharacters": 1000000,
+    "expandedLines": 10000,
+    "recipeDepth": 32,
+    "timerSeconds": [
+      1,
+      86400
+    ],
+    "worldWidth": [
+      12,
+      48
+    ],
+    "worldHeight": 20,
+    "customMaterials": 32,
+    "componentsPerPage": 32,
+    "voxelWorldsPerPage": 2
+  },
+  "notImplemented": [
+    "native Android app compilation",
+    "Minecraft mod compatibility",
+    "infinite terrain",
+    "survival",
+    "multiplayer",
+    "world JSON import",
+    "AAA / heavy 3D games",
+    "training or running heavy AI models on the phone"
+  ],
+  "modelInstructions": "You are helping write Nava 0.5 programs in CodePad. Write abbreviated keywords by default where a short form exists. The complete implemented keyword registry is: pg=صفحه; ap=برنامه; hd=عنوان; tx=متن; fg=رنگ; bg=پس‌زمینه; num=عدد; var=متغیر; in=ورودی; out=نمایش; bt=دکمه; img=عکس; alt=توضیح; sy=بگو; on=وقتی زده شد; cal=ماشین‌حساب; mb=موبایل; cnt=شمارنده; tm=تایمر; vx=جهان بلوکی; sz=اندازه; sd=بذر; bl=بلوک; df=تعریف; end=پایان; us=استفاده; tr=درست; fl=نادرست. Each instruction is on its own line; no @@, HTML or JavaScript. Preserve every quoted literal exactly, including visible messages, button labels, image paths, recipe names and interpolation placeholders. Preserve user variable names; do not abbreviate identifiers. Keywords are case-sensitive. Existing Persian and English component aliases still work. Do not invent commands. Boolean literals tr/fl are reserved identifiers. High-level components: cal mb = ماشین‌حساب آفلاین با محاسبات، پرانتز، درصد، تاریخچه و صفحه‌کلید; cnt = شمارندهٔ آماده با افزایش، کاهش و بازنشانی; tm ۶۰ = تایمر ثانیه‌ای با شروع، مکث و بازنشانی; vx sz ۲۴ sd ۷ = نمونهٔ سه‌بعدی آفلاین با پرواز، ساخت‌وساز، بلوک سفارشی و خروجی JSON. Other syntax: pg \"title\", ap \"name\", hd \"text\", tx \"text\", fg #67f5a5, bg #101410, num n = 0, var message = \"text\", var ready = tr, in name \"hint\", out \"Count: {n}\", bt \"Add\": n = n + 1, img \"asset.png\" alt \"description\". Message button: bt \"Start\" (ru240rn64yGi65G72): sy \"تو باختی\". Use a colon or on as the click separator. The capsule is optional: ru=horizontal pixels 1..8192, rn=vertical pixels 1..2048, y=deterministic solid two-color details. Sizes scale to available width; minimum target width 64px and minimum touch height 44px. Palette is case-sensitive: Gi65=#e66464, G72=#a5a7ae, B48=#5ca8f8, V36=#b29af5, N24=#67f5a5, D08=#20262d, W90=#f1f3f5, O52=#ffbd66. Choose two different codes, no color blending. Button actions: any Nava statements — one line after the colon (several separated by ؛) such as n = n + 1 or sy \"message\", or a block on the following lines closed with end; with a capsule and no action the button is appearance-only. Add voxel materials: bl \"Ruby\" #de3555. Named recipes: df \"name\", instructions, end; invoke with us \"name\". Minimal calculator: cal. Worlds are bounded creative demos, not Minecraft. Do not claim full Minecraft mods, infinite worlds, multiplayer, native APK compilation, arbitrary 100000 commands or unavailable libraries. Reply with actual abbreviated Nava source when code is requested. Core language (Persian keywords, also valid next to the short forms; blocks without a one-line ':' body close with پایان or end): lists لیست کارها = [\"a\"، \"b\"], index from 1 کارها[۱]; x += ۱; conditions اگر x > ۱۰ … وگرنه اگر … وگرنه … پایان (و، یا، نه، = or == compare); loops تکرار ۳, برای هر x در کارها, برای i از ۱ تا ۱۰, تا وقتی شرط; actions کنش نام با a، b … پایان and اجرا نام ۱، ۲; functions تابع نام با a … نتیجه a * ۲ … پایان; timers هر ۰.۵ ثانیه: … and بعد از ۲ ثانیه: …, توقف, ادامه; events وقتی لمس (ایکس، ایگرگ), وقتی کلید (کلید); list ops افزودن x به کارها, حذف آخر از کارها, خالی کارها, فهرست کارها با حذف; persistence ذخیره امتیاز، کارها; layout ردیف … پایان; inputs ورودی سن \"سن\" عدد|رمز|چندخطی; conditional display نمایش \"…\" اگر شرط; 2D canvas بوم ۳۲۰، ۳۲۰ with پاک، دایره x، y، r، رنگ، مستطیل، خط، نوشته، تصویر; light WebGL 3D صحنه ۳۰۰، ۲۴۰ with مکعب/کره/هرم/زمین name \"#hex\" در x، y، z, بچرخان/جابجا name dx، dy، dz, اندازه name s, دوربین d; sound صدا ۸۸۰، ۱۰۰, آهنگ ۵۲۳، ۶۵۹; پیام \"toast\"; بگو \"spoken + shown message\"; AI بپرس جواب = سوال (Gemini, needs the user's key and internet). Built-in functions: تصادفی، طول، گرد، صحیح، قدرمطلق، جذر، توان، حداقل، حداکثر، جمع، سینوس، کسینوس، فاصله، عدد، متن، زمان، ساعت، تاریخ، شامل، جای، جدا، چسب، خطوط، برعکس، مرتب، بخش، فایل. Honest limits: no AAA 3D, no on-device AI training, no network except بپرس.",
+  "buttonAppearance": {
+    "syntax": "(ru<width>rn<height>y<firstColor><secondColor>)",
+    "example": "(ru5736rn728yGi65G72)",
+    "widthPixels": [
+      1,
+      8192
+    ],
+    "heightPixels": [
+      1,
+      2048
+    ],
+    "palette": {
+      "Gi65": {
+        "color": "#e66464",
+        "name": "قرمز ملایم"
+      },
+      "G72": {
+        "color": "#a5a7ae",
+        "name": "توسی"
+      },
+      "B48": {
+        "color": "#5ca8f8",
+        "name": "آبی"
+      },
+      "V36": {
+        "color": "#b29af5",
+        "name": "بنفش"
+      },
+      "N24": {
+        "color": "#67f5a5",
+        "name": "سبز"
+      },
+      "D08": {
+        "color": "#20262d",
+        "name": "زغالی"
+      },
+      "W90": {
+        "color": "#f1f3f5",
+        "name": "سفید"
+      },
+      "O52": {
+        "color": "#ffbd66",
+        "name": "نارنجی"
+      }
+    },
+    "distinctColorsRequired": true,
+    "deterministicLayout": true,
+    "layoutCount": 4,
+    "colorMixing": false,
+    "responsive": true,
+    "minimumTargetWidth": 64,
+    "minimumTouchHeight": 44,
+    "actions": [
+      "assignment to existing variable",
+      "sy \"message\"",
+      "omitted = no action"
+    ]
+  },
+  "defaultSyntax": "abbreviated",
+  "backwardCompatible": true,
+  "keywordRegistry": [
+    {
+      "short": "pg",
+      "long": "صفحه",
+      "role": "command",
+      "meaning": "صفحه"
+    },
+    {
+      "short": "ap",
+      "long": "برنامه",
+      "role": "command",
+      "meaning": "نام برنامه"
+    },
+    {
+      "short": "hd",
+      "long": "عنوان",
+      "role": "command",
+      "meaning": "عنوان"
+    },
+    {
+      "short": "tx",
+      "long": "متن",
+      "role": "command",
+      "meaning": "متن"
+    },
+    {
+      "short": "fg",
+      "long": "رنگ",
+      "role": "command",
+      "meaning": "رنگ اصلی"
+    },
+    {
+      "short": "bg",
+      "long": "پس‌زمینه",
+      "role": "command",
+      "meaning": "پس‌زمینه",
+      "aliases": [
+        "پسزمینه"
+      ]
+    },
+    {
+      "short": "num",
+      "long": "عدد",
+      "role": "command",
+      "meaning": "متغیر عددی"
+    },
+    {
+      "short": "var",
+      "long": "متغیر",
+      "role": "command",
+      "meaning": "متغیر"
+    },
+    {
+      "short": "in",
+      "long": "ورودی",
+      "role": "command",
+      "meaning": "ورودی"
+    },
+    {
+      "short": "out",
+      "long": "نمایش",
+      "role": "command",
+      "meaning": "نمایش مقدار"
+    },
+    {
+      "short": "bt",
+      "long": "دکمه",
+      "role": "command",
+      "meaning": "دکمه"
+    },
+    {
+      "short": "img",
+      "long": "عکس",
+      "role": "command",
+      "meaning": "عکس"
+    },
+    {
+      "short": "alt",
+      "long": "توضیح",
+      "role": "option",
+      "meaning": "توضیح عکس"
+    },
+    {
+      "short": "sy",
+      "long": "بگو",
+      "role": "action",
+      "meaning": "نمایش پیام کلیک"
+    },
+    {
+      "short": "on",
+      "long": "وقتی زده شد",
+      "role": "separator",
+      "meaning": "فرمان کلیک؛ به‌جای :"
+    },
+    {
+      "short": "cal",
+      "long": "ماشین‌حساب",
+      "role": "command",
+      "meaning": "ماشین‌حساب",
+      "aliases": [
+        "ماشین حساب",
+        "ماشینحساب",
+        "calculator",
+        "ماشین-حساب"
+      ]
+    },
+    {
+      "short": "mb",
+      "long": "موبایل",
+      "role": "option",
+      "meaning": "قالب موبایل",
+      "aliases": [
+        "mobile"
+      ]
+    },
+    {
+      "short": "cnt",
+      "long": "شمارنده",
+      "role": "command",
+      "meaning": "شمارنده",
+      "aliases": [
+        "counter"
+      ]
+    },
+    {
+      "short": "tm",
+      "long": "تایمر",
+      "role": "command",
+      "meaning": "تایمر",
+      "aliases": [
+        "timer"
+      ]
+    },
+    {
+      "short": "vx",
+      "long": "جهان بلوکی",
+      "role": "command",
+      "meaning": "جهان بلوکی",
+      "aliases": [
+        "voxel"
+      ]
+    },
+    {
+      "short": "sz",
+      "long": "اندازه",
+      "role": "option",
+      "meaning": "اندازهٔ جهان"
+    },
+    {
+      "short": "sd",
+      "long": "بذر",
+      "role": "option",
+      "meaning": "بذر جهان"
+    },
+    {
+      "short": "bl",
+      "long": "بلوک",
+      "role": "command",
+      "meaning": "بلوک سفارشی"
+    },
+    {
+      "short": "df",
+      "long": "تعریف",
+      "role": "command",
+      "meaning": "تعریف بسته"
+    },
+    {
+      "short": "end",
+      "long": "پایان",
+      "role": "command",
+      "meaning": "پایان بسته"
+    },
+    {
+      "short": "us",
+      "long": "استفاده",
+      "role": "command",
+      "meaning": "استفاده از بسته"
+    },
+    {
+      "short": "tr",
+      "long": "درست",
+      "role": "literal",
+      "meaning": "مقدار درست",
+      "aliases": [
+        "true"
+      ]
+    },
+    {
+      "short": "fl",
+      "long": "نادرست",
+      "role": "literal",
+      "meaning": "مقدار نادرست",
+      "aliases": [
+        "false"
+      ]
+    }
+  ],
+  "literalRules": {
+    "quotedStrings": "preserved verbatim during compaction",
+    "identifiers": "preserved, never abbreviated",
+    "reservedBooleanNames": [
+      "tr",
+      "fl",
+      "درست",
+      "نادرست",
+      "true",
+      "false"
+    ],
+    "comments": "preserved",
+    "lineEndings": "preserved",
+    "normalization": "contextual, outside strings only"
+  },
+  "codepad": "2.4.0",
+  "coreLanguage": {
+    "description": "Full Persian-keyword language from CodePad 2.2 (compiled to a JSON program + embedded interpreter, no eval). Works together with every short form above; short forms are expanded to these long keywords before parsing.",
+    "syntax": "Core language (Persian keywords, also valid next to the short forms; blocks without a one-line ':' body close with پایان or end): lists لیست کارها = [\"a\"، \"b\"], index from 1 کارها[۱]; x += ۱; conditions اگر x > ۱۰ … وگرنه اگر … وگرنه … پایان (و، یا، نه، = or == compare); loops تکرار ۳, برای هر x در کارها, برای i از ۱ تا ۱۰, تا وقتی شرط; actions کنش نام با a، b … پایان and اجرا نام ۱، ۲; functions تابع نام با a … نتیجه a * ۲ … پایان; timers هر ۰.۵ ثانیه: … and بعد از ۲ ثانیه: …, توقف, ادامه; events وقتی لمس (ایکس، ایگرگ), وقتی کلید (کلید); list ops افزودن x به کارها, حذف آخر از کارها, خالی کارها, فهرست کارها با حذف; persistence ذخیره امتیاز، کارها; layout ردیف … پایان; inputs ورودی سن \"سن\" عدد|رمز|چندخطی; conditional display نمایش \"…\" اگر شرط; 2D canvas بوم ۳۲۰، ۳۲۰ with پاک، دایره x، y، r، رنگ، مستطیل، خط، نوشته، تصویر; light WebGL 3D صحنه ۳۰۰، ۲۴۰ with مکعب/کره/هرم/زمین name \"#hex\" در x، y، z, بچرخان/جابجا name dx، dy، dz, اندازه name s, دوربین d; sound صدا ۸۸۰، ۱۰۰, آهنگ ۵۲۳، ۶۵۹; پیام \"toast\"; بگو \"spoken + shown message\"; AI بپرس جواب = سوال (Gemini, needs the user's key and internet). Built-in functions: تصادفی، طول، گرد، صحیح، قدرمطلق، جذر، توان، حداقل، حداکثر، جمع، سینوس، کسینوس، فاصله، عدد، متن، زمان، ساعت، تاریخ، شامل، جای، جدا، چسب، خطوط، برعکس، مرتب، بخش، فایل. Honest limits: no AAA 3D, no on-device AI training, no network except بپرس.",
+    "keywords": [
+      "برنامه",
+      "رنگ",
+      "پس‌زمینه",
+      "پسزمینه",
+      "عنوان",
+      "متن",
+      "نمایش",
+      "ورودی",
+      "دکمه",
+      "عکس",
+      "توضیح",
+      "فهرست",
+      "ردیف",
+      "بوم",
+      "صحنه",
+      "مکعب",
+      "کره",
+      "هرم",
+      "زمین",
+      "در",
+      "عدد",
+      "متغیر",
+      "لیست",
+      "ذخیره",
+      "کنش",
+      "هر",
+      "ثانیه",
+      "بعد",
+      "از",
+      "وقتی",
+      "لمس",
+      "کلید",
+      "اگر",
+      "وگرنه",
+      "پایان",
+      "تکرار",
+      "بار",
+      "برای",
+      "تا",
+      "افزودن",
+      "به",
+      "اول",
+      "آخر",
+      "شماره",
+      "حذف",
+      "خالی",
+      "پیام",
+      "صدا",
+      "آهنگ",
+      "بگو",
+      "بپرس",
+      "پاک",
+      "دایره",
+      "مستطیل",
+      "خط",
+      "نوشته",
+      "تصویر",
+      "بچرخان",
+      "جابجا",
+      "حرکت",
+      "اندازه",
+      "دوربین",
+      "اجرا",
+      "توقف",
+      "ادامه",
+      "برگرد",
+      "نتیجه",
+      "تابع",
+      "و",
+      "یا",
+      "نه",
+      "درست",
+      "نادرست",
+      "با",
+      "رمز",
+      "چندخطی",
+      "زده",
+      "شد",
+      "صفحه",
+      "ماشین‌حساب",
+      "ماشینحساب",
+      "شمارنده",
+      "تایمر",
+      "بلوک",
+      "تعریف",
+      "استفاده",
+      "موبایل"
+    ],
+    "functions": [
+      "تصادفی",
+      "طول",
+      "گرد",
+      "صحیح",
+      "قدرمطلق",
+      "جذر",
+      "توان",
+      "حداقل",
+      "حداکثر",
+      "جمع",
+      "سینوس",
+      "کسینوس",
+      "فاصله",
+      "عدد",
+      "متن",
+      "زمان",
+      "ساعت",
+      "تاریخ",
+      "شامل",
+      "جای",
+      "جدا",
+      "چسب",
+      "خطوط",
+      "برعکس",
+      "مرتب",
+      "بخش",
+      "فایل"
+    ],
+    "blocks": "Lines that open a block (اگر، تکرار، برای، تا وقتی، کنش، تابع، هر … ثانیه، بعد از … ثانیه، وقتی لمس/کلید، ردیف، دکمه without a one-line body) close with پایان (or end). Recipes (df … end) may contain such blocks.",
+    "guide": "NAVA-GUIDE.md"
+  }
+}

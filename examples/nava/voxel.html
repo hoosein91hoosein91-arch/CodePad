@@ -1,0 +1,745 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>دنیای بلوکی</title><style>:root{--nava-accent:#c6f135}
+:root{color-scheme:dark}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%;background:#101410;color:#edf4ed;font-family:Vazirmatn,Tahoma,sans-serif}body{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,color-mix(in srgb,#c6f135 15%,#101410),#101410 65%)}.nv-app{min-height:100vh;display:grid;place-items:center;padding:20px}.nv-card{width:min(100%,460px);padding:24px;border:1px solid #ffffff20;border-radius:28px;background:#171e19ef;box-shadow:0 24px 80px #0008;display:flex;flex-direction:column;gap:14px}.nv-brand{color:#c6f135;font-size:12px;letter-spacing:.08em}h1{font-size:26px;line-height:1.4;margin:0}.nv-copy{color:#b8c6ba;line-height:1.9;margin:0;white-space:pre-wrap}.nv-value{font-size:22px;font-weight:700;margin:2px 0;white-space:pre-wrap;line-height:1.7}.nv-input{width:100%;padding:13px 15px;border:1px solid #ffffff25;border-radius:14px;background:#0e130f;color:#fff;font:inherit;outline:none;resize:vertical}.nv-input:focus{border-color:#c6f135;box-shadow:0 0 0 3px color-mix(in srgb,#c6f135 22%,transparent)}.nv-button{min-height:48px;padding:11px 16px;border:0;border-radius:14px;background:#c6f135;color:#11170e;font:inherit;font-weight:700;cursor:pointer;transition:transform .15s,filter .15s;touch-action:manipulation}.nv-button:active{transform:scale(.97);filter:brightness(.9)}.nv-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.nv-row>*{flex:1 1 0;min-width:0}.nv-image{width:100%;max-height:260px;object-fit:cover;border-radius:18px}.nv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.nv-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0e130f;border:1px solid #ffffff14}.nv-list li span{flex:1;overflow-wrap:anywhere}.nv-list .nv-empty{color:#7f8f82;justify-content:center}.nv-del{border:0;background:#ff6a7a22;color:#ff8f9b;border-radius:10px;width:32px;height:32px;font:inherit;cursor:pointer}.nv-canvas{display:block;width:100%;margin:0 auto;border-radius:18px;background:#05090699;border:1px solid #ffffff18;touch-action:none}.nv-scene{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,#c6f135 18%,#0b1220),#05070d)}.nv-error{padding:12px 14px;border-radius:14px;background:#3a1016;color:#ffb3bc;font-size:14px;line-height:1.8}.nv-toast{position:fixed;inset-inline:0;bottom:28px;margin:auto;width:max-content;max-width:86vw;padding:10px 16px;border-radius:14px;background:#000d;color:#c6f135;border:1px solid color-mix(in srgb,#c6f135 50%,transparent);font-weight:700;box-shadow:0 10px 40px #0009}
+
+.nv-button.nv-packed{position:relative;isolation:isolate;overflow:hidden;align-self:center;width:min(100%,max(64px,var(--nv-width)));max-width:100%;min-width:0;aspect-ratio:var(--nv-ratio);height:auto;min-height:44px;flex-shrink:0;padding:12px 20px;border:2px solid var(--nv-second);border-radius:var(--nv-radius);background:var(--nv-first);color:var(--nv-ink);filter:none;transition:transform .15s}
+.nv-packed .nv-button-label{position:relative;z-index:1;display:block;overflow-wrap:anywhere;line-height:1.5}
+.nv-packed::before,.nv-packed::after{content:"";position:absolute;z-index:0;pointer-events:none;background:var(--nv-second)}
+.nv-packed::before{width:6px;top:0;bottom:0;left:0}.nv-packed::after{width:24%;height:4px;right:14%;top:0}
+.nv-packed[data-nava-layout="1"]::before{left:auto;right:0}.nv-packed[data-nava-layout="1"]::after{top:auto;bottom:0;right:auto;left:14%}
+.nv-packed[data-nava-layout="2"]::before{width:12px;height:12px;left:6px;top:6px;bottom:auto;border-radius:50%}.nv-packed[data-nava-layout="2"]::after{top:auto;bottom:0;width:36%;right:14%}
+.nv-packed[data-nava-layout="3"]::before{left:auto;right:0;width:10px;clip-path:polygon(0 0,100% 0,100% 100%,0 70%)}.nv-packed[data-nava-layout="3"]::after{left:14%;right:auto;width:28%}
+.nv-button.nv-packed:active{filter:none;transform:scale(.98)}.nv-button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.nv-message{margin:0;padding:12px 16px;border:1px solid #ffffff30;border-radius:12px;overflow-wrap:anywhere;color:#edf4ed;background:#101410}.nv-message[hidden]{display:none}
+@media(max-width:360px){.nv-app{padding:12px}.nv-card{padding:18px}}
+@media(prefers-reduced-motion:reduce){.nv-button{transition:none}.nv-button:active{transform:none}}
+
+.nv-voxel{outline:none}.nv-voxel-view{position:relative;border-radius:18px;overflow:hidden;border:1px solid #ffffff25}.nv-voxel canvas{display:block;width:100%;aspect-ratio:4/3;image-rendering:pixelated;touch-action:none}.nv-cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;text-shadow:0 1px 2px #000;font:22px monospace;pointer-events:none}.nv-world-badge{position:absolute;top:10px;right:10px;padding:5px 9px;background:#0b1519aa;border-radius:8px;font-size:10px}.nv-voxel-hint{font-size:11px;line-height:1.8;color:#b8c6ba}.nv-voxel select{width:100%;height:40px;border:1px solid #ffffff25;background:#25342b;color:white;border-radius:10px;font:inherit}.nv-voxel-actions,.nv-moves{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.nv-voxel button{border:1px solid #ffffff20;background:#25342b;color:#e7f0e4;border-radius:12px;min-height:45px;font:inherit;cursor:pointer;touch-action:none}.nv-moves button{font-size:18px}.nv-moves button:active{background:#5b7536}</style></head><body><main class="nv-app"><div class="nv-card"><div class="nv-brand">دنیای من</div>
+<h1>دنیای من</h1>
+<section id="nava-kit-0" class="nv-voxel" tabindex="0"><div class="nv-voxel-view"><canvas aria-label="دنیای بلوکی سه‌بعدی"></canvas><div class="nv-cross">+</div><span class="nv-world-badge">دنیای بلوکی · پرواز آزاد</span></div><p class="nv-voxel-hint">روی تصویر بکش تا نگاه کنی. WASD حرکت و Q/E پایین و بالا.</p><select aria-label="بلوک انتخابی"></select><div class="nv-voxel-actions"><button data-voxel="break">شکستن</button><button data-voxel="place">گذاشتن</button><button data-voxel="export">خروجی جهان</button></div><div class="nv-moves" dir="ltr"><button data-move="a">←</button><button data-move="w">↑</button><button data-move="d">→</button><button data-move="q">پایین</button><button data-move="s">↓</button><button data-move="e">بالا</button></div></section>
+<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main><script>(()=>{const P={"title":"دنیای من","accent":"#c6f135","vars":[],"persist":[],"actions":{},"start":[],"timers":[],"onTouch":null,"onKey":null,"buttons":[],"shows":[],"lists":[],"shapes":[],"canvas":null,"scene":null,"images":[]};const navaEngine=(function navaEngine(P     , io     )      {
+  const S      = Object.create(null);
+  const MAXLOOP = 100000;
+  const MAXSTEPS = 3000000;
+  const root      = { v: S, p: null };
+  const has = (o     , k        ) => Object.prototype.hasOwnProperty.call(o, k);
+  let steps = 0;
+  let depth = 0;
+  let timers        = [];
+  let running = false;
+  let lastSaved = "";
+  let t0 = io.now();
+  let reported = false;
+
+  const fail = (line        , msg        )        => {
+    const e      = new Error(msg);
+    e.navaLine = line;
+    throw e;
+  };
+  const digits = (s        ) =>
+    String(s)
+      .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 1776))
+      .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 1632))
+      .replace(/٫/g, ".")
+      .replace(/[٬,\s]/g, "");
+  const numish = (v     ) => typeof v === "number" || (typeof v === "string" && /^\s*[-+]?[\d۰-۹٠-٩٬,]+(?:[.٫][\d۰-۹٠-٩]+)?\s*$/.test(v));
+  const toNum = (v     )         => {
+    if (typeof v === "number") return v;
+    if (typeof v === "boolean") return v ? 1 : 0;
+    if (Array.isArray(v)) return v.length;
+    const n = Number(digits(String(v ?? "")));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const fmt = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 });
+  const str = (v     )         =>
+    typeof v === "number"
+      ? Number.isFinite(v) ? fmt.format(v) : "∞"
+      : typeof v === "boolean"
+        ? v ? "درست" : "نادرست"
+        : Array.isArray(v)
+          ? v.map((x) => (Array.isArray(x) ? `[${str(x)}]` : str(x))).join("، ")
+          : v == null ? "" : String(v);
+  const truthy = (v     ) => (Array.isArray(v) ? v.length > 0 : !!v);
+  const same = (a     , b     )          => {
+    if (Array.isArray(a) || Array.isArray(b)) {
+      if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+      return a.every((x, i) => same(x, b[i]));
+    }
+    if (typeof a === typeof b) return a === b;
+    if (numish(a) && numish(b) && typeof a !== "boolean" && typeof b !== "boolean") return toNum(a) === toNum(b);
+    return false;
+  };
+  const add = (a     , b     ) => {
+    if (Array.isArray(a)) return a.concat(Array.isArray(b) ? b : [b]);
+    if (typeof a === "number" && typeof b === "number") return a + b;
+    if ((typeof a === "string" || typeof b === "string") && !(numish(a) && numish(b))) return str(a) + str(b);
+    return toNum(a) + toNum(b);
+  };
+  const compare = (op        , a     , b     ) => {
+    const x = numish(a) && numish(b) ? toNum(a) : str(a);
+    const y = numish(a) && numish(b) ? toNum(b) : str(b);
+    return op === "<" ? x < y : op === ">" ? x > y : op === "<=" ? x <= y : x >= y;
+  };
+  const rnd = (a      , b      ) => {
+    if (a === undefined) return io.random();
+    let lo = 1, hi = toNum(a);
+    if (b !== undefined) { lo = toNum(a); hi = toNum(b); }
+    if (hi < lo) { const t = lo; lo = hi; hi = t; }
+    return Math.floor(io.random() * (Math.floor(hi) - Math.ceil(lo) + 1)) + Math.ceil(lo);
+  };
+  const nums = (xs       ) => xs.flatMap((x) => (Array.isArray(x) ? x : [x])).map(toNum);
+  const rad = (d     ) => (toNum(d) * Math.PI) / 180;
+  const B      = {
+    تصادفی: rnd,
+    طول: (x     ) => (Array.isArray(x) || typeof x === "string" ? x.length : str(x).length),
+    گرد: (x     , d      ) => { const k = Math.pow(10, d === undefined ? 0 : toNum(d)); return Math.round(toNum(x) * k) / k; },
+    صحیح: (x     ) => Math.trunc(toNum(x)),
+    قدرمطلق: (x     ) => Math.abs(toNum(x)),
+    جذر: (x     ) => Math.sqrt(toNum(x)),
+    توان: (a     , b     ) => Math.pow(toNum(a), toNum(b)),
+    حداقل: (...xs       ) => Math.min(...nums(xs)),
+    حداکثر: (...xs       ) => Math.max(...nums(xs)),
+    جمع: (...xs       ) => nums(xs).reduce((s, x) => s + x, 0),
+    سینوس: (d     ) => Math.sin(rad(d)),
+    کسینوس: (d     ) => Math.cos(rad(d)),
+    فاصله: (x1     , y1     , x2     , y2     ) => Math.hypot(toNum(x2) - toNum(x1), toNum(y2) - toNum(y1)),
+    عدد: (x     ) => toNum(x),
+    متن: (x     ) => str(x),
+    زمان: () => (io.now() - t0) / 1000,
+    ساعت: () => new Date().toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
+    تاریخ: () => new Date().toLocaleDateString("fa-IR"),
+    شامل: (a     , b     ) => (Array.isArray(a) ? a.some((x) => same(x, b)) : str(a).includes(str(b))),
+    جای: (a     , b     ) => (Array.isArray(a) ? a.findIndex((x) => same(x, b)) : str(a).indexOf(str(b))) + 1,
+    جدا: (s     , sep      ) => (sep === undefined ? str(s).split(/\s+/) : str(s).split(str(sep))).filter((x) => x !== ""),
+    چسب: (l     , sep      ) => (Array.isArray(l) ? l : [l]).map(str).join(sep === undefined ? "، " : str(sep)),
+    خطوط: (s     ) => str(s).split(/\r?\n/).filter((x) => x.trim() !== ""),
+    برعکس: (l     ) => (Array.isArray(l) ? [...l].reverse() : [...str(l)].reverse().join("")),
+    مرتب: (l     ) => (Array.isArray(l) ? [...l].sort((a, b) => (numish(a) && numish(b) ? toNum(a) - toNum(b) : str(a).localeCompare(str(b), "fa"))) : l),
+    بخش: (l     , from     , to      ) => { const a = Array.isArray(l) ? l : str(l); const f = Math.max(0, toNum(from) - 1); return a.slice(f, to === undefined ? undefined : toNum(to)); },
+    فایل: (name     ) => io.fileText(str(name)),
+  };
+
+  const lookup = (env     , name        , line        ) => {
+    for (let e = env; e; e = e.p) if (has(e.v, name)) return e.v[name];
+    return fail(line, `متغیر «${name}» تعریف نشده است.`);
+  };
+  const assign = (env     , name        , val     , line        ) => {
+    for (let e = env; e; e = e.p) if (has(e.v, name)) { e.v[name] = val; return; }
+    fail(line, `متغیر «${name}» تعریف نشده است.`);
+  };
+  const slot = (list     , i     , line        ) => {
+    if (!Array.isArray(list) && typeof list !== "string") fail(line, "فقط لیست یا متن شماره دارد؛ مثل کارها[۱].");
+    const n = Math.trunc(toNum(i));
+    const pos = n < 0 ? list.length + n : n - 1;
+    if (n === 0 || pos < 0 || pos >= list.length) fail(line, `شمارهٔ ${str(n)} در لیست نیست (طول لیست ${str(list.length)} است؛ شماره از ۱ شروع می‌شود).`);
+    return pos;
+  };
+
+  const ev = (e     , env     , line        )      => {
+    switch (e.k) {
+      case "v": return e.v;
+      case "n": return lookup(env, e.n, line);
+      case "t": return e.parts.map((p     ) => (typeof p === "string" ? p : str(ev(p, env, line)))).join("");
+      case "l": return e.items.map((x     ) => ev(x, env, line));
+      case "i": { const base = ev(e.a, env, line); return base[slot(base, ev(e.i, env, line), line)]; }
+      case "u": { const v = ev(e.a, env, line); return e.op === "!" ? !truthy(v) : e.op === "-" ? -toNum(v) : toNum(v); }
+      case "c": {
+        const args = e.args.map((x     ) => ev(x, env, line));
+        const f = B[e.f];
+        return f ? f(...args) : callUser(e.f, args, line);
+      }
+      case "b": {
+        if (e.op === "&&") return truthy(ev(e.a, env, line)) ? truthy(ev(e.b, env, line)) : false;
+        if (e.op === "||") return truthy(ev(e.a, env, line)) ? true : truthy(ev(e.b, env, line));
+        const a = ev(e.a, env, line), b = ev(e.b, env, line);
+        switch (e.op) {
+          case "+": return add(a, b);
+          case "-": return toNum(a) - toNum(b);
+          case "*": return toNum(a) * toNum(b);
+          case "/": if (toNum(b) === 0) fail(line, "تقسیم بر صفر ممکن نیست."); return toNum(a) / toNum(b);
+          case "%": if (toNum(b) === 0) fail(line, "باقی‌ماندهٔ تقسیم بر صفر ممکن نیست."); return ((toNum(a) % toNum(b)) + toNum(b)) % toNum(b);
+          case "==": return same(a, b);
+          case "!=": return !same(a, b);
+          default: return compare(e.op, a, b);
+        }
+      }
+    }
+    return fail(line, "عبارت نامعتبر است.");
+  };
+
+  const listOf = (env     , name        , line        ) => {
+    const v = lookup(env, name, line);
+    if (!Array.isArray(v)) fail(line, `«${name}» لیست نیست؛ آن را با «لیست ${name}» بساز.`);
+    return v;
+  };
+  const child = (env     ) => ({ v: Object.create(null), p: env });
+  const callUser = (name        , args       , line        )      => {
+    const a = P.actions[name];
+    if (!a) return fail(line, `کنش یا تابع «${name}» تعریف نشده است.`);
+    if (++depth > 200) fail(line, "کنش‌ها بیش از حد همدیگر را صدا زده‌اند (بیش از ۲۰۰ لایه).");
+    const env = child(root);
+    a.params.forEach((p        , i        ) => { env.v[p] = args[i] === undefined ? "" : args[i]; });
+    try { exec(a.body, env); return ""; }
+    catch (err     ) { if (err && err.navaRet) return err.value === undefined ? "" : err.value; throw err; }
+    finally { depth--; }
+  };
+
+  const exec = (body       , env     )       => {
+    for (const s of body) {
+      if (++steps > MAXSTEPS) fail(s.line, "اجرای برنامه بیش از حد طول کشید (شاید یک حلقهٔ بی‌پایان داری).");
+      const E = (x     ) => ev(x, env, s.line);
+      switch (s.k) {
+        case "let": env.v[s.n] = E(s.e); break;
+        case "set": {
+          let val = E(s.e);
+          if (s.idx && s.idx.length) {
+            let target = lookup(env, s.n, s.line);
+            for (let i = 0; i < s.idx.length - 1; i++) target = target[slot(target, E(s.idx[i]), s.line)];
+            if (!Array.isArray(target)) fail(s.line, "فقط خانهٔ لیست را می‌شود عوض کرد.");
+            const pos = slot(target, E(s.idx[s.idx.length - 1]), s.line);
+            if (s.op === "+=") val = add(target[pos], val);
+            else if (s.op === "-=") val = toNum(target[pos]) - toNum(val);
+            target[pos] = val;
+          } else {
+            if (s.op === "+=") val = add(lookup(env, s.n, s.line), val);
+            else if (s.op === "-=") val = toNum(lookup(env, s.n, s.line)) - toNum(val);
+            assign(env, s.n, val, s.line);
+          }
+          break;
+        }
+        case "if": {
+          let done = false;
+          for (const br of s.br) if (truthy(E(br.c))) { exec(br.body, child(env)); done = true; break; }
+          if (!done && s.els) exec(s.els, child(env));
+          break;
+        }
+        case "rep": {
+          const n = Math.trunc(toNum(E(s.n)));
+          if (n > MAXLOOP) fail(s.line, "حداکثر ۱۰۰٬۰۰۰ بار تکرار مجاز است.");
+          for (let i = 1; i <= n; i++) { const c = child(env); if (s.v) c.v[s.v] = i; exec(s.body, c); }
+          break;
+        }
+        case "each": {
+          const list = E(s.e);
+          const items = Array.isArray(list) ? [...list] : typeof list === "string" ? [...list] : fail(s.line, "«برای هر» روی لیست یا متن کار می‌کند.");
+          for (const x of items) { const c = child(env); c.v[s.v] = x; exec(s.body, c); }
+          break;
+        }
+        case "for": {
+          const from = toNum(E(s.from)), to = toNum(E(s.to));
+          if (Math.abs(to - from) > MAXLOOP) fail(s.line, "حداکثر ۱۰۰٬۰۰۰ بار تکرار مجاز است.");
+          const step = from <= to ? 1 : -1;
+          for (let i = from; step > 0 ? i <= to : i >= to; i += step) { const c = child(env); c.v[s.v] = i; exec(s.body, c); }
+          break;
+        }
+        case "while": {
+          let guard = 0;
+          while (truthy(E(s.c))) {
+            if (++guard > MAXLOOP) fail(s.line, "حلقهٔ «تا وقتی» تمام نمی‌شود (بیش از ۱۰۰٬۰۰۰ دور).");
+            exec(s.body, child(env));
+          }
+          break;
+        }
+        case "push": { const list = listOf(env, s.n, s.line); const v = E(s.e); if (s.front) list.unshift(v); else list.push(v); break; }
+        case "del": {
+          const list = listOf(env, s.n, s.line);
+          if (s.which === "first") list.shift();
+          else if (s.which === "last") list.pop();
+          else if (s.which === "at") list.splice(slot(list, E(s.e), s.line), 1);
+          else { const v = E(s.e); const i = list.findIndex((x     ) => same(x, v)); if (i >= 0) list.splice(i, 1); }
+          break;
+        }
+        case "clear": listOf(env, s.n, s.line).length = 0; break;
+        case "msg": io.toast(str(E(s.e))); break;
+        case "tone": {
+          const a = E(s.a[0]);
+          if (typeof a === "string" && !numish(a)) io.play(a);
+          else io.tone(toNum(a), s.a[1] ? toNum(E(s.a[1])) : 150);
+          break;
+        }
+        case "melody": io.melody(s.a.map((x     ) => toNum(E(x))), 180); break;
+        case "say": io.say(str(E(s.e))); break;
+        case "ask": {
+          const prompt = str(E(s.e));
+          const target = s.n;
+          S[target] = "… در حال فکر کردن";
+          Promise.resolve()
+            .then(() => io.ask(prompt))
+            .then(
+              (text     ) => { S[target] = String(text ?? ""); after(); },
+              (err     ) => { S[target] = `⚠️ ${err && err.message ? err.message : String(err)}`; after(); },
+            );
+          break;
+        }
+        case "draw": io.draw(s.op, s.a.map(E), s.line); break;
+        case "obj": io.obj(s.op, s.n, s.a.map((x     ) => toNum(E(x))), s.line); break;
+        case "cam": io.cam(toNum(E(s.e))); break;
+        case "call": callUser(s.n, s.a.map(E), s.line); break;
+        case "stop": stopTimers(); break;
+        case "resume": startTimers(); break;
+        case "ret": throw { navaRet: true, value: s.e ? E(s.e) : undefined };
+      }
+    }
+  };
+
+  const pick = () => { const o      = {}; for (const n of P.persist) o[n] = S[n]; return o; };
+  const persist = () => {
+    if (!P.persist.length) return;
+    const snap = JSON.stringify(pick());
+    if (snap === lastSaved) return;
+    lastSaved = snap;
+    try { Promise.resolve(io.save(JSON.parse(snap))).catch(() => {}); } catch { /* ذخیره ممکن نشد */ }
+  };
+  function after() { io.render(); persist(); }
+  const report = (err     ) => {
+    const msg = (err && err.navaLine ? `خط ${err.navaLine}: ` : "") + (err && err.message ? err.message : String(err));
+    stopTimers();
+    if (!reported) { reported = true; io.error(msg); }
+  };
+  const handle = (body                          ) => {
+    if (!body) return;
+    steps = 0; depth = 0;
+    try { exec(body, child(root)); } catch (err     ) { if (!(err && err.navaRet)) report(err); }
+    after();
+  };
+  function stopTimers() { for (const t of timers) io.clearInterval(t); timers = []; running = false; }
+  function startTimers() {
+    if (running) return;
+    running = true;
+    for (const t of P.timers) {
+      if (t.once) continue;
+      let sec = 1;
+      try { sec = toNum(ev(t.sec, root, t.line)); } catch (err) { report(err); return; }
+      timers.push(io.setInterval(() => handle(t.body), Math.max(16, sec * 1000)));
+    }
+  }
+
+  const api = {
+    S, str, toNum, truthy,
+    get running() { return running; },
+    value: (name        ) => S[name],
+    text: (e     , line        ) => { try { return str(ev(e, root, line)); } catch (err) { report(err); return ""; } },
+    truth: (e     , line        ) => { try { return truthy(ev(e, root, line)); } catch (err) { report(err); return false; } },
+    click: (i        ) => handle(P.buttons[i]),
+    key: (k        ) => { S["کلید"] = k; handle(P.onKey); },
+    touch: (x        , y        ) => { S["ایکس"] = Math.round(x); S["ایگرگ"] = Math.round(y); handle(P.onTouch); },
+    input: (name        , value     ) => { S[name] = value; after(); },
+    removeAt: (name        , index        ) => { const l = S[name]; if (Array.isArray(l) && index >= 0 && index < l.length) l.splice(index, 1); after(); },
+    stop: stopTimers,
+    run: handle,
+    start: async () => {
+      t0 = io.now();
+      S["ایکس"] = 0; S["ایگرگ"] = 0; S["کلید"] = "";
+      try { for (const d of P.vars) { steps = 0; S[d.n] = ev(d.e, root, d.line); } } catch (err) { report(err); io.render(); return; }
+      if (P.persist.length) {
+        try {
+          const saved = await io.load();
+          if (saved && typeof saved === "object") for (const n of P.persist) if (has(saved, n) && saved[n] !== null && saved[n] !== undefined) S[n] = saved[n];
+        } catch { /* حافظه در دسترس نبود */ }
+        lastSaved = JSON.stringify(pick());
+      }
+      try { for (const sh of P.shapes) if (sh.at) io.obj("جابجا", sh.n, sh.at.map((x     ) => toNum(ev(x, root, sh.line))), sh.line); } catch (err) { report(err); }
+      if (io.ready) await io.ready();
+      handle(P.start);
+      if (!reported) {
+        startTimers();
+        for (const t of P.timers) if (t.once) { let sec = 1; try { sec = toNum(ev(t.sec, root, t.line)); } catch { /* */ } io.setTimeout(() => handle(t.body), Math.max(0, sec * 1000)); }
+      }
+    },
+  };
+  return api;
+});(function navaDom(P     , engine     )       {
+  const doc = document;
+  const $ = (s        ) => doc.querySelector(s)       ;
+  const errBox = $(".nv-error");
+  const toastBox = $(".nv-toast");
+  const lineErr = (line        , msg        )        => { const e      = new Error(msg); e.navaLine = line; throw e; };
+  const J      = (window       ).jibos;
+
+  // ── صدا (Web Audio داخل همین قاب) ──
+  let ac      = null;
+  const audio = () => { const A = (window       ).AudioContext || (window       ).webkitAudioContext; if (!A) return null; if (!ac) ac = new A(); if (ac.state === "suspended") ac.resume(); return ac; };
+  const tone = (f        , ms        ) => {
+    try {
+      const c = audio(); if (!c || !(f > 0)) return;
+      const o = c.createOscillator(), g = c.createGain(), t = c.currentTime, d = Math.max(20, Math.min(5000, ms || 150)) / 1000;
+      o.type = "square"; o.frequency.value = Math.min(8000, f);
+      g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d + 0.03);
+    } catch { /* صدا در دسترس نیست */ }
+  };
+
+  // ── بوم دوبعدی ──
+  const cv      = doc.getElementById("nv-canvas");
+  const cw = P.canvas ? P.canvas.w : 0, ch = P.canvas ? P.canvas.h : 0;
+  let g2      = null;
+  if (cv) {
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    g2 = cv.getContext("2d");
+    if (g2) { g2.scale(dpr, dpr); g2.textAlign = "center"; g2.textBaseline = "middle"; }
+  }
+  const images      = {};
+  const image = (src        ) => { if (!images[src]) { const im = new Image(); im.src = src; images[src] = im; } return images[src]; };
+  const draw = (op        , a       , line        ) => {
+    if (!g2) lineErr(line, "برای نقاشی اول یک «بوم» بساز؛ مثل: بوم ۳۲۰، ۳۲۰");
+    const n = (i        , d = 0) => (a[i] === undefined ? d : api.toNum(a[i]));
+    const col = (i        , d        ) => (a[i] === undefined ? d : String(a[i]));
+    g2.save();
+    if (op === "پاک") {
+      if (a[0] === undefined) g2.clearRect(0, 0, cw, ch); else { g2.fillStyle = col(0, "#000"); g2.fillRect(0, 0, cw, ch); }
+    } else if (op === "دایره") {
+      g2.fillStyle = col(3, P.accent); g2.beginPath(); g2.arc(n(0), n(1), Math.max(0, n(2, 10)), 0, Math.PI * 2); g2.fill();
+    } else if (op === "مستطیل") {
+      g2.fillStyle = col(4, P.accent); g2.fillRect(n(0), n(1), n(2, 10), n(3, 10));
+    } else if (op === "خط") {
+      g2.strokeStyle = col(4, P.accent); g2.lineWidth = n(5, 3); g2.lineCap = "round"; g2.beginPath(); g2.moveTo(n(0), n(1)); g2.lineTo(n(2), n(3)); g2.stroke();
+    } else if (op === "نوشته") {
+      g2.fillStyle = col(3, "#ffffff"); g2.font = `700 ${n(4, 18)}px Vazirmatn, Tahoma, sans-serif`; g2.fillText(api.str(a[0]), n(1), n(2));
+    } else if (op === "تصویر") {
+      const im = image(String(a[0] ?? ""));
+      if (im.complete && im.naturalWidth) g2.drawImage(im, n(1), n(2), a[3] === undefined ? im.naturalWidth : n(3), a[4] === undefined ? (a[3] === undefined ? im.naturalHeight : n(3)) : n(4));
+    }
+    g2.restore();
+  };
+
+  // ── صحنهٔ سه‌بعدی (WebGL خام، بدون کتابخانه) ──
+  const sc      = doc.getElementById("nv-scene");
+  const sw = P.scene ? P.scene.w : 0, sh = P.scene ? P.scene.h : 0;
+  const objs      = {};
+  for (const s of P.shapes) objs[s.n] = { kind: s.kind, color: s.color, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1 };
+  let camDist = 6;
+  let gl      = null, prog      = null;
+  const meshes      = {};
+  const rgb = (() => {
+    const c = doc.createElement("canvas").getContext("2d");
+    return (color        ) => {
+      if (!c) return [0.4, 0.96, 0.65];
+      c.fillStyle = "#67f5a5"; c.fillStyle = color;
+      const v = String(c.fillStyle);
+      if (v[0] === "#") return [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16) / 255);
+      const m = v.match(/[\d.]+/g) || ["103", "245", "165"];
+      return m.slice(0, 3).map((x) => Number(x) / 255);
+    };
+  })();
+  if (sc) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    sc.width = Math.round(sw * dpr); sc.height = Math.round(sh * dpr);
+    gl = sc.getContext("webgl", { antialias: true, alpha: true }) || sc.getContext("experimental-webgl");
+    if (gl) {
+      const shader = (type        , src        ) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+      prog = gl.createProgram();
+      gl.attachShader(prog, shader(gl.VERTEX_SHADER, "attribute vec3 p;attribute vec3 q;uniform mat4 m;uniform mat4 w;varying vec3 n;void main(){n=(w*vec4(q,0.0)).xyz;gl_Position=m*vec4(p,1.0);}"));
+      gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, "precision mediump float;uniform vec3 c;varying vec3 n;void main(){float d=max(dot(normalize(n),normalize(vec3(0.45,0.8,0.6))),0.0);gl_FragColor=vec4(c*(0.32+0.68*d),1.0);}"));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) gl = null;
+    }
+    if (gl) {
+      gl.useProgram(prog);
+      gl.enable(gl.DEPTH_TEST);
+      const build = (tris            , smooth         ) => {
+        const pos           = [], nor           = [];
+        for (let i = 0; i < tris.length; i += 3) {
+          const [a, b, c] = [tris[i], tris[i + 1], tris[i + 2]];
+          const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+          const f = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+          for (const p of [a, b, c]) { pos.push(p[0], p[1], p[2]); const k = smooth ? p : f; nor.push(k[0], k[1], k[2]); }
+        }
+        const bp = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bp); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
+        const bn = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bn); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(nor), gl.STATIC_DRAW);
+        return { bp, bn, count: pos.length / 3 };
+      };
+      const quad = (a          , b          , c          , d          ) => [a, b, c, a, c, d];
+      const h = 0.75;
+      const V = (x        , y        , z        ) => [x * h, y * h, z * h];
+      meshes["مکعب"] = build([
+        ...quad(V(-1, -1, 1), V(1, -1, 1), V(1, 1, 1), V(-1, 1, 1)), ...quad(V(1, -1, -1), V(-1, -1, -1), V(-1, 1, -1), V(1, 1, -1)),
+        ...quad(V(-1, 1, 1), V(1, 1, 1), V(1, 1, -1), V(-1, 1, -1)), ...quad(V(-1, -1, -1), V(1, -1, -1), V(1, -1, 1), V(-1, -1, 1)),
+        ...quad(V(1, -1, 1), V(1, -1, -1), V(1, 1, -1), V(1, 1, 1)), ...quad(V(-1, -1, -1), V(-1, -1, 1), V(-1, 1, 1), V(-1, 1, -1)),
+      ], false);
+      const sp             = [];
+      const LAT = 18, LON = 28, R = 0.85;
+      const pt = (i        , j        ) => { const t = (i / LAT) * Math.PI, f = (j / LON) * Math.PI * 2; return [R * Math.sin(t) * Math.cos(f), R * Math.cos(t), R * Math.sin(t) * Math.sin(f)]; };
+      for (let i = 0; i < LAT; i++) for (let j = 0; j < LON; j++) sp.push(...quad(pt(i, j), pt(i, j + 1), pt(i + 1, j + 1), pt(i + 1, j)));
+      meshes["کره"] = build(sp, true);
+      const top = [0, 0.85, 0], b1 = [-0.85, -0.7, 0.85], b2 = [0.85, -0.7, 0.85], b3 = [0.85, -0.7, -0.85], b4 = [-0.85, -0.7, -0.85];
+      meshes["هرم"] = build([b1, b2, top, b2, b3, top, b3, b4, top, b4, b1, top, ...quad(b4, b3, b2, b1)], false);
+      meshes["زمین"] = build(quad([-4, 0, 4], [4, 0, 4], [4, 0, -4], [-4, 0, -4]), false);
+    }
+  }
+  const mul = (a          , b          ) => { const o = new Array(16).fill(0); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
+  const T = (x        , y        , z        ) => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1];
+  const RX = (d        ) => { const r = (d * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]; };
+  const RY = (d        ) => { const r = (d * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]; };
+  const RZ = (d        ) => { const r = (d * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; };
+  const SC = (k        ) => [k, 0, 0, 0, 0, k, 0, 0, 0, 0, k, 0, 0, 0, 0, 1];
+  const draw3d = () => {
+    if (!gl) return;
+    gl.viewport(0, 0, sc.width, sc.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const f = 1 / Math.tan((50 * Math.PI) / 360), asp = sw / sh, near = 0.1, far = 100;
+    const proj = [f / asp, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, (2 * far * near) / (near - far), 0];
+    const view = mul(T(0, 0, -camDist), RX(18));
+    const lp = gl.getAttribLocation(prog, "p"), lq = gl.getAttribLocation(prog, "q");
+    const um = gl.getUniformLocation(prog, "m"), uw = gl.getUniformLocation(prog, "w"), uc = gl.getUniformLocation(prog, "c");
+    for (const name of Object.keys(objs)) {
+      const o = objs[name], mesh = meshes[o.kind];
+      if (!mesh) continue;
+      const model = mul(T(o.pos[0], o.pos[1], o.pos[2]), mul(RY(o.rot[1]), mul(RX(o.rot[0]), mul(RZ(o.rot[2]), SC(o.scale)))));
+      gl.uniformMatrix4fv(um, false, new Float32Array(mul(proj, mul(view, model))));
+      gl.uniformMatrix4fv(uw, false, new Float32Array(model));
+      gl.uniform3fv(uc, new Float32Array(rgb(o.color)));
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bp); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bn); gl.enableVertexAttribArray(lq); gl.vertexAttribPointer(lq, 3, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+    }
+  };
+  let frame3d = 0;
+  const want3d = () => { if (gl && !frame3d) frame3d = requestAnimationFrame(() => { frame3d = 0; draw3d(); }); };
+  const obj = (op        , name        , a          , line        ) => {
+    const o = objs[name];
+    if (!o) lineErr(line, `شکل «${name}» در صحنه نیست.`);
+    const v = (i        ) => (Number.isFinite(a[i]) ? a[i] : 0);
+    if (op === "بچرخان") { o.rot[0] += v(0); o.rot[1] += v(1); o.rot[2] += v(2); }
+    else if (op === "جابجا") o.pos = [v(0), v(1), v(2)];
+    else if (op === "حرکت") { o.pos[0] += v(0); o.pos[1] += v(1); o.pos[2] += v(2); }
+    else if (op === "اندازه") o.scale = Math.max(0, v(0) || 0);
+    want3d();
+  };
+
+  // ── پیام، خطا، حافظه، هوش مصنوعی ──
+  let toastTimer = 0;
+  const toast = (text        ) => {
+    if (!toastBox) return;
+    toastBox.textContent = text; toastBox.hidden = false;
+    clearTimeout(toastTimer); toastTimer = window.setTimeout(() => { toastBox.hidden = true; }, 2400);
+  };
+  const error = (msg        ) => {
+    if (errBox) { errBox.textContent = `⚠️ ${msg}`; errBox.hidden = false; }
+    try { console.error(`نوا — ${msg}`); } catch { /* */ }
+  };
+  let memory      = null;
+  const lsKey = `nava:${P.title}`;
+  const load = async () => {
+    if (J && J.storage) { try { return await J.storage.get("nava"); } catch { /* به حافظهٔ محلی می‌رویم */ } }
+    try { const raw = localStorage.getItem(lsKey); return raw ? JSON.parse(raw) : null; } catch { return memory; }
+  };
+  const save = async (data     ) => {
+    memory = data;
+    if (J && J.storage) { try { await J.storage.set("nava", data); return; } catch { /* */ } }
+    try { localStorage.setItem(lsKey, JSON.stringify(data)); } catch { /* فقط در حافظهٔ موقت */ }
+  };
+  const ask = (prompt        ) => {
+    if (J && typeof J.call === "function") return J.call("ai", prompt);
+    return Promise.reject(new Error("هوش مصنوعی فقط داخل CodePad (ویرایشگر یا لانچر) و با «اتصال Gemini» کار می‌کند."));
+  };
+  const fileText = (v        ) => {
+    if (!v.startsWith("data:")) throw new Error(`پیوست «${v}» پیدا نشد؛ فایل را به پروژه پیوست کن و نامش را دقیق بنویس.`);
+    const comma = v.indexOf(","), meta = v.slice(0, comma), body = v.slice(comma + 1);
+    if (!/;base64/i.test(meta)) return decodeURIComponent(body);
+    const bin = atob(body), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  };
+  const ready = () => Promise.all(
+    (P.images            ).map((src) => new Promise((done) => { const im = image(src); if (im.complete) done(true); else { im.onload = im.onerror = () => done(true); setTimeout(() => done(false), 3000); } })),
+  );
+
+  const io = {
+    now: () => performance.now(),
+    random: Math.random,
+    setInterval: (f     , ms        ) => window.setInterval(f, ms),
+    clearInterval: (id        ) => window.clearInterval(id),
+    setTimeout: (f     , ms        ) => window.setTimeout(f, ms),
+    toast, tone, error, load, save, ask, fileText, ready, draw, obj,
+    cam: (d        ) => { camDist = Math.max(1.5, Math.min(60, d || 6)); want3d(); },
+    melody: (fs          , ms        ) => fs.forEach((f, i) => window.setTimeout(() => tone(f, ms), i * ms)),
+    play: (src        ) => { try { void new Audio(src).play().catch(() => {}); } catch { /* */ } },
+    say: (text        ) => {
+      // پیام «بگو» روی صفحه هم دیده می‌شود (حتی بدون پشتیبانی گفتار) و اگر ممکن باشد خوانده هم می‌شود
+      const msg = doc.querySelector(".nv-message")       ;
+      if (msg) { msg.textContent = text; msg.hidden = false; }
+      try { const u = new SpeechSynthesisUtterance(text); u.lang = /[\u0600-\u06ff]/.test(text) ? "fa-IR" : "en-US"; speechSynthesis.speak(u); }
+      catch { if (J && J.speak) void J.speak(text).catch(() => {}); }
+    },
+    render: () => render(),
+  };
+  const api = engine(P, io);
+
+  function render() {
+    doc.querySelectorAll("[data-nv-show]").forEach((el     ) => {
+      const spec = P.shows[Number(el.getAttribute("data-nv-show"))];
+      const visible = spec.when ? api.truth(spec.when, spec.line) : true;
+      el.hidden = !visible;
+      if (visible) { const t = api.text(spec.e, spec.line); if (el.textContent !== t) el.textContent = t; }
+    });
+    doc.querySelectorAll("[data-nv-input]").forEach((el     ) => {
+      if (doc.activeElement === el) return;
+      const name = el.getAttribute("data-nv-input");
+      const v = api.value(name);
+      const t = v === "" || v === undefined ? "" : api.str(v).replace(/٬/g, "");
+      if (el.value !== t && !(el.value === "" && v === 0 && el.getAttribute("data-nv-type") === "number")) el.value = t;
+    });
+    doc.querySelectorAll("[data-nv-list]").forEach((el     ) => {
+      const spec = P.lists[Number(el.getAttribute("data-nv-list"))];
+      const items = api.value(spec.n);
+      const arr = Array.isArray(items) ? items : [];
+      const sig = JSON.stringify(arr);
+      if (el.getAttribute("data-sig") === sig) return;
+      el.setAttribute("data-sig", sig);
+      el.replaceChildren();
+      if (!arr.length) { const li = doc.createElement("li"); li.className = "nv-empty"; li.textContent = "— خالی —"; el.append(li); }
+      arr.forEach((item     , i        ) => {
+        const li = doc.createElement("li");
+        const span = doc.createElement("span"); span.textContent = api.str(item); li.append(span);
+        if (spec.del) { const b = doc.createElement("button"); b.type = "button"; b.className = "nv-del"; b.textContent = "✕"; b.setAttribute("aria-label", "حذف"); b.setAttribute("data-nv-del", String(i)); li.append(b); }
+        el.append(li);
+      });
+    });
+    want3d();
+  }
+
+  doc.querySelectorAll("[data-nv-btn]").forEach((el     ) => el.addEventListener("click", () => { audio(); api.click(Number(el.getAttribute("data-nv-btn"))); }));
+  doc.querySelectorAll("[data-nv-input]").forEach((el     ) => el.addEventListener("input", () => {
+    const type = el.getAttribute("data-nv-type");
+    const raw = el.value;
+    api.input(el.getAttribute("data-nv-input"), type === "number" ? (raw.trim() === "" ? 0 : api.toNum(raw)) : raw);
+  }));
+  doc.querySelectorAll("[data-nv-list]").forEach((el     ) => el.addEventListener("click", (e     ) => {
+    const b = e.target && e.target.closest ? e.target.closest("[data-nv-del]") : null;
+    if (b) api.removeAt(P.lists[Number(el.getAttribute("data-nv-list"))].n, Number(b.getAttribute("data-nv-del")));
+  }));
+  const touchable = (el     , w        , h        ) => {
+    if (!el) return;
+    let sx = 0, sy = 0;
+    el.addEventListener("pointerdown", (e     ) => { sx = e.clientX; sy = e.clientY; audio(); });
+    el.addEventListener("pointerup", (e     ) => {
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (P.onKey && Math.hypot(dx, dy) > 28) { api.key(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "راست" : "چپ") : dy > 0 ? "پایین" : "بالا"); return; }
+      const r = el.getBoundingClientRect();
+      api.touch(((e.clientX - r.left) * w) / (r.width || 1), ((e.clientY - r.top) * h) / (r.height || 1));
+    });
+  };
+  touchable(cv, cw, ch);
+  touchable(sc, sw, sh);
+  if (P.onKey) {
+    const names      = { ArrowUp: "بالا", ArrowDown: "پایین", ArrowLeft: "چپ", ArrowRight: "راست", " ": "فاصله", Enter: "اینتر", Escape: "خروج" };
+    doc.addEventListener("keydown", (e     ) => {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      if (names[e.key]) e.preventDefault();
+      api.key(names[e.key] || e.key);
+    });
+  }
+  if (sc && !gl) error("این دستگاه WebGL ندارد؛ صحنهٔ سه‌بعدی نشان داده نمی‌شود.");
+  void api.start();
+})(P,navaEngine);})();
+(function mountVoxel(id        , config                                                                              , create                         , cast                     ) {
+  const root = document.getElementById(id) ;
+  const canvas = root.querySelector                   ("canvas") ;
+  const ctx = canvas.getContext("2d", { alpha: false }) ;
+  const world = create(config.size, config.seed);
+  const materials = [null, { name: "چمن", color: "#68a94b" }, { name: "خاک", color: "#957353" }, { name: "سنگ", color: "#8e9da5" }, { name: "چوب", color: "#795133" }, { name: "برگ", color: "#427d40" }, ...config.materials];
+  const palette = materials.map((m) => m ? [1, 3, 5].map((end) => parseInt(m.color.slice(end, end + 2), 16)) : [0, 0, 0]);
+  const select = root.querySelector                   ("select") ;
+  for (let i = 1; i < materials.length; i++) { const option = document.createElement("option"); option.value = String(i); option.textContent = materials[i] .name; select.append(option); }
+  let x = config.size / 2 + .5, z = config.size / 2 + .5, y = 19, yaw = .55, pitch = -.25;
+  while (y > 0 && !world[(y * config.size + Math.floor(z)) * config.size + Math.floor(x)]) y--;
+  y = Math.min(18.5, y + 4);
+  const pressed = new Set        ();
+  const forward = () => [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+  const edit = (remove         ) => {
+    const hit = cast(world, config.size, [x, y, z], forward(), 12);
+    if (!hit) return;
+    const cell = remove ? [hit.x, hit.y, hit.z] : hit.previous;
+    const [a, b, c] = cell;
+    if (b <= 0 || a < 0 || a >= config.size || c < 0 || c >= config.size || b >= 20) return;
+    world[(b * config.size + c) * config.size + a] = remove ? 0 : Number(select.value || 1);
+  };
+  root.querySelector('[data-voxel="break"]') .addEventListener("click", () => edit(true));
+  root.querySelector('[data-voxel="place"]') .addEventListener("click", () => edit(false));
+  root.querySelector('[data-voxel="export"]') .addEventListener("click", () => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ format: "nava-world-1", ...config, blocks: Array.from(world) })], { type: "application/json" }));
+    const link = document.createElement("a"); link.href = url; link.download = "nava-world.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  root.querySelectorAll             ("[data-move]").forEach((button) => {
+    button.addEventListener("pointerdown", (event) => { event.preventDefault(); button.setPointerCapture(event.pointerId); pressed.add(button.dataset.move ); root.focus({ preventScroll: true }); });
+    const release = () => pressed.delete(button.dataset.move );
+    button.addEventListener("pointerup", release); button.addEventListener("pointercancel", release); button.addEventListener("lostpointercapture", release);
+  });
+  root.addEventListener("keydown", (event) => { const key = event.key.toLowerCase(); if (["w", "a", "s", "d", "q", "e"].includes(key)) { event.preventDefault(); pressed.add(key); } });
+  root.addEventListener("keyup", (event) => pressed.delete(event.key.toLowerCase()));
+  window.addEventListener("blur", () => pressed.clear());
+  let drag                                              = null;
+  canvas.addEventListener("pointerdown", (event) => { canvas.setPointerCapture(event.pointerId); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; root.focus({ preventScroll: true }); });
+  canvas.addEventListener("pointermove", (event) => { if (!drag || drag.id !== event.pointerId) return; yaw += (event.clientX - drag.x) * .009; pitch = Math.max(-1.4, Math.min(1.4, pitch - (event.clientY - drag.y) * .009)); drag = { x: event.clientX, y: event.clientY, id: event.pointerId }; });
+  canvas.addEventListener("pointerup", () => { drag = null; }); canvas.addEventListener("pointercancel", () => { drag = null; });
+  canvas.width = 120; canvas.height = 90;
+  const image = ctx.createImageData(canvas.width, canvas.height);
+  let last = 0;
+  const frame = (time        ) => {
+    requestAnimationFrame(frame);
+    if (document.hidden || time - last < 75) return;
+    const dt = Math.min(.12, (time - last) / 1000); last = time;
+    const move = (pressed.has("w") ? 1 : 0) - (pressed.has("s") ? 1 : 0), side = (pressed.has("d") ? 1 : 0) - (pressed.has("a") ? 1 : 0);
+    const speed = 4 * dt / (move && side ? Math.SQRT2 : 1);
+    x = Math.max(.1, Math.min(config.size - .1, x + (Math.sin(yaw) * move + Math.cos(yaw) * side) * speed));
+    z = Math.max(.1, Math.min(config.size - .1, z + (Math.cos(yaw) * move - Math.sin(yaw) * side) * speed));
+    y = Math.max(.5, Math.min(19.5, y + ((pressed.has("e") ? 1 : 0) - (pressed.has("q") ? 1 : 0)) * speed));
+    const front = forward(), right = [Math.cos(yaw), 0, -Math.sin(yaw)], up = [-Math.sin(yaw) * Math.sin(pitch), Math.cos(pitch), -Math.cos(yaw) * Math.sin(pitch)];
+    for (let py = 0; py < canvas.height; py++) for (let px = 0; px < canvas.width; px++) {
+      const sx = (px / canvas.width - .5) * 1.4, sy = (.5 - py / canvas.height) * 1.05;
+      const direction = front.map((v, axis) => v + right[axis] * sx + up[axis] * sy);
+      const norm = Math.hypot(...direction); for (let i = 0; i < 3; i++) direction[i] /= norm;
+      const hit = cast(world, config.size, [x, y, z], direction, 28);
+      const offset = (py * canvas.width + px) * 4;
+      const sky = [106 + 50 * py / canvas.height, 175 + 28 * py / canvas.height, 210 + 10 * py / canvas.height];
+      if (hit) {
+        const shade = hit.face === 1 ? 1 : hit.face === 0 ? .78 : .9, fog = Math.min(.85, hit.distance / 35);
+        const hx = x + direction[0] * hit.distance, hy = y + direction[1] * hit.distance, hz = z + direction[2] * hit.distance;
+        const fract = (n        ) => n - Math.floor(n);
+        const u = fract(hit.face === 0 ? hz : hx), v = fract(hit.face === 1 ? hz : hy);
+        const grain = 1 + (((Math.floor(u * 12) * 17 ^ Math.floor(v * 12) * 31 ^ hit.x * 13 ^ hit.z * 7) & 15) - 7) * .018;
+        const edge = u < .025 || u > .975 || v < .025 || v > .975 ? .88 : 1;
+        const color = hit.id === 1 && hit.face !== 1 && fract(hy) < .82 ? [144, 108, 72] : palette[hit.id];
+        for (let i = 0; i < 3; i++) image.data[offset + i] = color[i] * shade * grain * edge * (1 - fog) + sky[i] * fog;
+      } else for (let i = 0; i < 3; i++) image.data[offset + i] = sky[i];
+      image.data[offset + 3] = 255;
+    }
+    ctx.putImageData(image, 0, 0);
+  };
+  requestAnimationFrame(frame);
+})("nava-kit-0",{"size":24,"seed":7,"materials":[{"name":"یاقوت","color":"#dc477b"}]},function createVoxelWorld(size        , seed        )             {
+  const world = new Uint8Array(size * size * 20);
+  const put = (x        , y        , z        , value        ) => { if (x >= 0 && x < size && z >= 0 && z < size && y >= 0 && y < 20) world[(y * size + z) * size + x] = value; };
+  let randomSeed = seed >>> 0;
+  const random = () => { randomSeed = (Math.imul(randomSeed, 1664525) + 1013904223) >>> 0; return randomSeed / 4294967296; };
+  for (let x = 0; x < size; x++) for (let z = 0; z < size; z++) {
+    const height = 4 + Math.floor(1.8 * Math.sin((x + seed % 37) * .26) + 1.4 * Math.cos(z * .31));
+    for (let y = 0; y <= height; y++) put(x, y, z, y === height ? 1 : y > height - 3 ? 2 : 3);
+    if (random() < .045 && Math.abs(x - size / 2) + Math.abs(z - size / 2) > 5) {
+      for (let y = height + 1; y <= height + 4; y++) put(x, y, z, 4);
+      for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (let dy = 3; dy <= 5; dy++) {
+        if (Math.abs(dx) + Math.abs(dz) < 4) put(x + dx, height + dy, z + dz, 5);
+      }
+    }
+  }
+  return world;
+},function castVoxelRay(world            , size        , origin          , direction          , max        ) {
+  let [x, y, z] = origin.map(Math.floor);
+  const [dx, dy, dz] = direction;
+  const step = [dx < 0 ? -1 : 1, dy < 0 ? -1 : 1, dz < 0 ? -1 : 1];
+  const delta = direction.map((value) => value === 0 ? Infinity : Math.abs(1 / value));
+  const next = [x, y, z].map((value, axis) => direction[axis] === 0 ? Infinity : ((value + (step[axis] > 0 ? 1 : 0)) - origin[axis]) / direction[axis]);
+  let distance = 0, face = 1, previous = [x, y, z];
+  for (let n = 0; n < 180 && distance <= max; n++) {
+    if (x < 0 || x >= size || z < 0 || z >= size || y < 0 || y >= 20) return null;
+    const id = world[(y * size + z) * size + x];
+    if (id) return { x, y, z, id, distance, face, previous };
+    previous = [x, y, z];
+    if (next[0] < next[1] && next[0] < next[2]) { distance = next[0]; next[0] += delta[0]; x += step[0]; face = 0; }
+    else if (next[1] < next[2]) { distance = next[1]; next[1] += delta[1]; y += step[1]; face = 1; }
+    else { distance = next[2]; next[2] += delta[2]; z += step[2]; face = 2; }
+  }
+  return null;
+});</script></body></html>

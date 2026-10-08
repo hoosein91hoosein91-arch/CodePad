@@ -7,6 +7,8 @@ import { parsePack } from "@/labshell/pack";
 import { PACK_SAMPLES } from "@/labshell/pack-samples";
 import { codeArea, field, ghostBtn, primaryBtn, Sheet } from "./sheet";
 import { imageData } from "@/labshell/image";
+import { NAVA_PRESETS } from "@/labshell/nava-kit";
+import { compactNavaSource } from "@/labshell/nava-short";
 
 const ICON_COLORS = ["#03140b", "#0b2a1a", "#10131f", "#1d0b2e", "#2a0b14", "#2a1d05", "#06222a", "#000000"];
 
@@ -187,6 +189,15 @@ export function InstallSheet({ open, onOpenChange, accent, onInstalled }: { open
             </button>
           ))}
         </div>
+        {kind === "nava" ? (
+          <div className="grid grid-cols-2 gap-2">
+            <select aria-label="نمونهٔ آمادهٔ نوا" className={field} defaultValue="" onChange={(e) => { const preset = NAVA_PRESETS.find((p) => p.id === e.target.value); if (preset) { setCode(preset.code); setName(preset.title); } }}>
+              <option value="" disabled>نمونهٔ یک‌خطی…</option>
+              {NAVA_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.title}</option>)}
+            </select>
+            <button type="button" className={ghostBtn} title="دستورها مخفف می‌شوند؛ متن‌ها حفظ می‌شوند" onClick={() => setCode(compactNavaSource(code))}>مخفف‌کردن کد</button>
+          </div>
+        ) : null}
         <input className={field} aria-label="نام برنامهٔ تازه" value={name} onChange={(e) => setName(e.target.value)} />
         <textarea dir={kind === "nava" ? "rtl" : "ltr"} spellCheck={false} aria-label="کد برنامهٔ تازه" className={`${codeArea} h-40`} value={code} onChange={(e) => setCode(e.target.value)} />
         <button type="button" className={`${primaryBtn} w-full`} style={{ background: accent }} onClick={() => { const app: App = { id: `app-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`, name: name.trim() || "برنامهٔ تازه", icon: "✦", files: [{ name: kind === "nava" ? "main.nava" : "index.html", content: code }], installedAt: Date.now() }; useLauncher.getState().put(app); onInstalled(app, true); }}>ساخت و اجرا</button>
