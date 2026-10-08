@@ -15,13 +15,14 @@ import {
   syntaxHighlighting,
 } from "@codemirror/language";
 import { highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, drawSelection, EditorView } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { tags } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
 import { FARSI_KEYWORDS } from "@/labshell/farsi";
 import { NAVA_FUNCTIONS, NAVA_KEYWORDS } from "@/labshell/nava";
 import { NAVA_SHORT_WORDS } from "@/labshell/nava-short";
+import { navaCodeDirection } from "@/labshell/nava-direction";
 import { ENGLISH_KEYWORDS } from "@/labshell/english";
 import type { Lang } from "@/labshell/types";
 import { detectKind, kindOf } from "@/labshell/mix";
@@ -264,6 +265,8 @@ function completer(lang: Lang) {
   };
 }
 
+const directionExtensions = (isRtl: boolean) => [themeFor(isRtl), EditorView.contentAttributes.of({ "aria-label": "ویرایشگر کد", dir: isRtl ? "rtl" : "ltr", spellcheck: "false", autocapitalize: "off" })];
+
 export function CodeEditor({
   fileId,
   lang,
@@ -277,6 +280,8 @@ export function CodeEditor({
 }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
+  const direction = useRef(new Compartment());
+  const rtl = lang === "farsi" || (lang === "nava" && navaCodeDirection(content) === "rtl");
   const ac = useTheme((state) => state.autocomplete);
   const onChangeRef = useRef(onChange);
   const contentRef = useRef(content);
@@ -316,16 +321,10 @@ export function CodeEditor({
             ...historyKeymap,
           ]),
           syntaxHighlighting(highlight),
-          themeFor(lang === "farsi" || lang === "nava"),
+          direction.current.of(directionExtensions(lang === "farsi" || (lang === "nava" && navaCodeDirection(contentRef.current) === "rtl"))),
           languageOf(lang),
           ...(lang === "farsi" || lang === "nava" ? [bidiIsolates()] : []),
           EditorView.lineWrapping,
-          EditorView.contentAttributes.of({
-            "aria-label": "ویرایشگر کد",
-            dir: lang === "farsi" || lang === "nava" ? "rtl" : "ltr",
-            spellcheck: "false",
-            autocapitalize: "off",
-          }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current(update.state.doc.toString());
           }),
@@ -341,6 +340,11 @@ export function CodeEditor({
     };
   }, [fileId, lang, ac]);
 
+  // Reconfigure direction without recreating the editor or losing undo history.
+  useEffect(() => {
+    view.current?.dispatch({ effects: direction.current.reconfigure(directionExtensions(rtl)) });
+  }, [rtl, fileId, lang, ac]);
+
   // وقتی متن از بیرون عوض شود (مثلاً «مخفف‌کردن کد» نوا)، ویرایشگر هم به‌روز می‌شود
   useEffect(() => {
     const editor = view.current;
@@ -349,5 +353,5 @@ export function CodeEditor({
     }
   }, [content, fileId, lang, ac]);
 
-  return <div ref={host} className="h-full min-h-0 overflow-hidden" dir={lang === "farsi" || lang === "nava" ? "rtl" : "ltr"} />;
+  return <div ref={host} className="h-full min-h-0 overflow-hidden" dir={rtl ? "rtl" : "ltr"} />;
 }

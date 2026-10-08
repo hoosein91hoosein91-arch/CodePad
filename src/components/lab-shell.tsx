@@ -25,6 +25,7 @@ import { CodeEditor } from "@/components/code-editor";
 import { editHistory, hotkeys, insertAtCursor, moveCursor, pressTab } from "@/components/editor-commands";
 import { ThemePanel } from "@/components/theme-panel";
 import { runShell } from "@/labshell/shell";
+import { runTermuxCommand } from "@/lib/termux-bridge";
 import type { LabFile } from "@/labshell/types";
 import { MachineView } from "@/components/machine-view";
 import { LauncherButton } from "@/components/launcher-button";
@@ -42,6 +43,20 @@ const MIX_BAR = [
 ];
 
 const NAVA_BAR = [
+  { label: "bt · دکمه", insert: 'bt "شروع" (ru240rn64yGi65G72): sy "تو باختی"\n' },
+  { label: "cal · ماشین‌حساب", insert: "cal mb\n" },
+  { label: "vx · جهان", insert: "vx sz ۲۴ sd ۷\n" },
+  { label: "pg · صفحه", insert: 'pg "برنامهٔ من"\n' },
+  { label: "tm · تایمر", insert: "tm ۶۰\n" },
+  { label: "cnt · شمارنده", insert: "cnt\n" },
+  { label: "hd · عنوان", insert: 'hd ""\n' },
+  { label: "tx · متن", insert: 'tx ""\n' },
+  { label: "num · عدد", insert: "num امتیاز = ۰\n" },
+  { label: "out · نمایش", insert: 'out "تعداد: {امتیاز}"\n' },
+  { label: "in · ورودی", insert: 'in نام "نامت را بنویس"\n' },
+  { label: "img · عکس", insert: 'img "تصویر.png" alt "توضیح تصویر"\n' },
+  { label: "df · بسته", insert: 'df "ابزار من"\ncal\nend\nus "ابزار من"\n' },
+  // Full-form commands from Nava 0.5 remain available alongside compact commands.
   { label: "عنوان", insert: 'عنوان ""\n' },
   { label: "متن", insert: 'متن ""\n' },
   { label: "عدد", insert: "عدد امتیاز = ۰\n" },
@@ -66,7 +81,7 @@ const NAVA_BAR = [
   { label: "bt · دکمهٔ کپسولی", insert: 'bt "شروع" (ru240rn64yGi65G72): sy "آفرین"\n' },
   { label: "pg · صفحه", insert: 'pg "برنامهٔ من"\n' },
   { label: "df · بسته", insert: 'df "ابزار من"\ncal\nend\nus "ابزار من"\n' },
-];
+].filter((item, index, all) => all.findIndex((other) => other.label === item.label) === index);
 
 const KEYS: { label: string; insert?: string; move?: "left" | "right" | "up" | "down" }[] = [
   { label: "←", move: "left" },
@@ -105,6 +120,21 @@ const STREAM_CLASS: Record<TermStream, string> = {
   out: "text-paper",
   err: "text-coral",
 };
+
+function isAllowedLocalNmap(command: string): boolean {
+  const parts = command.trim().split(/\s+/);
+  if (parts.length !== 3 || parts[0].toLowerCase() !== "nmap" || parts[1] !== "-sn") return false;
+  const [address, mask, extra] = parts[2].split("/");
+  if (extra !== undefined || (mask !== undefined && (!/^\d{1,2}$/.test(mask) || Number(mask) < 24 || Number(mask) > 32))) return false;
+  const octets = address.split(".");
+  if (octets.length !== 4 || octets.some((part) => !/^\d{1,3}$/.test(part) || Number(part) > 255)) return false;
+  const [a, b] = octets.map(Number);
+  return a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+}
+
+function isNmapInstall(command: string): boolean {
+  return /^pkg\s+install\s+nmap(?:\s+-y)?$/i.test(command.trim());
+}
 
 // متنی که صفحهٔ html از آن ساخته می‌شود (خودش + css و js هم‌پروژه‌ای که داخلش گذاشته می‌شوند)؛ برای پیدا کردن نام پیوست‌ها
 function htmlSourceText(file: LabFile, files: LabFile[]): string {
@@ -969,6 +999,30 @@ export function LabShell() {
                 const text = shellInput.trim();
                 setShellInput("");
                 if (!text) return;
+                if (/^termux(?:\s|$)/i.test(text)) {
+                  const command = text.replace(/^termux\s*/i, "").trim();
+                  pushLines([termLine("cmd", `$ ${text}`)]);
+                  if (!command) {
+                    pushLines([termLine("sys", "کاربرد: termux <command> — دستور در نشست جداگانهٔ Termux باز می‌شود.")]);
+                    return;
+                  }
+                  if (/\bnmap\b/i.test(command) && !isNmapInstall(command) && !isAllowedLocalNmap(command)) {
+                    pushLines([termLine("err", "در این اتصال، nmap فقط با الگوی nmap -sn و برای IP خصوصیِ شبکهٔ محلی مجاز است؛ شبکهٔ CIDR باید /24 یا کوچک‌تر باشد.")]);
+                    return;
+                  }
+                  if (!window.confirm("این دستور در Termux و با دسترسی همان برنامه اجرا می‌شود و نتیجه به کنسول برمی‌گردد. برای این کار Termux باید نصب باشد، مجوز RUN_COMMAND را بدهی و allow-external-apps=true را در تنظیماتش آگاهانه فعال کنی. فقط دستور بررسی‌شده را اجرا کن. ادامه می‌دهی؟")) {
+                    pushLines([termLine("sys", "اجرا لغو شد.")]);
+                    return;
+                  }
+                  void runTermuxCommand(command)
+                    .then((result) => pushLines([
+                      ...(result.stdout ? result.stdout.replace(/\s+$/, "").split("\n").map((line) => termLine("out", line)) : []),
+                      ...(result.stderr ? result.stderr.replace(/\s+$/, "").split("\n").map((line) => termLine("err", line)) : []),
+                      termLine("sys", `${result.message} کد خروج: ${result.exitCode ?? "نامشخص"}`),
+                    ]))
+                    .catch((error) => pushLines([termLine("err", error instanceof Error ? error.message : String(error))]));
+                  return;
+                }
                 const out = runShell(text, () => hotkeys.run());
                 pushLines([termLine("cmd", `$ ${text}`), ...out.map((row) => termLine("out", row))]);
               }}
