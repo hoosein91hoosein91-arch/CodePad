@@ -9,3 +9,10 @@ An offline, multi-language coding workshop for phones. It runs Python (Pyodide),
 - **v2.4.0 — Nava 0.5 (the owner's v2.3.0 Nava 0.4 work merged into the full app — launcher, JibOS, Gemini, terminal, browser and the whole v2.2.0 Nava language all kept):** every Nava keyword now has a 2–3-letter short form (`pg`, `bt`, `out`, `num`, …; a **«مخفف‌کردن کد»** button converts code, keeping all text), one-line ready-made components (`cal` calculator, `cnt` counter, `tm` timer, `vx` small voxel world with custom blocks `bl`), one-line button capsules `bt "شروع" (ru240rn64yGi65G72): sy "…"`, and reusable recipes `df "name"` … `end` / `us "name"` — all on top of the full v2.2.0 language. Machine-readable spec for AI: [NAVA-AI-SPEC.json](NAVA-AI-SPEC.json); standalone examples: `examples/nava/`. Details: [NAVA-GUIDE.md §5.5](NAVA-GUIDE.md), [AI_GUIDE.md §2.13.1](AI_GUIDE.md).
 - Download the Android APK: https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.4.0/CodePad.apk (all versions: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest) (debug build: allow unknown sources, and uninstall the old version before installing a new one).
 - Build: `npm install`, `npm run build:mobile`; the Android APK is built by `.github/workflows/android.yml`.
+
+
+## ادغام با سورس قبلی لانچر — ۲۰۲۶/۱۰/۰۸
+
+سورس ۲.۴.۰ با آخرین لانچر به‌روزشده ادغام شده است. نام صفحه‌ها، تنظیمات و پشتیبان‌های قبلی پشتیبانی می‌شوند؛ مخفف‌های نوا، اتصال Termux و خروجی ویرایشگر حفظ شده‌اند. هیچ مسیر ورودی حذف نشده است. نسخهٔ کامل و دست‌نخوردهٔ هر دو ZIP در `merge-originals/` قرار دارد. گزارش و محدودیت‌های آزمون را در [MERGE-REPORT.md](MERGE-REPORT.md) بخوانید. این بسته سورس است و APK ساخته‌شده ندارد.
+
+آزمون‌های مرتبط: `npm run test:launcher`.
