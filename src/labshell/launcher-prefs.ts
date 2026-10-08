@@ -34,6 +34,7 @@ export type Preferences = {
   bootScript: string;
   pages: number;
   pageWallpapers: string[];
+  pageNames: string[];
 };
 
 export type ThemePreset = { id: string; name: string; wallpaper: string; accent: string; matrix: boolean; scanlines: boolean; grid: boolean; mono: boolean };
@@ -65,6 +66,7 @@ export const DEFAULT_PREFS: Preferences = {
   bootScript: "",
   pages: 1,
   pageWallpapers: [],
+  pageNames: [],
 };
 
 const clamp = (v: unknown, lo: number, hi: number, d: number) => (typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : d);
@@ -75,6 +77,11 @@ const str = (v: unknown, d: string, max = 3_000_000) => (typeof v === "string" ?
 export function normalizePrefs(raw: unknown): Preferences {
   const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const d = DEFAULT_PREFS;
+  const legacyPages = Array.isArray(o.pages) ? o.pages : null;
+  const pages = clamp(legacyPages?.length ?? o.pages, 1, 9, d.pages);
+  const legacyField = (name: string) => legacyPages?.map((page) => page && typeof page === "object" ? (page as Record<string, unknown>)[name] : "");
+  const names = Array.isArray(o.pageNames) ? o.pageNames : legacyField("name") ?? [];
+  const wallpapers = Array.isArray(o.pageWallpapers) ? o.pageWallpapers : legacyField("wallpaper") ?? [];
   return {
     theme: str(o.theme, d.theme, 40),
     wallpaper: str(o.wallpaper, d.wallpaper) || d.wallpaper,
@@ -93,8 +100,10 @@ export function normalizePrefs(raw: unknown): Preferences {
     devMode: bool(o.devMode, d.devMode),
     customCss: str(o.customCss, d.customCss, 100_000),
     bootScript: str(o.bootScript, d.bootScript, 100_000),
-    pages: clamp(o.pages, 1, 8, d.pages),
-    pageWallpapers: Array.isArray(o.pageWallpapers) ? o.pageWallpapers.slice(0, 8).map((w) => str(w, "")) : d.pageWallpapers,
+    pages,
+    // Keep entries for temporarily hidden pages so reducing then increasing the count loses no appearance data.
+    pageWallpapers: wallpapers.slice(0, 9).map((w) => str(w, "")),
+    pageNames: names.slice(0, 9).map((name, i) => str(name, `صفحهٔ ${i + 1}`)),
   };
 }
 
