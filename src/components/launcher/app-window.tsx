@@ -1,4 +1,3 @@
-import { ArrowRight, RotateCw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { compileEnglish } from "@/labshell/english";
 import { compileFarsi } from "@/labshell/farsi";
@@ -15,6 +14,7 @@ import { langFromName } from "@/labshell/open-files";
 import { runCpp, runFarsi, runJavaScript, runPython, stopRuntimes, type RunResult } from "@/labshell/runtime";
 import { stageSrcDoc } from "@/labshell/stage-doc";
 import type { Lang } from "@/labshell/types";
+import { ImmersiveToolbar } from "./immersive-toolbar";
 
 // پنجرهٔ تمام‌صفحهٔ یک برنامهٔ نصب‌شده. برنامه‌های وب داخل iframe محدود (بدون allow-same-origin) اجرا می‌شوند
 // و فقط از راه پل jibos (postMessage + رمز یک‌بارمصرف) با لانچر حرف می‌زنند.
@@ -185,19 +185,8 @@ export function AppWindow({ app, host, accent, onClose }: { app: App; host: Brid
   }, [app, nonce, run]);
 
   return (
-    <div role="dialog" data-state="open" aria-label={app.name} data-testid="app-window" className={`jibos-window fixed inset-0 z-30 flex flex-col bg-[#020604] pt-[env(safe-area-inset-top)] ${closing ? "jibos-window-out" : ""}`}>
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-black/70 px-2 backdrop-blur-xl" style={{ borderColor: `${accent}33` }}>
-        <button type="button" className="grid size-10 place-items-center rounded-full hover:bg-white/10" aria-label="بازگشت به خانه" onClick={close}>
-          <ArrowRight className="size-5" />
-        </button>
-        <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-lg text-sm" style={{ background: app.iconColor ?? "#06150d" }}>
-          {app.iconImage ? <img src={app.iconImage} alt="" className="size-full object-cover" /> : app.icon}
-        </span>
-        <span className="truncate text-sm font-semibold">{app.name}</span>
-        <button type="button" className="ms-auto grid size-10 place-items-center rounded-full text-white/60 hover:bg-white/10" aria-label="اجرای دوباره" onClick={() => setRun((n) => n + 1)}>
-          <RotateCw className="size-4" />
-        </button>
-      </header>
+    <div role="dialog" data-state="open" aria-label={app.name} data-testid="app-window" className={`jibos-window fixed inset-0 z-30 flex flex-col bg-[#020604] ${closing ? "jibos-window-out" : ""}`}>
+      <ImmersiveToolbar name={app.name} icon={app.icon} iconImage={app.iconImage} iconColor={app.iconColor} accent={accent} resetKey={app.id} onClose={close} onReload={() => setRun((n) => n + 1)} />
       {view.kind === "busy" ? (
         <div className="grid flex-1 place-items-center font-mono text-sm" style={{ color: accent }}>
           <span className="jibos-caret">در حال اجرا</span>

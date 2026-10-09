@@ -4,5 +4,5 @@
   "webDir": "dist/client",
   "backgroundColor": "#101410",
   "server": { "androidScheme": "https" },
-  "android": { "adjustMarginsForEdgeToEdge": "auto" }
+  "android": { "adjustMarginsForEdgeToEdge": "disable" }
 }

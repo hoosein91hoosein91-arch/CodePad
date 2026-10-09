@@ -1,5 +1,6 @@
 # CodePad (جیب‌کد)
 
+**2.5.1 / Fullscreen**: Android system bars appear temporarily on edge swipe. Launcher tools stay hidden until the top handle is tapped or dragged down, without resizing the running game.
 **2.5.0 / Nava Studio 0.6**: Latin starter/completions, multiple instructions per line with `|`, frame animations, seven WebGL primitives, materials, fog, lighting, pinch/drag camera, and correct active-file installation in the launcher. Existing languages and legacy Nava remain supported.
 
 An offline, multi-language coding workshop for phones. It runs Python (Pyodide), JavaScript, C/C++, the Jib teaching language (English and Farsi keywords), an 8-bit binary machine, HTML and CSS, plus **mix files** that combine several languages in one file and can render a live HTML/canvas page.

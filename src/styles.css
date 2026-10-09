@@ -71,6 +71,45 @@
   }
 }
 
+.jibos-chrome-reveal {
+  position: absolute;
+  z-index: 11;
+  inset-block-start: env(safe-area-inset-top, 0px);
+  inset-inline-start: calc(50% - 24px);
+  width: 48px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+}
+.jibos-chrome-reveal::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-paper) 30%, transparent);
+}
+.jibos-app-toolbar {
+  position: absolute;
+  z-index: 12;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: calc(48px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 8px 0;
+  border-bottom: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-ink) 90%, transparent);
+  color: var(--color-paper);
+  backdrop-filter: blur(16px);
+}
+.jibos-app-toolbar[hidden], .jibos-chrome-reveal[hidden] { display: none; }
+.jibos-chrome-reveal:focus-visible { outline: 2px solid var(--color-lime); outline-offset: -4px; }
+
 /* ── JibOS launcher: «ترمینال نئون» ───────────────────────────── */
 .jibos-grid {
   background-image:

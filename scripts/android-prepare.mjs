@@ -2,8 +2,7 @@
 /**
  * Run after `npx cap add android` (CI does this; the android/ folder is not committed).
  * - Copies the CodePad launcher icons and splash screens from resources/android/res.
- * - Gives the native window the app's dark background and light status/nav bar icons,
- *   so the bars match the UI (and no white flash before the WebView paints).
+ * - Hides system bars until an edge swipe and keeps the native window dark.
  */
 import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -211,15 +210,10 @@ public class TermuxResultService extends IntentService {
 `;
 writeFileSync(join(javaDir, "TermuxResultService.java"), resultService);
 
+// Own the activity template so regeneration always retains immersive mode.
 const activityPath = join(javaDir, "MainActivity.java");
-if (existsSync(activityPath)) {
-  let activity = readFileSync(activityPath, "utf8");
-  if (!activity.includes("registerPlugin(TermuxBridgePlugin.class)")) {
-    activity = activity.replace(/(package [^;]+;)/, "$1\n\nimport android.os.Bundle;");
-    activity = activity.replace(/(public class MainActivity extends BridgeActivity\s*\{)/, `$1\n    @Override\n    public void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        registerPlugin(TermuxBridgePlugin.class);\n    }`);
-    writeFileSync(activityPath, activity);
-  }
-}
+const activity = readFileSync("resources/android/MainActivity.java.in", "utf8").replaceAll("__APP_ID__", appId);
+writeFileSync(activityPath, activity);
 
 const stylesPath = join(res, "values/styles.xml");
 let styles = readFileSync(stylesPath, "utf8");
@@ -243,7 +237,7 @@ console.log("android resources prepared");
 const gradlePath = "android/app/build.gradle";
 if (existsSync(gradlePath)) {
   const gradle = readFileSync(gradlePath, "utf8")
-    .replace(/versionCode\s+\d+/, "versionCode 250")
-    .replace(/versionName\s+"[^"]+"/, 'versionName "2.5.0"');
+    .replace(/versionCode\s+\d+/, "versionCode 251")
+    .replace(/versionName\s+"[^"]+"/, 'versionName "2.5.1"');
   writeFileSync(gradlePath, gradle);
 }
