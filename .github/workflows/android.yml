@@ -2,58 +2,89 @@ name: Build Android APK
 on:
   push:
     branches: [main]
+    paths: ['CodePad-2.10.0-source.zip.part*']
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: codepad-2.10-release
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: release-source/CodePad-2.10.0
     steps:
       - uses: actions/checkout@v4
+      - name: Restore and verify delivered source
+        working-directory: .
+        run: |
+          cat CodePad-2.10.0-source.zip.part1 CodePad-2.10.0-source.zip.part2 > CodePad-2.10.0-source.zip
+          echo 'f2c5855d2ce126b2235f1071049583bd5197b27e319101696a0936fae1c5a216  CodePad-2.10.0-source.zip' | sha256sum -c -
+          unzip -q CodePad-2.10.0-source.zip -d release-source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: release-source/CodePad-2.10.0/package-lock.json
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci --no-audit --no-fund
-      - name: Verify Nava and launcher
+      - name: Verify TypeScript, Nava and launcher
         run: |
           npm run typecheck
           npm run test:launcher
-      - name: Build web (static SPA)
+          node --check public/background/python-worker.js
+          node --check public/background/native-worker.js
+      - name: Build delivered mobile sources
         run: npm run build:mobile
+      - name: Verify sources and continuous Python
+        run: |
+          npm run test:source
+          npm run test:continuous:node
+          npx playwright install --with-deps chromium
+          npm run test:continuous
       - name: Generate Android project
         run: |
           npx cap add android
           npm run android:prepare
           npx cap sync android
-      - name: Build debug APK
-        working-directory: android
+      - name: Build installable debug APK
+        working-directory: release-source/CodePad-2.10.0/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
+      - name: Verify APK signature and version
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify "$APK"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | head -1 | grep "name='com.hoosein.codepad.continuous'.*versionCode='2100'.*versionName='2.10.0'"
       - uses: actions/upload-artifact@v4
         with:
-          name: CodePad-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
-
-      - name: Publish CodePad 2.5.1
+          name: CodePad-2.10.0-apk
+          path: release-source/CodePad-2.10.0/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish CodePad 2.10.0
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        working-directory: .
         run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk CodePad.apk
+          cp release-source/CodePad-2.10.0/android/app/build/outputs/apk/debug/app-debug.apk CodePad-2.10.0.apk
+          sha256sum CodePad-2.10.0.apk CodePad-2.10.0-source.zip > SHA256SUMS.txt
           cat > release-notes.md <<'NOTES'
-          Fullscreen launcher: tools appear only when requested; Android system bars appear temporarily with an edge swipe.
-          Nava Studio 0.6 adds Latin defaults, packed instructions with |, frame animation, torus/cylinder/cone, material controls, fog, lighting and touch orbit.
-          The launcher now runs the selected edited project file and retains its entry in backups and exported packs.
-          Debug Android APK. Back up your projects before replacing a build signed with a different debug key.
+          CodePad 2.10.0: continuous Python, immediate output, asyncio task lifetime and Android foreground runtime with a visible Stop notification.
+          Preserves the delivered editor, launcher, Gemini agent, pip and APK/Windows export tools. Adds static GLB/glTF/OBJ/STL models in Nava.
+          Fixes module-worker loading in the Android runtime; verified with real browser Python tests as well as Node tests.
+          Installs beside older CodePad packages as com.hoosein.codepad.continuous; does not automatically import their data. Built and signed as a debug APK. No physical-device test is claimed.
+          Full editable 2.10.0 source is attached as CodePad-2.10.0-source.zip. Root legacy source remains for history; this build uses only the attached, SHA-256-verified source.
           NOTES
-          if gh release view v2.5.1 >/dev/null 2>&1; then
-            gh release upload v2.5.1 CodePad.apk --clobber
+          if gh release view v2.10.0 >/dev/null 2>&1; then
+            gh release upload v2.10.0 CodePad-2.10.0.apk CodePad-2.10.0-source.zip SHA256SUMS.txt --clobber
           else
-            gh release create v2.5.1 CodePad.apk --target "$GITHUB_SHA" --title "CodePad 2.5.1 · Fullscreen" --notes-file release-notes.md
+            gh release create v2.10.0 CodePad-2.10.0.apk CodePad-2.10.0-source.zip SHA256SUMS.txt --target "$GITHUB_SHA" --title 'CodePad 2.10.0 · Continuous Python' --notes-file release-notes.md
           fi
