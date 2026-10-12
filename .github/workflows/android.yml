@@ -2,7 +2,7 @@ name: Build Android APK
 on:
   push:
     branches: [main]
-    paths: ['CodePad-2.11.0-source.zip.part*']
+    paths: ['CodePad-2.11.0-source.zip.part*', '.github/workflows/android.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -22,7 +22,7 @@ jobs:
         working-directory: .
         run: |
           cat CodePad-2.11.0-source.zip.part* > CodePad-2.11.0-source.zip
-          echo '6fee97c96d9b33252fead6594086341a1a5dc6034b2bad1b22dec11dfdfa2ae9  CodePad-2.11.0-source.zip' | sha256sum -c -
+          sha256sum -c CodePad-2.11.0-source.sha256
           unzip -q CodePad-2.11.0-source.zip -d release-source
       - uses: actions/setup-node@v4
         with:
