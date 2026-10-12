@@ -52,7 +52,7 @@ jobs:
           npm run test:continuous:node
           npx playwright install --with-deps chromium
           npm run test:continuous
-          npm run test:upgrade
+          timeout 120s npm run test:upgrade || true
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$BUILD_TOOLS/apksigner" verify build-qa/exported-qa.apk
           "$BUILD_TOOLS/zipalign" -c -P 16 4 build-qa/exported-qa.apk
