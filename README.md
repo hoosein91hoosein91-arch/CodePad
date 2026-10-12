@@ -1,3 +1,31 @@
+# CodePad 2.10.0 — Continuous Python
+
+The current Android release is built from **CodePad-2.10.0-source.zip** attached to release **v2.10.0**. The verified source archive is stored in this repository as two ordered parts to fit browser upload limits. Root `src/` is the preserved older React source; it is **not** the 2.10 mobile build entry.
+
+The complete release preserves the delivered 2.9 editor and launcher, Gemini agent, pip installation, APK and Windows export tools, and adds continuous streaming Python, an Android foreground runtime with a Stop notification, and static Nava model import. Module-worker startup in the Android runtime was fixed before publication.
+
+Download the installable APK and full editable source from [release v2.10.0](https://github.com/hoosein91hoosein91-arch/CodePad/releases/tag/v2.10.0).
+
+This debug APK uses `com.hoosein.codepad.continuous`, installs beside old CodePad builds, and does not automatically migrate their projects. Export/import a project or launcher backup to move your data. Physical-device behavior has not been tested.
+
+To restore the complete source after cloning:
+
+```sh
+cat CodePad-2.10.0-source.zip.part1 CodePad-2.10.0-source.zip.part2 > CodePad-2.10.0-source.zip
+sha256sum CodePad-2.10.0-source.zip
+# f2c5855d2ce126b2235f1071049583bd5197b27e319101696a0936fae1c5a216
+unzip CodePad-2.10.0-source.zip
+cd CodePad-2.10.0
+npm ci
+npm run build:mobile
+```
+
+The release workflow verifies the hash, runs source/launcher/TypeScript and real Python browser tests, generates Android, builds the APK and verifies its signature/version before publishing. See the complete source README for supported model formats and background-execution limits.
+
+---
+
+## Legacy source history
+
 # CodePad (جیب‌کد)
 
 **2.5.1 / Fullscreen**: Android system bars appear temporarily on edge swipe. Launcher tools stay hidden until the top handle is tapped or dragged down, without resizing the running game.
