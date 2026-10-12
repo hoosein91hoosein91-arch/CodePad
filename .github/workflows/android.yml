@@ -2,32 +2,33 @@ name: Build Android APK
 on:
   push:
     branches: [main]
-    paths: ['CodePad-2.10.0-source.zip.part*']
+    paths: ['CodePad-2.11.0-source.zip.part*']
   workflow_dispatch:
 permissions:
   contents: write
 concurrency:
-  group: codepad-2.10-release
+  group: codepad-2.11-release
   cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     defaults:
       run:
-        working-directory: release-source/CodePad-2.10.0
+        working-directory: release-source/CodePad-2.11.0
     steps:
       - uses: actions/checkout@v4
       - name: Restore and verify delivered source
         working-directory: .
         run: |
-          cat CodePad-2.10.0-source.zip.part1 CodePad-2.10.0-source.zip.part2 > CodePad-2.10.0-source.zip
-          echo 'f2c5855d2ce126b2235f1071049583bd5197b27e319101696a0936fae1c5a216  CodePad-2.10.0-source.zip' | sha256sum -c -
-          unzip -q CodePad-2.10.0-source.zip -d release-source
+          cat CodePad-2.11.0-source.zip.part* > CodePad-2.11.0-source.zip
+          echo '6fee97c96d9b33252fead6594086341a1a5dc6034b2bad1b22dec11dfdfa2ae9  CodePad-2.11.0-source.zip' | sha256sum -c -
+          unzip -q CodePad-2.11.0-source.zip -d release-source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: release-source/CodePad-2.10.0/package-lock.json
+          cache-dependency-path: release-source/CodePad-2.11.0/package-lock.json
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -40,51 +41,78 @@ jobs:
           npm run test:launcher
           node --check public/background/python-worker.js
           node --check public/background/native-worker.js
+          node --check mobile-src/assets/recovery.js
       - name: Build delivered mobile sources
         run: npm run build:mobile
-      - name: Verify sources and continuous Python
+      - name: Verify real browser exports, recovery, 3D and Python
+        env:
+          CODEPAD_QA_OUTPUT: build-qa
         run: |
           npm run test:source
           npm run test:continuous:node
           npx playwright install --with-deps chromium
           npm run test:continuous
+          npm run test:upgrade
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify build-qa/exported-qa.apk
+          "$BUILD_TOOLS/zipalign" -c -P 16 4 build-qa/exported-qa.apk
       - name: Generate Android project
         run: |
           npx cap add android
           npm run android:prepare
           npx cap sync android
-      - name: Build installable debug APK
-        working-directory: release-source/CodePad-2.10.0/android
+      - name: Build Android shell for private release signing
+        working-directory: release-source/CodePad-2.11.0/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-      - name: Verify APK signature and version
+      - name: Verify APK signature, package and version
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$BUILD_TOOLS/apksigner" verify "$APK"
-          "$BUILD_TOOLS/aapt" dump badging "$APK" | head -1 | grep "name='com.hoosein.codepad.continuous'.*versionCode='2100'.*versionName='2.10.0'"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | head -1 | grep "name='com.hoosein.codepad.stable'.*versionCode='2110'.*versionName='2.11.0'"
+      - name: Enable test emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify native APK save and exported app on Android emulator
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          working-directory: release-source/CodePad-2.11.0
+          script: npm run test:android-export
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CodePad-2.11.0-validation
+          path: release-source/CodePad-2.11.0/build-qa
       - uses: actions/upload-artifact@v4
         with:
-          name: CodePad-2.10.0-apk
-          path: release-source/CodePad-2.10.0/android/app/build/outputs/apk/debug/app-debug.apk
-      - name: Publish CodePad 2.10.0
+          name: CodePad-2.11.0-shell-for-signing
+          path: release-source/CodePad-2.11.0/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Prepare release draft with full source
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         working-directory: .
         run: |
-          cp release-source/CodePad-2.10.0/android/app/build/outputs/apk/debug/app-debug.apk CodePad-2.10.0.apk
-          sha256sum CodePad-2.10.0.apk CodePad-2.10.0-source.zip > SHA256SUMS.txt
           cat > release-notes.md <<'NOTES'
-          CodePad 2.10.0: continuous Python, immediate output, asyncio task lifetime and Android foreground runtime with a visible Stop notification.
-          Preserves the delivered editor, launcher, Gemini agent, pip and APK/Windows export tools. Adds static GLB/glTF/OBJ/STL models in Nava.
-          Fixes module-worker loading in the Android runtime; verified with real browser Python tests as well as Node tests.
-          Installs beside older CodePad packages as com.hoosein.codepad.continuous; does not automatically import their data. Built and signed as a debug APK. No physical-device test is claimed.
-          Full editable 2.10.0 source is attached as CodePad-2.10.0-source.zip. Root legacy source remains for history; this build uses only the attached, SHA-256-verified source.
+          CodePad 2.11.0: fixes Android APK/Windows export saving with a registered native document-picker bridge, and surfaces Mix errors in editor, launcher and exported players.
+          Adds automatic version history, complete backups with attachments and personal APK identity/version counters, and a Python package compatibility guide in the Project menu.
+          Nava adds four-influence skinning, TRS animation clips, swept box collision, mass, gravity, velocity and impulse. Animated meshes: at most 100,000 expanded vertices; physics: 128 world-axis-aligned box colliders. No ragdolls, mesh colliders, morph targets or compressed/external glTF assets.
+          APK for installation will be attached only after private stable signing and final verification. Package com.hoosein.codepad.stable installs beside 2.10; keep 2.10 until migrating launcher backup and editor files. Future releases retain this package and signing identity. The old debug private key was unavailable.
+          Verified source/compiler tests, real browser exports and recovery, actual WebGL, continuous Python, and Android emulator native save/install/run. No physical-device test is claimed.
+          Full editable source is attached. Root legacy source is preserved; this workflow builds only the SHA-256-verified 2.11 source archive.
           NOTES
-          if gh release view v2.10.0 >/dev/null 2>&1; then
-            gh release upload v2.10.0 CodePad-2.10.0.apk CodePad-2.10.0-source.zip SHA256SUMS.txt --clobber
+          if gh release view v2.11.0 >/dev/null 2>&1; then
+            gh release upload v2.11.0 CodePad-2.11.0-source.zip --clobber
           else
-            gh release create v2.10.0 CodePad-2.10.0.apk CodePad-2.10.0-source.zip SHA256SUMS.txt --target "$GITHUB_SHA" --title 'CodePad 2.10.0 · Continuous Python' --notes-file release-notes.md
+            gh release create v2.11.0 CodePad-2.11.0-source.zip --draft --target "$GITHUB_SHA" --title 'CodePad 2.11.0 · Export, Recovery & Nava 3D' --notes-file release-notes.md
           fi
