@@ -1,0 +1,61 @@
+{
+ "base": "CodePad-3.7.0-source.zip",
+ "files": {
+  "capacitor.config.json": {
+   "base": "6b1e723779b4d7f761bf53b0819bf645511c7a7fd60b44acf663b4af395b88a5",
+   "new": "497e9b4d33309b62b4eebdfaaea072061f6fbea38393821f3cc626dbcba4b385"
+  },
+  "mobile-src/assets/ai-provider.js": {
+   "base": null,
+   "new": "5569a87c3caa806d880d63a71d2a478c7bcca8ca156e8e99de1db1d6f314d748"
+  },
+  "mobile-src/assets/cyber-lab.js": {
+   "base": null,
+   "new": "ded18f8953fe7d85a7dae756db6062ed5632970fed133b60cf2dd2b7fb9f1666"
+  },
+  "mobile-src/assets/cyber-samples.js": {
+   "base": null,
+   "new": "660c8b38f4d427d22ba6d004e4adc9e8cd304b3754a99dfb2a02ad019a318b44"
+  },
+  "mobile-src/assets/device-tools.js": {
+   "base": null,
+   "new": "0804bd40b0ce39702f66dcb13a14c648ac2f76ca68fff39c97b366841361b66a"
+  },
+  "mobile-src/assets/hacker.css": {
+   "base": null,
+   "new": "cab99b571da844a841efbfebab78b4872ecb62b08bc7ecce06c5de2f21197ce8"
+  },
+  "mobile-src/assets/launcher.js": {
+   "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
+   "new": "939332a38970f449dbaead5fc70f9bfbfe88b448b4d10ead114eb51c3bb6f9fb"
+  },
+  "mobile-src/assets/runtime.js": {
+   "base": "ff4218a9802a6804384fb45414c2cdbe2bd6632af1f8fffdd09a7a4a524aa2c8",
+   "new": "4407a8a3510ad0a2c284d57222dd0e6aff71b8bc611197601499be53af258a28"
+  },
+  "mobile-src/index.html": {
+   "base": "eddf31ab45fbae51a673637b45befd1998ed83b3f06fa9f95a78b70b8644307d",
+   "new": "41ea425452c90dd00bd63e3d7a80d576a0117a82ff56b68f5f57bafb23151849"
+  },
+  "package.json": {
+   "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
+   "new": "2d6980a7f3819753c01062044a8befc6cc267e548fd14e38a579203524d133cb"
+  },
+  "public/background/python-worker.js": {
+   "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
+   "new": "419627635616656693f66fc818d2c654c19ca2dfdb2355ca3e6961b889973af0"
+  },
+  "scripts/ai-provider.test.mjs": {
+   "base": null,
+   "new": "f7cc1047a8fbb5a8ff529b573704b705abe185a83d3fce00ae9a4413303619d0"
+  },
+  "scripts/android-prepare.mjs": {
+   "base": "338408499cde41ec970826172330c78d83b147abcee62f1eb2e01d97cebc4303",
+   "new": "2fafd5742c58f60b92eb374a535ae23473a7a67b6e0ca3a9d4842cf383825bbd"
+  },
+  "scripts/device-tools.test.mjs": {
+   "base": null,
+   "new": "786c4aa413d4eace8d6347f8ddae32b8e47d3165afdb6ba82126b93e03cbfcfc"
+  }
+ }
+}
