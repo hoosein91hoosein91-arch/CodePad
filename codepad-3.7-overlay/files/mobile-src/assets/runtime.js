@@ -1,4 +1,5 @@
 import * as codepadAI from "./ai-provider.js";
+import { readRunConfig } from "./run-config.js";
 import {mediaBlobURL,revokeMediaURL,sandboxMediaDocument} from './sandbox-media.js';
 import {safeProjectPath} from '../background/project-files.js';
 function navaPhysics(objects) {
@@ -30014,7 +30015,7 @@ function pythonRequest(e, t, n, r, i) {
       pythonPending.set(l, p),
       p.arm(18e4),
       o.postMessage(
-        { id: l, code: e, stdin: t, assets: n?.assets, requirements: savedRequirements(), packageCommand: r, entryFile:n?.entryFile, projectKey:n?.projectKey },
+        { id: l, code: e, stdin: t, assets: n?.assets, requirements: savedRequirements(), packageCommand: r, entryFile:n?.entryFile, projectKey:n?.projectKey, runConfig: readRunConfig(n?.projectKey) },
         n?.transfer ?? [],
       ));
     for (let e of n?.assets ?? []) e.buf && sentToPython.set(e.name, e.stamp);

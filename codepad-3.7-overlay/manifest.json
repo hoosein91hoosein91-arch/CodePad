@@ -29,9 +29,29 @@
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
    "new": "939332a38970f449dbaead5fc70f9bfbfe88b448b4d10ead114eb51c3bb6f9fb"
   },
+  "mobile-src/assets/project-zip.js": {
+   "base": "d39bd45c49a366aa0152a0ee3c3dd613e123de5dbfaf764f144084a0dc7818c2",
+   "new": "ee7fe8a5c484db7ef11aa5009b54c288c14ace328f940f20503e5ff319423995"
+  },
+  "mobile-src/assets/python-engine.js": {
+   "base": "9edc05a8d6b6853158cfd786305fd6b9a79bc17ce4f5f7b1190cbeb9d93033f6",
+   "new": "b5383403cd50ed02c16c635ea191ca5586c8605777626cee3778381df3c7a612"
+  },
+  "mobile-src/assets/python-input.js": {
+   "base": "d09882459c0078bf70154f4562a9b3a9208a63b616a7bde7029e8822c9382864",
+   "new": "fbf7274f95f0d5d45730171b2507351b9c3bb8e019989d2900de117f916f0551"
+  },
+  "mobile-src/assets/run-config.js": {
+   "base": null,
+   "new": "0ed9656771536141953c5841a27b57fb128e78d2c855b4010f57407e37f49746"
+  },
   "mobile-src/assets/runtime.js": {
    "base": "ff4218a9802a6804384fb45414c2cdbe2bd6632af1f8fffdd09a7a4a524aa2c8",
-   "new": "4407a8a3510ad0a2c284d57222dd0e6aff71b8bc611197601499be53af258a28"
+   "new": "256c0cc965637c4e3fbf71ec1c7c67d675c424741bf087b59064accf40089e14"
+  },
+  "mobile-src/assets/studio.js": {
+   "base": "7aa11c842338e4db85b1d6787b25a9b24bdf9ffeda24a4fd5716541ade6f5d8f",
+   "new": "c80b6ca16b061a3729655c28d3a108f01e1da65262f547511d4a55c267820c04"
   },
   "mobile-src/index.html": {
    "base": "eddf31ab45fbae51a673637b45befd1998ed83b3f06fa9f95a78b70b8644307d",
@@ -39,11 +59,19 @@
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
-   "new": "2d6980a7f3819753c01062044a8befc6cc267e548fd14e38a579203524d133cb"
+   "new": "38360225e13c6de9f4529382beb1e17cb44de2d2f8811338ebe2133ae8b763fd"
   },
   "public/background/python-worker.js": {
    "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
-   "new": "419627635616656693f66fc818d2c654c19ca2dfdb2355ca3e6961b889973af0"
+   "new": "f4c1dc65e993f65c39f8a3f985d860022a61fdd130f7237e7a57eff966544afc"
+  },
+  "resources/python/codepad_console.py": {
+   "base": "cce71f2147c985ffb347f97d8f3a271dea3d0d7732e2371bf9ac29e259673d44",
+   "new": "395f8189b3a76a131b9c06b88ff16698af657f6ad2f2835c5c0f173e1c8e39f9"
+  },
+  "resources/python/codepad_runtime.py": {
+   "base": "bc8d515dbd4ae73552c6e6a3592d0f66936fd7f785fbd9aaab73a9e5958f2855",
+   "new": "9b6a883afbebb6cb48083cd875f78b81c388acca3fb13c5bf520a985d25e9351"
   },
   "scripts/ai-provider.test.mjs": {
    "base": null,
@@ -56,6 +84,18 @@
   "scripts/device-tools.test.mjs": {
    "base": null,
    "new": "786c4aa413d4eace8d6347f8ddae32b8e47d3165afdb6ba82126b93e03cbfcfc"
+  },
+  "scripts/python-host.test.mjs": {
+   "base": null,
+   "new": "2e5cf0438b3d214ec91f0cbcb1520f0de16d357478770ab96781adf604995f44"
+  },
+  "scripts/python-routing-reachability.test.mjs": {
+   "base": null,
+   "new": "90400becff45caa13c294cf4d3c26a56a3c3c04770b97e4578202b9b4c527a94"
+  },
+  "scripts/run-config.test.mjs": {
+   "base": null,
+   "new": "05663f5cefd1aa063dda80ff58007beada62244e8142d5c58233c8fbba73963f"
   }
  }
 }

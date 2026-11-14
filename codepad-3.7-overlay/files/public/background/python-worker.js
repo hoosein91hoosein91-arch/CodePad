@@ -84,7 +84,7 @@ async function install(py, requirements) {
   if (useNumpy) notes.push('NumPy واقعیِ سازگار با Pyodide بارگذاری شد؛ نسخه: ' + py.runPython('__import__("numpy").__version__') + '. پین نسخهٔ دسکتاپ اعمال نمی‌شود.');
   return notes.join('\n');
 }
-async function run({ id, code = '', stdin = '', assets = [], requirements = [], packageCommand, entryFile }) {
+async function run({ id, code = '', stdin = '', assets = [], requirements = [], packageCommand, entryFile, runConfig }) {
   activeId = id;
   emit({ progress: 'در حال آماده‌سازی Python…' });
   let py;
@@ -105,6 +105,16 @@ async function run({ id, code = '', stdin = '', assets = [], requirements = [], 
     for (const name of mounted) if (!names.has(name)) { try { py.FS.unlink(name); } catch {} mounted.delete(name); }
     const project=mountProjectAssets(py,assets,entryFile,code);for(const name of project.names)mounted.add(name);
     py.globals.set('_codepad_source', code);
+    py.globals.set('_codepad_run_config', JSON.stringify(runConfig && typeof runConfig === 'object' ? runConfig : {}));
+    py.runPython(`
+import sys, os, json
+_cfg = json.loads(_codepad_run_config)
+for _k in globals().get('_codepad_env_keys', []): os.environ.pop(_k, None)
+_blocked = {"LD_PRELOAD", "LD_LIBRARY_PATH", "PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP", "PATH"}
+_codepad_env_keys = [k for k in (_cfg.get("env") or {}) if isinstance(k, str) and k.isidentifier() and k.upper() not in _blocked]
+for _k in _codepad_env_keys: os.environ[_k] = str(_cfg["env"][_k])[:4000]
+sys.argv = [_codepad_filename] + [str(a) for a in (_cfg.get("argv") or [])][:64]
+`);
     py.globals.set('_codepad_stdin', stdin);
     py.globals.set('_codepad_emit', (kind, text, snapshot) => emit({ stream: true, kind, text, snapshot }));
     py.runPython(`
