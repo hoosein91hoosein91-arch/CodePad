@@ -1,0 +1,72 @@
+name: Build CodePad 3.7 AI + Cyber APK
+on:
+  push:
+    branches: ['claude/**']
+    paths:
+      - 'codepad-3.7-overlay/**'
+      - '.github/workflows/android-3.7-overlay.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: codepad-3.7-overlay-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Download official CodePad 3.7.0 source and apply the overlay
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v3.7.0 --repo "$GITHUB_REPOSITORY" --pattern CodePad-3.7.0-source.zip
+          unzip -q CodePad-3.7.0-source.zip
+          node codepad-3.7-overlay/apply.mjs CodePad-3.7.0
+      - name: Install and build web sources
+        working-directory: CodePad-3.7.0
+        run: |
+          npm install --no-audit --no-fund
+          npm run build:mobile -- --offline
+      - name: Typecheck and source tests
+        working-directory: CodePad-3.7.0
+        run: |
+          npm run typecheck
+          npm run test:source
+          npm run test:launcher
+      - name: Generate Android project
+        working-directory: CodePad-3.7.0
+        run: |
+          npx cap add android
+          npm run android:prepare
+          npx cap sync android
+      - name: Build debug APK
+        working-directory: CodePad-3.7.0/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Verify APK
+        run: |
+          APK=CodePad-3.7.0/android/app/build/outputs/apk/debug/app-debug.apk
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify "$APK"
+          "$BUILD_TOOLS/aapt" dump badging "$APK" | head -1
+          mkdir -p out && cp "$APK" out/CodePad-3.7-AI-Cyber.apk && sha256sum out/CodePad-3.7-AI-Cyber.apk | tee out/CodePad-3.7-AI-Cyber.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CodePad-3.7-AI-Cyber-apk
+          path: out
+      - name: Attach APK to a draft pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v3.7.0-ai-cyber.${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" out/CodePad-3.7-AI-Cyber.apk out/CodePad-3.7-AI-Cyber.sha256 --draft --prerelease --target "$GITHUB_SHA" --title "CodePad 3.7 AI + Cyber (debug APK, build ${GITHUB_RUN_NUMBER})" --notes "Debug-signed APK built from the official 3.7.0 source plus codepad-3.7-overlay. Not tested on a physical device. See codepad-3.7-overlay/README.md."
