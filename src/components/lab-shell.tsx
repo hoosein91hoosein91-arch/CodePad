@@ -167,6 +167,25 @@ export function LabShell() {
   const clearLines = useLab((state) => state.clearLines);
   const pushLines = useLab((state) => state.pushLines);
 
+  useEffect(() => {
+    const rows = new Map<string, string>();
+    const stream = (event: Event) => {
+      const data = (event as CustomEvent<{ id: number; text?: string; snapshot?: string; kind?: string }>).detail;
+      if (!data.text) return;
+      const state = useLab.getState();
+      if (!state.running) return;
+      const key = `${data.id}:${data.kind}`, rowId = rows.get(key);
+      if (rowId && state.lines.some(row => row.id === rowId)) useLab.setState({ lines: state.lines.map(row => row.id === rowId ? { ...row, text: data.snapshot ?? row.text + data.text } : row) });
+      else {
+        if (rows.size > 64) rows.clear();
+        const row = termLine(data.kind === "err" ? "err" : "out", data.snapshot ?? data.text);
+        rows.set(key, row.id); state.pushLines([row]);
+      }
+    };
+    window.addEventListener("codepad-runtime-stream", stream);
+    return () => window.removeEventListener("codepad-runtime-stream", stream);
+  }, []);
+
   const project = activeProject({ projects, activeProjectId });
   const file = activeFile(project);
   const cssFile = file.lang === "css" ? file : project.files.find((item) => item.lang === "css");
@@ -483,13 +502,13 @@ export function LabShell() {
           : await runCpp(current.content, current.stdin);
     if (token.current !== mine || result.aborted) return;
     const next: TermLine[] = [];
-    if (result.stdout) {
+    if (result.stdout && !result.streamed) {
       for (const line of result.stdout.replace(/\s+$/, "").split("\n")) next.push(termLine("out", line));
     }
     if (result.stderr) {
       for (const line of result.stderr.replace(/\s+$/, "").split("\n")) next.push(termLine("err", line));
     }
-    if (!result.stdout.trim() && !result.stderr.trim()) next.push(termLine("sys", "خروجی‌ای نبود."));
+    if (!result.streamed && !result.stdout.trim() && !result.stderr.trim()) next.push(termLine("sys", "خروجی‌ای نبود."));
     useLab.getState().pushLines(next);
     useLab.getState().setRunning(false);
   }, []);

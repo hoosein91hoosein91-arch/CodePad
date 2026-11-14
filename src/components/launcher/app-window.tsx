@@ -131,6 +131,15 @@ export function AppWindow({ app, host, accent, onClose }: { app: App; host: Brid
   useEffect(() => {
     let dead = false;
     const show = (v: View) => !dead && setView(v);
+    const onStream = (event: Event) => {
+      const data = (event as CustomEvent<{ text?: string; kind?: string }>).detail;
+      if (dead || !data.text) return;
+      setView((old) => {
+        const value = old.kind === "text" ? old : { kind: "text" as const, out: "", err: "" };
+        return data.kind === "err" ? { ...value, err: value.err + data.text } : { ...value, out: value.out + data.text };
+      });
+    };
+    window.addEventListener("codepad-runtime-stream", onStream);
     setView({ kind: "busy" });
     const bridge = (doc: string) => injectHead(doc, jibosClient(nonce, app.name));
     (async () => {
@@ -180,6 +189,7 @@ export function AppWindow({ app, host, accent, onClose }: { app: App; host: Brid
     })().catch((e) => show({ kind: "text", out: "", err: String(e) }));
     return () => {
       dead = true;
+      window.removeEventListener("codepad-runtime-stream", onStream);
       stopRuntimes();
     };
   }, [app, nonce, run]);

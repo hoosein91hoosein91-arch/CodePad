@@ -15,7 +15,7 @@ If the code changes, re-check the files listed in [§9 Where things live](#9-whe
 
 ## 1. What CodePad is
 
-- **CodePad / جیب‌کد** is an offline, multi-language coding workshop for phones. It is a React + Vite web app, packaged for Android with Capacitor (`appId com.hoosein.codepad`).
+- **CodePad / جیب‌کد** is an offline, multi-language coding workshop for phones. It is a React + Vite web app, packaged for Android with Capacitor (`appId com.hoosein.codepad.stable`).
 - The UI is in Persian (RTL). Here are the main controls:
 
   | Control | Label in the app |
@@ -949,3 +949,8 @@ Why it works: `"photo.png"` inside `shared` is replaced by the file's `data:` UR
 | `src/labshell/asset-refs.ts` | pure helpers: finding and replacing attachment names in code, `assetText`/`assetBytes` page helpers |
 | `src/labshell/samples.ts` | built-in samples and project templates |
 | `src/components/lab-shell.tsx` | UI, Run button, tabs, sandboxed iframe |
+
+
+## CodePad 2.10 source supplement
+
+The authoritative mobile source is mobile-src (recovered readable JavaScript), not the old React editor alone. See README.md and SOURCE-STATUS.md. Python streams live, owns module-created asyncio tasks and has no execution-duration cutoff. Android uses a user-started foreground service; do not claim survival after force-stop/process death. CodePad 2.11: Model/Mdl supports GLB/self-contained glTF with four-influence skinning and TRS clips; Anim Name "clip",N1,N1 loops; PauseAnim Name N1 pauses. Body, Velocity, Impulse, Gravity and Physics provide fixed-step swept axis-aligned box physics. Collider rotation, ragdoll, morph targets, compressed meshes and external glTF buffers are unsupported. OBJ/STL are static geometry. See NAVA-GUIDE.md.

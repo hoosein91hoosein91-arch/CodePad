@@ -1,4 +1,6 @@
-/** Offline, self-contained WebGL renderer. Emitted into Nava previews without external imports. */
+import { navaPhysics } from './nava-physics.ts';
+import { navaModel } from './nava-model.ts';
+/** Offline WebGL renderer. Model decoder is embedded in exported Nava pages. */
 export function navaScene3d(P: any, canvas: any, report: (message: string) => void): any {
   const noop = () => {};
   if (!canvas) return { obj: noop, cam: noop, scene: noop, draw: noop, dispose: noop, available: false, orbit: false };
@@ -17,12 +19,40 @@ export function navaScene3d(P: any, canvas: any, report: (message: string) => vo
     colors.set(color, result); return result;
   };
   const objects: any[] = P.shapes.map((s: any) => ({ name: s.n, kind: s.kind, color: rgb(s.color), pos: [0, 0, 0], rot: [0, 0, 0], scale: [1, 1, 1], material: [.4, .15, 0] }));
+  const physics = navaPhysics(objects);
+  let paused = false, lastFrame: number | null = null;
   const byName = new Map(objects.map((o) => [o.name, o]));
   let distance = 6, pitch = 18, yaw = 0, orbit = false, pending = 0, disposed = false, lost = false;
   let fog = rgb("#070b14"), fogNear = 10, fogFar = 35, light = [.45, .8, .6], intensity = 1.3, ambient = .28;
   let gl: any = canvas.getContext("webgl", { antialias: ultra, alpha: true, powerPreference: ultra ? "high-performance" : "low-power" });
   let program: any, locations: any = {}, meshes: any = {};
   const shaders: any[] = [], buffers: any[] = [];
+  const textures: any[] = [], loaded = new Map<string, any[]>();
+  const fetches = new AbortController();
+  let generation = 0;
+  let whiteTexture: any;
+  const upload = (data: number[]) => { const b = gl.createBuffer(); buffers.push(b); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW); return b; };
+  const installModel = (kind: string, parts: any[]) => {
+    const current = generation;
+    meshes[kind] = parts.map(part => {
+      const mesh: any = { bp: upload(part.positions), bn: upload(part.normals), bu: part.uv.length ? upload(part.uv) : null, count: part.positions.length / 3, color: part.color, texture: null, part };
+      if (part.image && mesh.bu) {
+        const image = doc.createElement('img'), url = URL.createObjectURL(new Blob([part.image.bytes], { type: part.image.mime }));
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          if (disposed || lost || current !== generation) return;
+          const t = gl.createTexture(); textures.push(t); gl.bindTexture(gl.TEXTURE_2D, t);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          mesh.texture = t; requestDraw();
+        };
+        image.onerror = () => { URL.revokeObjectURL(url); if (!disposed) report('Model texture could not be decoded.'); };
+        image.src = url;
+      }
+      return mesh;
+    });
+  };
   const matrix = (a: number[], b: number[]) => { const o = new Array(16).fill(0); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
   const translate = (x: number, y: number, z: number) => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1];
   const rx = (d: number) => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]; };
@@ -69,23 +99,27 @@ export function navaScene3d(P: any, canvas: any, report: (message: string) => vo
   };
   const initialize = () => {
     if (!gl) return;
-    meshes = {}; locations = {}; buffers.length = 0; shaders.length = 0;
+    generation++; meshes = {}; locations = {}; buffers.length = 0; shaders.length = 0; textures.length = 0;
     try {
       const shader = (type: number, source: string) => { const s = gl.createShader(type); shaders.push(s); gl.shaderSource(s, source); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
       program = gl.createProgram();
-      gl.attachShader(program, shader(gl.VERTEX_SHADER, `attribute vec3 p;attribute vec3 q;uniform mat4 m;uniform mat4 w;uniform mat3 nm;varying vec3 n;varying vec3 wp;void main(){wp=(w*vec4(p,1.0)).xyz;n=nm*q;gl_Position=m*vec4(p,1.0);}`));
+      gl.attachShader(program, shader(gl.VERTEX_SHADER, `attribute vec3 p;attribute vec3 q;attribute vec2 uv;uniform mat4 m;uniform mat4 w;uniform mat3 nm;varying vec3 n;varying vec3 wp;varying vec2 tc;void main(){tc=uv;wp=(w*vec4(p,1.0)).xyz;n=nm*q;gl_Position=m*vec4(p,1.0);}`));
       gl.attachShader(program, shader(gl.FRAGMENT_SHADER, `precision mediump float;
-        uniform vec3 c,eye,ld,fc;uniform vec3 mat;uniform vec2 fogRange;uniform float power,amb,ground;uniform vec4 shadows[8];varying vec3 n,wp;
+        uniform vec3 c,eye,ld,fc;uniform vec3 mat;uniform vec2 fogRange;uniform float power,amb,ground,textured;uniform sampler2D tex;uniform vec4 shadows[8];varying vec3 n,wp;varying vec2 tc;
         void main(){vec3 N=normalize(n),V=normalize(eye-wp),L=normalize(ld);float diffuse=max(dot(N,L),0.0);float rough=clamp(mat.x,0.08,1.0),metal=clamp(mat.y,0.0,1.0);vec3 H=normalize(L+V);
         float spec=pow(max(dot(N,H),0.0),mix(180.0,5.0,rough))*diffuse;float rim=pow(1.0-max(dot(N,V),0.0),3.0);
-        vec3 linear=pow(c,vec3(2.2));vec3 lit=linear*(amb+power*diffuse*(1.0-metal*.55))+mix(vec3(.15),linear,metal)*spec*power*(1.0-rough*.5)+linear*mat.z+vec3(.07,.13,.18)*rim;
+        vec3 base=c;if(textured>.5)base*=texture2D(tex,tc).rgb;vec3 linear=pow(base,vec3(2.2));vec3 lit=linear*(amb+power*diffuse*(1.0-metal*.55))+mix(vec3(.15),linear,metal)*spec*power*(1.0-rough*.5)+linear*mat.z+vec3(.07,.13,.18)*rim;
         if(ground>.5){float shade=0.0;for(int i=0;i<8;i++){vec2 d=wp.xz-shadows[i].xy;shade+=exp(-dot(d,d)/max(shadows[i].z,.01))*shadows[i].w;}lit*=1.0-clamp(shade,0.0,.65);}
         lit=lit/(vec3(1.0)+lit);vec3 result=pow(lit,vec3(1.0/2.2));float f=smoothstep(fogRange.x,fogRange.y,length(eye-wp));gl_FragColor=vec4(mix(result,fc,f),1.0);}`));
       gl.linkProgram(program); if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
       gl.useProgram(program); gl.enable(gl.DEPTH_TEST);
-      for (const key of ["m", "w", "nm", "c", "eye", "ld", "fc", "mat", "fogRange", "power", "amb", "ground", "shadows[0]"]) locations[key] = gl.getUniformLocation(program, key);
-      locations.p = gl.getAttribLocation(program, "p"); locations.q = gl.getAttribLocation(program, "q");
-      for (const o of objects) if (!meshes[o.kind]) meshes[o.kind] = build(o.kind);
+      whiteTexture = gl.createTexture(); textures.push(whiteTexture); gl.bindTexture(gl.TEXTURE_2D, whiteTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255,255,255,255]));
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      for (const key of ["m", "w", "nm", "c", "eye", "ld", "fc", "mat", "fogRange", "power", "amb", "ground", "textured", "tex", "shadows[0]"]) locations[key] = gl.getUniformLocation(program, key);
+      locations.p = gl.getAttribLocation(program, "p"); locations.q = gl.getAttribLocation(program, "q"); locations.uv = gl.getAttribLocation(program, "uv");
+      for (const o of objects) if (!meshes[o.kind]) meshes[o.kind] = o.kind.startsWith('@model:') ? [] : [build(o.kind)];
+      for (const [kind, parts] of loaded) installModel(kind, parts);
     } catch (e) { report(`3D shader: ${e instanceof Error ? e.message : String(e)}`); gl = null; }
   };
   const shadowData = new Float32Array(32);
@@ -105,8 +139,9 @@ export function navaScene3d(P: any, canvas: any, report: (message: string) => vo
     const floors = objects.filter((o) => o.kind === "زمین" && Math.abs(o.rot[0] % 360) < .001 && Math.abs(o.rot[2] % 360) < .001);
     for (const o of objects) {
       if (o.scale.some((s: number) => s <= 0)) continue;
-      const mesh = meshes[o.kind];
-      const rotation = matrix(ry(o.rot[1]), matrix(rx(o.rot[0]), rz(o.rot[2]))), model = matrix(translate(...o.pos as [number,number,number]), matrix(rotation, scale(o.scale)));
+      const pieces = meshes[o.kind] ?? [];
+      const position = physics.renderPosition(o.name);
+      const rotation = matrix(ry(o.rot[1]), matrix(rx(o.rot[0]), rz(o.rot[2]))), model = matrix(translate(...position as [number,number,number]), matrix(rotation, scale(o.scale)));
       // Inverse transpose for nonuniform scale, avoiding incorrect lighting on stretched meshes.
       const normal = [rotation[0]! / o.scale[0], rotation[1]! / o.scale[0], rotation[2]! / o.scale[0], rotation[4]! / o.scale[1], rotation[5]! / o.scale[1], rotation[6]! / o.scale[1], rotation[8]! / o.scale[2], rotation[9]! / o.scale[2], rotation[10]! / o.scale[2]];
       gl.uniformMatrix4fv(locations.m, false, new Float32Array(matrix(pv, model))); gl.uniformMatrix4fv(locations.w, false, new Float32Array(model)); gl.uniformMatrix3fv(locations.nm, false, new Float32Array(normal));
@@ -116,14 +151,47 @@ export function navaScene3d(P: any, canvas: any, report: (message: string) => vo
         for (const s of objects) if (s.kind !== "زمین" && s.pos[1] >= o.pos[1] && s.scale.every((v: number) => v > 0) && i < 8) { const height = s.pos[1] - o.pos[1]; shadowData.set([s.pos[0], s.pos[2], Math.max(.05, (Math.max(s.scale[0], s.scale[2]) * .65 + height * .15) ** 2), .45 / (1 + height * .5)], i++ * 4); }
         gl.uniform4fv(locations["shadows[0]"], shadowData);
       }
+      for (const mesh of pieces) {
+      gl.uniform3fv(locations.c, mesh.color ? mesh.color.map((value: number, i: number) => value * o.color[i]) : o.color);
+      gl.uniform1f(locations.textured, mesh.texture ? 1 : 0);
+      if (mesh.bu) { gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bu); gl.enableVertexAttribArray(locations.uv); gl.vertexAttribPointer(locations.uv, 2, gl.FLOAT, false, 0, 0); }
+      else { gl.disableVertexAttribArray?.(locations.uv); gl.vertexAttrib2f?.(locations.uv, 0, 0); }
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, mesh.texture || whiteTexture); gl.uniform1i(locations.tex, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bp); gl.enableVertexAttribArray(locations.p); gl.vertexAttribPointer(locations.p, 3, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bn); gl.enableVertexAttribArray(locations.q); gl.vertexAttribPointer(locations.q, 3, gl.FLOAT, false, 0, 0);
       gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+      }
     }
   };
-  const requestDraw = () => { if (!pending && !disposed && !lost && gl) pending = requestAnimationFrame(() => { pending = 0; draw(); }); };
+  const continuous = () => !paused && !doc.hidden && (physics.active || objects.some(o => o.animation?.playing));
+  const frame = (time: number) => {
+    pending = 0; if (disposed || lost || !gl) return;
+    const dt = lastFrame === null || paused || doc.hidden ? 0 : Math.min(.1, Math.max(0, (time - lastFrame) / 1000)); lastFrame = time;
+    if (!paused && !doc.hidden) {
+      physics.step(dt);
+      for (const o of objects) if (o.animation?.playing) {
+        const parts: any = loaded.get(o.kind), animation = o.animation;
+        if (!parts?.animations?.length) continue;
+        try {
+          animation.time += dt * animation.speed;
+          const ended = parts.update(animation.time, animation.clip, animation.loop);
+          for (const mesh of meshes[o.kind] || []) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bp); gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(mesh.part.positions));
+            gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bn); gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(mesh.part.normals));
+          }
+          if (ended) animation.playing = false;
+        } catch (error) { animation.playing = false; report('Animation: ' + String((error as any).message || error)); }
+      }
+    }
+    draw(); if (continuous()) requestDraw(); else lastFrame = null;
+  };
+  const requestDraw = () => { if (!pending && !disposed && !lost && gl) pending = requestAnimationFrame(frame); };
+  const visibility = () => { lastFrame = null; if (doc.hidden && pending) { cancelAnimationFrame(pending); pending = 0; } else requestDraw(); };
+  doc.addEventListener('visibilitychange', visibility);
   const api: any = {
-    get available() { return !!gl && !lost; }, get orbit() { return orbit; }, draw, requestDraw,
+    get available() { return !!gl && !lost; }, physics,
+    pause: (value: boolean) => { paused = value; lastFrame = null; if (!value) requestDraw(); },
+    get orbit() { return orbit; }, draw, requestDraw,
     obj: (op: string, name: string, args: any[], line: number) => {
       const o: any = byName.get(name); if (!o) throw new Error(`Line ${line}: object ${name} is missing.`);
       const v = (i: number) => clamp(args[i], -100000, 100000, 0);
@@ -133,17 +201,29 @@ export function navaScene3d(P: any, canvas: any, report: (message: string) => vo
       if (op === "اندازه") o.scale = [0, 1, 2].map((i) => clamp(args[args.length === 1 ? 0 : i], 0, 100, 1));
       if (op === "متریال") o.material = [clamp(args[0], .08, 1, .4), clamp(args[1], 0, 1, .15), clamp(args[2], 0, 4, 0)];
       if (op === "رنگشکل") o.color = rgb(String(args[0]));
+      if (op === "جسم") physics.body(name, args);
+      if (op === "سرعت") physics.velocity(name, args);
+      if (op === "ضربه") physics.impulse(name, args);
+      if (op === "پویانمایی") {
+        o.animation = {clip: args[0], speed: clamp(args[1] ?? 1, 0, 10, 1), loop: args[2] === undefined ? true : !!args[2], time: 0, playing: true};
+        const parts: any = loaded.get(o.kind);
+        if (parts && !parts.animations?.length) { o.animation.playing = false; throw Error('Model has no animation clips.'); }
+      }
+      if (op === "مکثمدل" && o.animation) o.animation.playing = !args[0];
+      if (op === "جابجا" || op === "حرکت") physics.resetInterpolation(name);
       requestDraw();
     },
     cam: (d: number, x?: number, y?: number) => { distance = clamp(d, 1.5, 120, 6); if (x !== undefined) pitch = clamp(x, -85, 85, 18); if (y !== undefined) yaw = clamp(y, -36000, 36000, 0) % 360; requestDraw(); },
     scene: (op: string, a: any[]) => {
+      if (op === "جاذبه") physics.gravity(a);
+      if (op === "فیزیک") physics.enable(!!a[0]);
       if (op === "مدار") orbit = !!a[0];
       if (op === "مه") { fog = rgb(String(a[0])); fogNear = clamp(a[1], 0, 240, 10); fogFar = Math.max(fogNear + .1, clamp(a[2], .1, 250, 35)); }
       if (op === "نور") { light = [Number(a[0]) || 0, Number(a[1]) || 0, Number(a[2]) || 0]; if (Math.hypot(...light) < .001) light = [.45, .8, .6]; intensity = clamp(a[3], 0, 8, 1.3); }
       if (op === "محیط") ambient = clamp(a[0], 0, 2, .28);
       requestDraw();
     },
-    dispose: () => { disposed = true; if (pending) cancelAnimationFrame(pending); observer?.disconnect(); if (gl && !lost) { buffers.forEach((b) => gl.deleteBuffer(b)); shaders.forEach((s) => gl.deleteShader(s)); if (program) gl.deleteProgram(program); } },
+    dispose: () => { disposed = true; physics.dispose(); doc.removeEventListener('visibilitychange', visibility); fetches.abort(); if (pending) cancelAnimationFrame(pending); observer?.disconnect(); if (gl && !lost) { textures.forEach(t => gl.deleteTexture(t)); buffers.forEach((b) => gl.deleteBuffer(b)); shaders.forEach((s) => gl.deleteShader(s)); if (program) gl.deleteProgram(program); } loaded.clear(); },
   };
   const pointers = new Map<number, { x: number; y: number }>(); let span = 0;
   const pinchSpan = () => { const a = [...pointers.values()]; return a.length >= 2 ? Math.hypot(a[0]!.x - a[1]!.x, a[0]!.y - a[1]!.y) : 0; };
@@ -156,6 +236,19 @@ export function navaScene3d(P: any, canvas: any, report: (message: string) => vo
   canvas.addEventListener("webglcontextrestored", () => { lost = false; initialize(); requestDraw(); });
   const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(requestDraw) : null; observer?.observe(canvas);
   initialize(); requestDraw();
+  if (gl) for (const shape of P.shapes) if (shape.file) {
+    fetch(shape.file, { signal: fetches.signal }).then(response => {
+      if (!response.ok) throw new Error('Model file is missing. Attach it to this project first.');
+      return response.arrayBuffer();
+    }).then(bytes => {
+      if (disposed) return;
+      const parts = navaModel(bytes, shape.format);
+      loaded.set(shape.kind, parts);
+      const object: any = byName.get(shape.n);
+      if (object?.animation?.playing && !(parts as any).animations?.length) { object.animation.playing = false; report(`Line ${shape.line}: Model has no animation clips.`); }
+      if (!lost) { installModel(shape.kind, parts); requestDraw(); }
+    }).catch(error => { const object: any = byName.get(shape.n); if (object?.animation) object.animation.playing = false; if (!disposed) report(`Line ${shape.line}: ${String(error.message || error)}`); });
+  }
   if (!gl) report("WebGL is unavailable. The 3D scene cannot render on this device.");
   return api;
 }

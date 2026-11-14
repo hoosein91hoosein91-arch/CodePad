@@ -19,6 +19,7 @@ export const NAVA_PRESETS = [
   { id: "packed-button", title: "دکمهٔ فشرده", code: 'Bt "شروع" (Ru240Rn64): Sy "تو باختی"\n' },
   { id: "counter", title: "شمارنده", code: 'Pg "Score" | Cnt\n' },
   { id: "studio3d", title: "استودیو سه‌بعدی", code: 'Ap "Nava Studio" | G9 | Sc N360,N480 | Sp Orb "#47f2cb" | Rg Ring "#b0a9ff" | Floor Base "#182331" | Ps Base N0,-N1d2,N0 | Sl Orb N0d6 | Mt Orb N0d14,N0d65,N0d6 | Rt Ring N65,N0,N0 | Mt Ring N0d16,N0d7,N0d15 | Cm N6,N18,N0 | Ob Tr | Fz "#070b14",N9,N28 | Fr | Rt Ring N0,N22 * Dt,N9 * Dt | End\n' },
+  {"id": "gravity3d", "title": "برخورد و جاذبه", "code": "Pg \"برخورد و جاذبه\"\nScene N350,N360\nFloor Ground \"#314038\"\nShift Ground N0,-N1d05,N0\nBody Ground N0,N8,N0d1,N8,N0\nCube Box \"#c6f135\"\nShift Box N0,N3,N0\nBody Box N1,N1d5,N1d5,N1d5,N0d5\nGravity N0,-N9d81,N0\nOrbit N1\nCamera N8,N18,N0\nBt \"دوباره بنداز\": Shift Box N0,N3,N0; Velocity Box N1,N0,N0\nBt \"توقف\": Stop\nBt \"ادامه\": Resume\n"},
 ];
 
 /** The full core language of CodePad 2.2+ (all Persian keywords; blocks close with پایان or end). */

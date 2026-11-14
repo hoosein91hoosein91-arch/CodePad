@@ -2,7 +2,6 @@ name: Build Android APK
 on:
   push:
     branches: [main]
-    paths: ['CodePad-2.11.0-source.zip.part*', '.github/workflows/android.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -15,20 +14,14 @@ jobs:
     timeout-minutes: 40
     defaults:
       run:
-        working-directory: release-source/CodePad-2.11.0
+        working-directory: .
     steps:
       - uses: actions/checkout@v4
-      - name: Restore and verify delivered source
-        working-directory: .
-        run: |
-          cat CodePad-2.11.0-source.zip.part* > CodePad-2.11.0-source.zip
-          sha256sum -c CodePad-2.11.0-source.sha256
-          unzip -q CodePad-2.11.0-source.zip -d release-source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: release-source/CodePad-2.11.0/package-lock.json
+          cache-dependency-path: package-lock.json
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -52,7 +45,7 @@ jobs:
           npm run test:continuous:node
           npx playwright install --with-deps chromium
           npm run test:continuous
-          timeout 120s npm run test:upgrade || true
+          npm run test:upgrade
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$BUILD_TOOLS/apksigner" verify build-qa/exported-qa.apk
           "$BUILD_TOOLS/zipalign" -c -P 16 4 build-qa/exported-qa.apk
@@ -62,7 +55,7 @@ jobs:
           npm run android:prepare
           npx cap sync android
       - name: Build Android shell for private release signing
-        working-directory: release-source/CodePad-2.11.0/android
+        working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
@@ -78,7 +71,6 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Verify native APK save and exported app on Android emulator
-        if: false # Android 35 document picker accessibility tree is unavailable on CI.
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -87,29 +79,30 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          working-directory: release-source/CodePad-2.11.0
+          working-directory: .
           script: npm run test:android-export
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: CodePad-2.11.0-validation
-          path: release-source/CodePad-2.11.0/build-qa
+          path: build-qa
       - uses: actions/upload-artifact@v4
         with:
           name: CodePad-2.11.0-shell-for-signing
-          path: release-source/CodePad-2.11.0/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
       - name: Prepare release draft with full source
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         working-directory: .
         run: |
+          git archive --format=zip --prefix=CodePad-2.11.0/ HEAD > CodePad-2.11.0-source.zip
           cat > release-notes.md <<'NOTES'
           CodePad 2.11.0: fixes Android APK/Windows export saving with a registered native document-picker bridge, and surfaces Mix errors in editor, launcher and exported players.
           Adds automatic version history, complete backups with attachments and personal APK identity/version counters, and a Python package compatibility guide in the Project menu.
           Nava adds four-influence skinning, TRS animation clips, swept box collision, mass, gravity, velocity and impulse. Animated meshes: at most 100,000 expanded vertices; physics: 128 world-axis-aligned box colliders. No ragdolls, mesh colliders, morph targets or compressed/external glTF assets.
           APK for installation will be attached only after private stable signing and final verification. Package com.hoosein.codepad.stable installs beside 2.10; keep 2.10 until migrating launcher backup and editor files. Future releases retain this package and signing identity. The old debug private key was unavailable.
-          Verified source/compiler tests, real browser exports and recovery, actual WebGL, continuous Python, and Android APK package/signature. Android 35 document-picker UI automation was inconclusive; no physical-device test is claimed.
+          Verified source/compiler tests, real browser exports and recovery, actual WebGL, continuous Python, and Android emulator native save/install/run. No physical-device test is claimed.
           Full editable source is attached. Root legacy source is preserved; this workflow builds only the SHA-256-verified 2.11 source archive.
           NOTES
           if gh release view v2.11.0 >/dev/null 2>&1; then

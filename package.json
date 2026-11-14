@@ -7,8 +7,8 @@
     "nf3": "0.3.17"
   },
   "scripts": {
-    "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
-    "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
+    "dev": "node scripts/serve-mobile.mjs",
+    "build": "npm run build:mobile",
     "db:migrate": "node scripts/migrate.mjs",
     "build:dev": "node scripts/with-app-env.mjs vite build --mode development",
     "preview": "node scripts/with-app-env.mjs vite preview",
@@ -20,9 +20,18 @@
     "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/labshell/nava.test.ts src/labshell/launcher-compat.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build:mobile": "VITE_AUTH_ENABLED=false vite build -c vite.mobile.config.ts",
+    "build:mobile": "node scripts/build-mobile.mjs",
     "android:prepare": "node scripts/android-prepare.mjs",
-    "test:launcher": "node --experimental-strip-types --test src/labshell/nava.test.ts src/labshell/launcher-compat.test.ts && node --experimental-strip-types scripts/jib-selftest.mjs && node --experimental-vm-modules scripts/launcher-merge-selftest.mjs"
+    "test:launcher": "node --experimental-strip-types --test src/labshell/nava.test.ts src/labshell/launcher-compat.test.ts && node --experimental-strip-types scripts/jib-selftest.mjs && node --experimental-vm-modules scripts/launcher-merge-selftest.mjs",
+    "test:continuous": "node scripts/continuous-runtime-test.mjs",
+    "build:react": "VITE_AUTH_ENABLED=false vite build -c vite.mobile.config.ts",
+    "dev:mobile": "node scripts/serve-mobile.mjs",
+    "preview:mobile": "node scripts/serve-mobile.mjs --port 8081",
+    "test:source": "node --test scripts/mobile-source.test.mjs scripts/nava-models.test.mjs scripts/nava-physics.test.mjs",
+    "test:continuous:node": "node scripts/continuous-runtime-node-test.mjs",
+    "dev:react": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
+    "test:upgrade": "node scripts/upgrade-browser-test.mjs && node scripts/nava-graphics-browser-test.mjs",
+    "test:android-export": "node scripts/android-export-test.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",
@@ -97,7 +106,8 @@
     "vaul": "^1.1.2",
     "vite": "^8.2.0",
     "zod": "^4.4.0",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.0",
+    "acorn": "8.18.0"
   },
   "devDependencies": {
     "@capacitor/android": "^7.6.9",
@@ -115,6 +125,8 @@
     "globals": "^15.15.0",
     "playwright": "^1.62.0",
     "prettier": "^3.4.0",
-    "typescript-eslint": "^8.56.1"
-  }
+    "typescript-eslint": "^8.56.1",
+    "eslint-scope": "8.4.0"
+  },
+  "version": "2.11.0"
 }

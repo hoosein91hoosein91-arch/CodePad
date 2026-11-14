@@ -11,6 +11,8 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(TermuxBridgePlugin.class);
+        registerPlugin(CodePadRuntimePlugin.class);
+        registerPlugin(ApkExportPlugin.class);
         super.onCreate(savedInstanceState);
         hideSystemBars();
     }

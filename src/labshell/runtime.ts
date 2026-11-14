@@ -6,6 +6,7 @@ export type RunResult = {
   stdout: string;
   stderr: string;
   aborted: boolean;
+  streamed?: boolean;
   page?: FarsiPage;
   machine?: { a: number; bits: string; pc: number; steps: number; gloss: string };
   /** Mix files: page from @@ html blocks (+ css, DOM scripts); `data` = final shared JSON for the page. */
@@ -64,12 +65,18 @@ function bindWorker(
   map: Map<number, Pending>,
   onDone?: () => void,
 ) {
-  worker.addEventListener("message", (event: MessageEvent<{ id: number; stdout?: string; stderr?: string }>) => {
+  worker.addEventListener("message", (event: MessageEvent<{ id: number; stdout?: string; stderr?: string; stream?: boolean; kind?: string; text?: string; phase?: string; progress?: string; streamed?: boolean }>) => {
+    if (event.data.stream) {
+      window.dispatchEvent(new CustomEvent("codepad-runtime-stream", { detail: event.data }));
+      return;
+    }
+    if (event.data.phase || event.data.progress) return;
     if (onDone) onDone();
     settle(map, event.data.id, {
       stdout: event.data.stdout ?? "",
       stderr: event.data.stderr ?? "",
       aborted: false,
+      streamed: event.data.streamed,
     });
   });
   worker.addEventListener("error", () => {
@@ -116,7 +123,7 @@ function runWorker(
 ): Promise<RunResult> {
   const id = ++seq;
   return new Promise((resolve) => {
-    const timer = window.setTimeout(() => {
+    const timer = timeoutMs > 0 ? window.setTimeout(() => {
       worker.terminate();
       if (worker === pythonWorker) {
         pythonWorker = null;
@@ -125,7 +132,7 @@ function runWorker(
       }
       map.delete(id);
       resolve({ stdout: "", stderr: timeoutText, aborted: false });
-    }, timeoutMs);
+    }, timeoutMs) : 0;
     map.set(id, { resolve, timer });
     worker.postMessage({ id, code, stdin, assets: mount?.assets }, mount?.transfer ?? []);
     for (const asset of mount?.assets ?? []) if (asset.buf) sentToPython.set(asset.name, asset.stamp);
@@ -139,7 +146,7 @@ async function runPythonRaw(code: string, stdin: string, projectId?: string): Pr
     pythonPending,
     code,
     stdin,
-    25000,
+    0,
     "Python timed out. If a loop never ends, run it again.",
     mount,
   );

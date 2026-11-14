@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><title>CodePad runtime</title></head><body><script>
+let worker;
+function codepadStart(payload) {
+  worker = new Worker('/background/python-worker.js', {type:'module'});
+  worker.postMessage({nativeMode:true});
+  worker.onmessage = e => {
+    if (e.data.nativeRequest) { CodePadHost.http(JSON.stringify(e.data.nativeRequest)); return; }
+    if (e.data.nativeCancel) { CodePadHost.cancelHttp(e.data.nativeCancel); return; }
+    CodePadHost.event(JSON.stringify(e.data));
+  };
+  worker.onerror = () => CodePadHost.event(JSON.stringify({id:payload.id,stdout:'',stderr:'موتور Python متوقف شد.',done:true}));
+  for (const asset of payload.assets || []) if (asset.b64) {
+    const text = atob(asset.b64); asset.buf = Uint8Array.from(text, c => c.charCodeAt(0)).buffer; delete asset.b64;
+  }
+  worker.postMessage(payload);
+}
+function codepadReply(reply) { if(worker) worker.postMessage({nativeReply:reply}); }
+CodePadHost.ready();
+</script></body></html>

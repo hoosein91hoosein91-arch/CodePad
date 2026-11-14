@@ -1,0 +1,14 @@
+Pg "برخورد و جاذبه"
+Scene N350,N360
+Floor Ground "#314038"
+Shift Ground N0,-N1d05,N0
+Body Ground N0,N8,N0d1,N8,N0
+Cube Box "#c6f135"
+Shift Box N0,N3,N0
+Body Box N1,N1d5,N1d5,N1d5,N0d5
+Gravity N0,-N9d81,N0
+Orbit N1
+Camera N8,N18,N0
+Bt "دوباره بنداز": Shift Box N0,N3,N0; Velocity Box N1,N0,N0
+Bt "توقف": Stop
+Bt "ادامه": Resume

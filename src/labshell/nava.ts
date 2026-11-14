@@ -3,7 +3,9 @@
  * هر خط یک دستور است. کامپایلر متن را به یک درخت JSON تبدیل می‌کند و صفحه‌ای (HTML/CSS/JS) می‌سازد که آن درخت را با
  * موتور nava-runtime تفسیر می‌کند. هیچ کدی از کاربر به JavaScript تبدیل یا eval نمی‌شود؛ متن‌ها همیشه escape می‌شوند.
  */
+import { navaPhysics } from "./nava-physics.ts";
 import { navaScene3d } from "./nava-scene.ts";
+import { navaModel } from "./nava-model.ts";
 import { navaDom, navaEngine } from "./nava-runtime.ts";
 import { expandNava } from "./nava-modules.ts";
 import { APPEARANCE_CSS, appearanceAttributes, parseAppearance, type ButtonAppearance } from "./nava-appearance.ts";
@@ -49,7 +51,7 @@ export type NavaProgram = {
   buttons: Stmt[][];
   shows: { e: Expr; when?: Expr; line: number }[];
   lists: { n: string; del: boolean }[];
-  shapes: { n: string; kind: string; color: string; at?: Expr[]; line: number }[];
+  shapes: { n: string; kind: string; color: string; file?: string; format?: string; at?: Expr[]; line: number }[];
   canvas: { w: number; h: number } | null;
   scene: { w: number; h: number } | null;
   images: string[];
@@ -422,6 +424,16 @@ class Parser {
       this.P[which] = m[2] ? this.inline(m[2], n) : this.block(`وقتی ${m[1]}`, n);
       return;
     }
+    if ((m = re("^(?:مدل|model|mdl)\\s+ID\\s+(.+)$").exec(text))) {
+      const file = quoted(m[2]!);
+      if (!file) oops(n, 'مدل را این‌طور بنویس: mdl car "car.glb"');
+      const format = file!.split('.').pop()!.toLowerCase();
+      if (!['glb', 'gltf', 'obj', 'stl'].includes(format)) oops(n, 'فرمت مدل باید GLB، glTF، OBJ یا STL باشد.');
+      if (this.P.shapes.length >= 512 || this.P.shapes.some(s => s.n === m![1])) oops(n, 'نام مدل تکراری است یا صحنه پر شده است.');
+      this.P.shapes.push({ n: m[1]!, kind: '@model:' + m[1]!, color: '#ffffff', file: file!, format, line: n });
+      this.P.images.push(file!);
+      return;
+    }
     if ((m = re("^(مکعب|کره|هرم|زمین|حلقه|استوانه|مخروط)\\s+ID(?:\\s+(.+?))?(?:\\s+در\\s+(.+))?$").exec(text))) {
       const color = m[3] ? quoted(m[3]) ?? m[3].trim() : m[1] === "زمین" ? "#1f3a2c" : this.P.accent;
       if (!/^(#[\da-f]{3,8}|[a-z]{3,20})$/i.test(color)) oops(n, `رنگ شکل را مثل "#ff85aa" یا "red" بنویس.`);
@@ -672,6 +684,11 @@ class Parser {
       if (a.length !== 3) oops(n, `${m[1]} سه عدد می‌خواهد؛ مثل ${m[1]} ${m[2]} ۱، ۲، ۰`);
       return simple({ k: "obj", line: n, op: m[1]!, n: m[2]!, a });
     }
+    if ((m = re("^(جسم|سرعت|ضربه|پویانمایی|مکثمدل)\\s+ID\\s+(.+)$").exec(text))) {
+      const a = parseArgs(m[3]!, n), counts = m[1] === "جسم" ? [5] : m[1] === "پویانمایی" ? [1,2,3] : m[1] === "مکثمدل" ? [1] : [3];
+      if (!counts.includes(a.length)) oops(n, "Body: mass,width,height,depth,bounce; Velocity/Impulse: x,y,z; Anim: clip,speed,loop; PauseAnim: 0 or 1.");
+      return simple({k:"obj",line:n,op:m[1]!,n:m[2]!,a});
+    }
     if ((m = re("^(اندازه|متریال|رنگشکل)\\s+ID\\s+(.+)$").exec(text))) {
       const a = parseArgs(m[3]!, n), count = m[1] === "رنگشکل" ? [1] : m[1] === "متریال" ? [3] : [1, 3];
       if (!count.includes(a.length)) oops(n, "Scale takes 1 or 3 values; Mat takes roughness, metal, emission; Tint takes one color.");
@@ -681,8 +698,8 @@ class Parser {
       const a = parseArgs(m[1]!, n); if (![1, 3].includes(a.length)) oops(n, "Camera takes distance, optionally pitch and yaw.");
       return simple({ k: "cam", line: n, e: a[0]!, a });
     }
-    if ((m = /^(مه|نور|محیط|مدار)\s+(.+)$/u.exec(text))) {
-      const a = parseArgs(m[2]!, n), count = m[1] === "مه" ? 3 : m[1] === "نور" ? 4 : 1;
+    if ((m = /^(مه|نور|محیط|مدار|جاذبه|فیزیک)\s+(.+)$/u.exec(text))) {
+      const a = parseArgs(m[2]!, n), count = m[1] === "مه" || m[1] === "جاذبه" ? 3 : m[1] === "نور" ? 4 : 1;
       if (a.length !== count) oops(n, `Invalid ${m[1]} argument count: expected ${count}.`);
       return simple({ k: "scene", line: n, op: m[1]!, a });
     }
@@ -833,7 +850,7 @@ export function compileNava(source: string): NavaResult {
   const kitHtml = (i: number) => kitParts[i]!.html;
   const webHtml = `<main class="nv-app${parser.gameMode ? " nv-game" : ""}" data-nava-graphics="${parser.quality}"><div class="nv-card"><div class="nv-brand">${html(P.title)}</div>\n${parser.ui.map((item) => uiHtml(item, kitHtml)).join("\n")}\n<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main>`;
   const css = `:root{color-scheme:dark}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%;background:${background};color:#edf4ed;font-family:Vazirmatn,Tahoma,sans-serif}body{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,color-mix(in srgb,${accent} 15%,${background}),${background} 65%)}.nv-app{min-height:100vh;display:grid;place-items:center;padding:20px}.nv-card{width:min(100%,460px);padding:24px;border:1px solid #ffffff20;border-radius:28px;background:#171e19ef;box-shadow:0 24px 80px #0008;display:flex;flex-direction:column;gap:14px}.nv-app[data-nava-graphics="low"] .nv-card{box-shadow:0 12px 32px #0007}.nv-app[data-nava-graphics="ultra"] .nv-card{border-color:#ffffff35;box-shadow:0 24px 80px #0008,0 0 36px color-mix(in srgb,${accent} 12%,transparent)}.nv-brand{color:${accent};font-size:12px;letter-spacing:.08em}h1{font-size:26px;line-height:1.4;margin:0}.nv-copy{color:#b8c6ba;line-height:1.9;margin:0;white-space:pre-wrap}.nv-value{font-size:22px;font-weight:700;margin:2px 0;white-space:pre-wrap;line-height:1.7}.nv-input{width:100%;padding:13px 15px;border:1px solid #ffffff25;border-radius:14px;background:#0e130f;color:#fff;font:inherit;outline:none;resize:vertical}.nv-input:focus{border-color:${accent};box-shadow:0 0 0 3px color-mix(in srgb,${accent} 22%,transparent)}.nv-button{min-height:48px;padding:11px 16px;border:0;border-radius:14px;background:${accent};color:#11170e;font:inherit;font-weight:700;cursor:pointer;transition:transform .15s,filter .15s;touch-action:manipulation}.nv-button:active{transform:scale(.97);filter:brightness(.9)}.nv-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.nv-row>*{flex:1 1 0;min-width:0}.nv-image{width:100%;max-height:260px;object-fit:cover;border-radius:18px}.nv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.nv-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0e130f;border:1px solid #ffffff14}.nv-list li span{flex:1;overflow-wrap:anywhere}.nv-list .nv-empty{color:#7f8f82;justify-content:center}.nv-del{border:0;background:#ff6a7a22;color:#ff8f9b;border-radius:10px;width:32px;height:32px;font:inherit;cursor:pointer}.nv-canvas{display:block;width:100%;margin:0 auto;border-radius:18px;background:#05090699;border:1px solid #ffffff18;touch-action:none}.nv-scene{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,${accent} 18%,#0b1220),#05070d)}.nv-error{padding:12px 14px;border-radius:14px;background:#3a1016;color:#ffb3bc;font-size:14px;line-height:1.8}.nv-toast{position:fixed;inset-inline:0;bottom:28px;margin:auto;width:max-content;max-width:86vw;padding:10px 16px;border-radius:14px;background:#000d;color:${accent};border:1px solid color-mix(in srgb,${accent} 50%,transparent);font-weight:700;box-shadow:0 10px 40px #0009}`;
-  const js = `(()=>{const P=${safeJson(P)};const navaEngine=(${navaEngine.toString()});(${navaDom.toString()})(P,navaEngine,(${navaScene3d.toString()}));})();`;
+  const js = `(()=>{const P=${safeJson(P)};const navaPhysics=(${navaPhysics.toString()});const navaModel=(${navaModel.toString()});const navaEngine=(${navaEngine.toString()});(${navaDom.toString()})(P,navaEngine,(${navaScene3d.toString()}));})();`;
   const kitCss = [...new Set(kitParts.map((part) => part.css))].join("\n");
   const kitJs = kitParts.map((part) => part.js).join("\n");
   const viewport = P.scene ?? P.canvas ?? { w: 360, h: 600 };

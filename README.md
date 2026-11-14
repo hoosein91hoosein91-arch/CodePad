@@ -1,49 +1,111 @@
-# CodePad 2.10.0 — Continuous Python
+# CodePad 2.11.0 — سورس یکپارچه
 
-The current Android release is built from **CodePad-2.10.0-source.zip** attached to release **v2.10.0**. The verified source archive is stored in this repository as two ordered parts to fit browser upload limits. Root `src/` is the preserved older React source; it is **not** the 2.10 mobile build entry.
+این بسته پروژهٔ قابل‌ساخت کدپد، فایل‌های قابل‌ویرایش ویرایشگر و لانچر نسخهٔ ۲٫۹، موتور جدید پایتون، سرویس اندروید، سازندهٔ خروجی APK و ویندوز، نمونه‌ها و آزمون‌ها را کنار هم قرار می‌دهد.
 
-The complete release preserves the delivered 2.9 editor and launcher, Gemini agent, pip installation, APK and Windows export tools, and adds continuous streaming Python, an Android foreground runtime with a Stop notification, and static Nava model import. Module-worker startup in the Android runtime was fixed before publication.
+## تغییرات نسخهٔ ۲.۱۱
 
-Download the installable APK and full editable source from [release v2.10.0](https://github.com/hoosein91hoosein91-arch/CodePad/releases/tag/v2.10.0).
+- پل ApkExport اندروید اکنون ثبت می‌شود و APK/خروجی PC/پشتیبان را با پنجرهٔ استاندارد ذخیرهٔ اندروید می‌نویسد؛ ذخیرهٔ لغوشده فایل موقت باقی نمی‌گذارد.
+- خطای Python یا بلوک دیگر در Mix در ویرایشگر، لانچر و پخش‌کنندهٔ خروجی نمایش داده می‌شود.
+- مرکز پروژه در منوی پروژه‌ها: ۲۰ نسخهٔ آخر، ثبت خودکار پس از ویرایش، بازگردانی همراه پیوست‌ها، پشتیبان کامل و راهنمای سازگاری بسته‌ها.
+- پشتیبان کامل، دادهٔ برنامه‌ها و کلید امضای خروجی‌های شخصی و شماره‌نسخه‌های آن‌ها را حفظ می‌کند؛ Gemini key وارد پشتیبان نمی‌شود.
+- Skin چهار اثر استخوان برای هر رأس و انیمیشن translation/rotation/scale در GLB/glTF داخلی؛ LINEAR، STEP و CUBICSPLINE. محدودیت مدل متحرک: ۱۰۰هزار رأسِ بازشده.
+- فیزیک سبک نوا: collider جعبه‌ای در راستای محور جهان، جرم، جاذبه، ضربه، سرعت و برخورد پیوسته با گام ثابت ۱۲۰ هرتز؛ حداکثر ۱۲۸ collider.
+- Stop/Resume انیمیشن و فیزیک را نیز متوقف/ادامه می‌دهد. نمونهٔ «برخورد و جاذبه» آماده است.
+- نسخهٔ نمایش‌داده‌شده از package.json ساخته می‌شود.
 
-This debug APK uses `com.hoosein.codepad.continuous`, installs beside old CodePad builds, and does not automatically migrate their projects. Export/import a project or launcher backup to move your data. Physical-device behavior has not been tested.
+## نصب و امضای ثابت
 
-To restore the complete source after cloning:
+شناسهٔ بستهٔ انتشار جدید `com.hoosein.codepad.stable` است. APK نسخهٔ ۲.۱۰ با کلید debug ساخته شد که در فایل‌های تحویل‌شده موجود نیست؛ بنابراین ارتقای مستقیم روی همان نصب قابل تضمین نیست. ۲.۱۱ کنار آن نصب می‌شود. تا انتقال برنامه‌ها و پروژه‌ها، نسخهٔ قبلی را نگه دارید. پشتیبان قدیمی لانچر در مرکز پروژه وارد می‌شود؛ پروژه‌های ویرایشگر قبلی را به‌صورت فایل منتقل کنید.
+
+برای انتشار نهایی، APK تولیدشده در CI به‌صورت محلی با یک کلید خصوصی ثابت امضا می‌شود. کلید در مخزن عمومی و CI قرار نمی‌گیرد. نسخه‌های بعدی با همان شناسه و کلید، قابلیت ارتقا و حفظ داده‌های نصب ۲.۱۱ را دارند. فایل کلید برای صاحب برنامه به‌صورت خصوصی نگهداری می‌شود. ساخت debug مستقل از این مسیر است و امضای قابل‌ارتقای انتشار ندارد.
+
+محدودیت سه‌بعدی: فیزیک این نسخه موتور rigid-body کامل، ragdoll، مفصل یا برخورد سطح دقیق mesh نیست. collider با Rotate نمی‌چرخد؛ Scale اندازهٔ collider را تغییر می‌دهد. glTF خارجی، فشرده‌سازی Draco/Meshopt، morph targets و FBX پشتیبانی نمی‌شوند.
+
+## نقطهٔ شروع برای ویرایش
+
+| مسیر | کاربرد |
+|---|---|
+| mobile-src/assets/editor.js | رابط اصلی ویرایشگر و تغییرات ۲٫۱۱ |
+| mobile-src/assets/runtime.js | زبان‌ها، ذخیره‌سازی، ایمپورت، صادرکننده‌ها و منطق اصلی |
+| mobile-src/assets/launcher.js | لانچر و اجرای برنامه‌ها |
+| export-player-src | سورس پخش‌کنندهٔ برنامه‌های صادرشده |
+| public/background/python-worker.js | موتور مشترک پایتون |
+| public/background/native-worker.js | پل اجرای پایتون در اندروید |
+| resources/android/*.java.in | سورس سرویس، پلاگین و Activity اندروید |
+| src/labshell/nava-model.ts | واردکنندهٔ مدل سه‌بعدی |
+| mobile-src/assets/recovery.js | تاریخچه، پشتیبان کامل و راهنمای بسته‌ها |
+| src/labshell/nava-physics.ts | برخورد پیوسته و جاذبه |
+| src/labshell/nava-scene.ts | رندر، نور، دوربین و تکسچر سه‌بعدی |
+| mobile-src/codepad_apk.py | بسته‌بندی و امضای خروجی APK |
+| resources/windows/main.go | سورس لانچر قابل‌حمل ویندوز جایگزین |
+| examples/continuous | نمونه‌های چاپ و ربات |
+| scripts | ساخت، آماده‌سازی و آزمون |
+
+جزئیات بازیابی سورس و محدودیت‌های تأیید در SOURCE-STATUS.md آمده‌اند. فایل‌های TypeScript قدیمی در src نیز نگه داشته شده‌اند؛ اجرای build:react یک نسخهٔ قدیمی‌تر رابط را می‌سازد و مسیر ساخت نسخهٔ کامل موبایل نیست.
+
+## ساخت نسخهٔ موبایل
+
+نیازمندی ساخت: Node 22 یا جدیدتر، npm و Python 3. ساخت اندروید به Java 21 و Android SDK هم نیاز دارد. موتور Pyodide و قالب‌های خروجی داخل بسته‌اند؛ اجرای build:mobile به فایل سورس دیگری یا ZIP نسخهٔ قبلی نیاز ندارد.
 
 ```sh
-cat CodePad-2.10.0-source.zip.part1 CodePad-2.10.0-source.zip.part2 > CodePad-2.10.0-source.zip
-sha256sum CodePad-2.10.0-source.zip
-# f2c5855d2ce126b2235f1071049583bd5197b27e319101696a0936fae1c5a216
-unzip CodePad-2.10.0-source.zip
-cd CodePad-2.10.0
 npm ci
+npm run build:mobile
+npm run test:source
+npm run test:continuous:node
+npx cap add android
+npm run android:prepare
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+در ویندوز، برای مرحلهٔ آخر gradlew.bat assembleDebug را اجرا کنید. مسیر خروجی APK: android/app/build/outputs/apk/debug/app-debug.apk.
+فایل .github/workflows/android.yml همین مسیر ساخت را برای GitHub Actions آماده می‌کند. این بسته به‌خودی‌خود چیزی را منتشر نمی‌کند.
+
+برای دیدن نسخهٔ ساخته‌شده: npm run dev:mobile. تغییر فایل‌های mobile-src یا موتور پس‌زمینه با build:mobile وارد نسخهٔ ساخته‌شده می‌شود.
+
+## پایتون متنی با فاصلهٔ واقعی
+
+نمونهٔ examples/continuous/random_greetings.py ده بار، هر بار با فاصلهٔ یک ثانیه، تصادفی «سلام» یا «خوبی» چاپ می‌کند. نمونهٔ telegram_bot.py از pyodide.http.pyfetch و HTTPS استفاده می‌کند. برای اجرا باید توکن ربات خودتان را جای مقدار نمونه بگذارید.
+
+کدپد CPython بومی همراه سوکت سیستم‌عامل نیست. کتابخانه‌هایی که به sockets یا فایل‌های اجرایی بومی وابسته‌اند لزوماً کار نمی‌کنند. برای async در سطح فایل، هم await مستقیم و هم asyncio.run پشتیبانی می‌شوند؛ asyncio.run داخل یک coroutine همچنان اجرای تو در توی حلقهٔ رویداد نیست. input مانند قبل در صورت نداشتن ورودی، درخواست پاسخ و اجرای دوباره دارد.
+
+سرویس پس‌زمینهٔ اندروید به معنی اجرای تضمینی بعد از force-stop، ری‌استارت گوشی، قطع اینترنت یا بسته‌شدن پردازش توسط سیستم نیست و خودکار ربات را دوباره راه نمی‌اندازد. در مرورگر و خروجی ویندوز، اجرا به بازماندن پنجره و فرایند وابسته است.
+
+## مدل سه‌بعدی
+
+فایل مدل را به پیوست پروژه اضافه کنید. برای نمونهٔ داخلی، crystal.glb و کد زیر کنار هم قرار دارند:
+
+```text
+Pg "Model viewer" | G9 | Scene N360,N480
+Model Gem "crystal.glb"
+Camera N6,N18,N0 | Orbit Tr
+Frame
+  Rotate Gem N0,N30 * Dt,N0
+End
+```
+
+حد فعلی: مدل مثلثی، بدون Draco/Meshopt، sparse accessor یا morph targets؛ ریگ چهار اثر استخوانی و clip داخلی translation/rotation/scale پشتیبانی می‌شوند. glTF باید بافرها و تصاویرش را داخل خود فایل نگه دارد؛ برای منابع جدا از GLB استفاده کنید. OBJ فقط هندسه و UV/نرمال را وارد می‌کند و فایل MTL آن خوانده نمی‌شود. FBX، Blend و سایر فرمت‌های خارج از این فهرست پیاده‌سازی نشده‌اند. انیمیشن دستوری Frame برای جابه‌جایی کل مدل و Anim برای clip داخلی کار می‌کند. سقف مدل پس از بازکردن اندیس‌ها یک میلیون رأس است؛ سقف پیوست خروجی برنامه از نسخهٔ قبلی ۴۰ مگابایت باقی مانده است.
+
+## خروجی ویندوز و قالب‌ها
+
+قالب‌های native آماده داخل mobile-src هستند. سورس قابل‌ویرایش صفحات داخل قالب‌ها در export-player-src قرار دارد و build:mobile آن‌ها را دوباره بسته‌بندی می‌کند.
+برای ساخت لانچر جدید از سورس Go، بدون کتابخانهٔ خارجی:
+
+```sh
+mkdir -p build-windows
+GOOS=windows GOARCH=amd64 go build -ldflags="-H=windowsgui" -o build-windows/Start.exe resources/windows/main.go
 npm run build:mobile
 ```
 
-The release workflow verifies the hash, runs source/launcher/TypeScript and real Python browser tests, generates Android, builds the APK and verifies its signature/version before publishing. See the complete source README for supported model formats and background-execution limits.
+اگر build-windows/Start.exe موجود باشد، ساخت قالب ویندوز از آن استفاده می‌کند؛ در غیر این صورت لانچر آمادهٔ نسخهٔ قبلی حفظ می‌شود. سورس Go همراه بسته بازنویسی است، نه سورس بازیابی‌شدهٔ دقیق باینری قدیمی؛ در محیط این تحویل کامپایل/اجرای ویندوز تأیید نشده است.
 
----
+## بررسی‌ها
 
-## Legacy source history
+VALIDATION.md نتیجهٔ بررسی همین تحویل را ثبت می‌کند. تست موتور Node از همان Pyodide/WASM و همان فایل worker محصول استفاده می‌کند؛ فقط مسیر فایل و پل Worker را برای Node تطبیق می‌دهد. این آزمون جای آزمون دستگاه اندروید یا بررسی تصویری WebGL نیست.
 
-# CodePad (جیب‌کد)
+## تأیید انتشار
 
-**2.5.1 / Fullscreen**: Android system bars appear temporarily on edge swipe. Launcher tools stay hidden until the top handle is tapped or dragged down, without resizing the running game.
-**2.5.0 / Nava Studio 0.6**: Latin starter/completions, multiple instructions per line with `|`, frame animations, seven WebGL primitives, materials, fog, lighting, pinch/drag camera, and correct active-file installation in the launcher. Existing languages and legacy Nava remain supported.
+`npm run typecheck`، `npm run test:launcher`، `npm run test:source` و `npm run test:upgrade` اجرا می‌شوند. آزمون مرورگر، پشتیبان با پیوست، خطاها و APK واقعی خروجی را بررسی می‌کند. آزمون اندروید روی emulator، ثبت پلاگین، لغو ذخیره، ذخیرهٔ chunkها در DocumentsUI، نصب و اجرای APK خروجی را بررسی می‌کند. برای آزمون دستگاه فیزیکی ادعایی نمی‌شود.
 
-An offline, multi-language coding workshop for phones. It runs Python (Pyodide), JavaScript, C/C++, the Jib teaching language (English and Farsi keywords), an 8-bit binary machine, HTML and CSS, plus **mix files** that combine several languages in one file and can render a live HTML/canvas page.
-
-- **Writing code for CodePad (for AI assistants and humans): see [AI_GUIDE.md](AI_GUIDE.md).** It covers the languages, the mix-file format (`@@` blocks, `shared`), attachments (upload any file — images, CSV/JSON/text, binary, audio, fonts — and use it in code by its file name), `.jibpack` packs (code + images in one file; built-in sample «مار و سیب (با عکس)»), the launcher (run projects as apps), limitations and worked examples.
-- **v2.0.0 — JibOS launcher:** neon-terminal theme with matrix rain, phone wallpapers (built-in or your own photo), per-app icon images, accent colours and layout options; **Connect Gemini** with your own API key (saved only on the device, stays connected); `window.jibos` for installed apps (sound, toast, persistent storage); an in-app **developer mode** (edit installed apps, launcher JSON/CSS/boot script, console) — this is not Android root; and offline security & cryptography samples (hashing, Base64/Hex, Caesar/Vigenère, XOR, password strength). Details and honest limits: [AI_GUIDE.md §2.11 and §4.5](AI_GUIDE.md).
-- **v2.1.0 — terminal, private browser, multi-page home:** a Termux-style **console** that is a simulated POSIX shell over a virtual in-app filesystem (`ls`/`cd`/`cat`/`grep`/`echo >` + the crypto/security helpers), with an **educational simulated** `nmap`/port-scan and an optional hand-off to the real Termux app on Android; a built-in **private (incognito) browser** that keeps no history/cookies; a **multi-page, swipeable home screen** with add-page, per-page wallpaper, and **export/backup** of the launcher and all apps to one `.jibos` file; and two more educational net-security samples. Honest limits (no real IP hiding/VPN, no Chrome-PC extensions, no real device control/anti-hack, no real network scanning): [AI_GUIDE.md §2.12 and §4.5](AI_GUIDE.md).
-- **v2.2.0 — Nava (نوا):** a tiny Persian-first language (`.nava`) that turns one short command per line into a full phone app: variables, lists, conditionals, loops, functions, timers, touch/keys, 2D canvas, lightweight WebGL 3D shapes, sound, persistent storage, attachments by file name, and `بپرس` (Gemini, with your own key and per-app permission). Persian, line-numbered errors; no `eval`. Five built-in samples (todo, clicker, snake, 3D, AI). Reference and honest limits (no AAA 3D, no on-device AI training): [NAVA-GUIDE.md](NAVA-GUIDE.md), [AI_GUIDE.md §2.13](AI_GUIDE.md).
-- **v2.4.0 — Nava 0.5 (the owner's v2.3.0 Nava 0.4 work merged into the full app — launcher, JibOS, Gemini, terminal, browser and the whole v2.2.0 Nava language all kept):** every Nava keyword now has a 2–3-letter short form (`pg`, `bt`, `out`, `num`, …; a **«مخفف‌کردن کد»** button converts code, keeping all text), one-line ready-made components (`cal` calculator, `cnt` counter, `tm` timer, `vx` small voxel world with custom blocks `bl`), one-line button capsules `bt "شروع" (ru240rn64yGi65G72): sy "…"`, and reusable recipes `df "name"` … `end` / `us "name"` — all on top of the full v2.2.0 language. Machine-readable spec for AI: [NAVA-AI-SPEC.json](NAVA-AI-SPEC.json); standalone examples: `examples/nava/`. Details: [NAVA-GUIDE.md §5.5](NAVA-GUIDE.md), [AI_GUIDE.md §2.13.1](AI_GUIDE.md).
-- Download the Android APK: https://github.com/hoosein91hoosein91-arch/CodePad/releases/download/v2.4.0/CodePad.apk (all versions: https://github.com/hoosein91hoosein91-arch/CodePad/releases/latest) (debug build: allow unknown sources, and uninstall the old version before installing a new one).
-- Build: `npm install`, `npm run build:mobile`; the Android APK is built by `.github/workflows/android.yml`.
-
-
-## ادغام با سورس قبلی لانچر — ۲۰۲۶/۱۰/۰۸
-
-سورس ۲.۴.۰ با آخرین لانچر به‌روزشده ادغام شده است. نام صفحه‌ها، تنظیمات و پشتیبان‌های قبلی پشتیبانی می‌شوند؛ مخفف‌های نوا، اتصال Termux و خروجی ویرایشگر حفظ شده‌اند. هیچ مسیر ورودی حذف نشده است. نسخهٔ کامل و دست‌نخوردهٔ هر دو ZIP در `merge-originals/` قرار دارد. گزارش و محدودیت‌های آزمون را در [MERGE-REPORT.md](MERGE-REPORT.md) بخوانید. این بسته سورس است و APK ساخته‌شده ندارد.
-
-آزمون‌های مرتبط: `npm run test:launcher`.
+امضای محلی: `node scripts/sign-release.mjs INPUT.apk OUTPUT.apk PRIVATE_KEY.json ANDROID_BUILD_TOOLS`. کلید را یک‌بار با `node scripts/create-release-key.mjs PRIVATE_KEY.json` بسازید؛ برای به‌روزرسانی کلید جدید نسازید.

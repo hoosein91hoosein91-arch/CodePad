@@ -1,6 +1,6 @@
 {
   "language": "Nava",
-  "version": "0.6",
+  "version": "0.7",
   "extension": ".nava",
   "caseSensitive": true,
   "oneInstructionPerLine": false,
@@ -592,5 +592,46 @@
       "No mesh import or physics engine",
       "Soft contact shadows approximate, up to 8 shapes on horizontal floors"
     ]
+  },
+  "models": {
+    "formats": [
+      "glb2",
+      "self-contained gltf2",
+      "obj",
+      "stl"
+    ],
+    "skinning": "four influences per vertex",
+    "animation": [
+      "translation",
+      "rotation",
+      "scale"
+    ],
+    "interpolation": [
+      "LINEAR",
+      "STEP",
+      "CUBICSPLINE"
+    ],
+    "maxAnimatedExpandedVertices": 100000,
+    "unsupported": [
+      "external buffers/textures",
+      "Draco/Meshopt",
+      "morph targets",
+      "FBX"
+    ]
+  },
+  "physics": {
+    "commands": {
+      "Body": "mass,width,height,depth,bounce",
+      "Velocity": "x,y,z",
+      "Impulse": "x,y,z",
+      "Gravity": "x,y,z",
+      "Physics": "0/1",
+      "Anim": "clip name or index,speed,loop",
+      "PauseAnim": "0/1"
+    },
+    "collider": "world-axis-aligned box, scaled dimensions; visual rotations do not rotate collider",
+    "fixedHz": 120,
+    "sweptCollision": true,
+    "maxBodies": 128
   }
 }

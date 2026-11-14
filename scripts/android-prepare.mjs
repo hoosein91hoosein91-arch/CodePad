@@ -7,6 +7,9 @@
 import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+const version = JSON.parse(readFileSync("package.json", "utf8")).version;
+const [major, minor, patch] = version.split(".").map(Number);
+const versionCode = major * 1000 + minor * 10 + patch;
 const appId = JSON.parse(readFileSync("capacitor.config.json", "utf8")).appId;
 
 const res = "android/app/src/main/res";
@@ -28,8 +31,30 @@ if (!manifest.includes(".TermuxResultService")) {
 }
 writeFileSync(manifestPath, manifest);
 
+// A user-started interpreter is specialUse, not a timed dataSync service.
+for (const permission of ["FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", "POST_NOTIFICATIONS", "WAKE_LOCK"]) {
+  if (!manifest.includes(`android.permission.${permission}"`)) manifest = manifest.replace(/(<application\b)/, `    <uses-permission android:name="android.permission.${permission}" />\n    $1`);
+}
+if (!manifest.includes(".CodePadRuntimeService")) manifest = manifest.replace(/(<application\b[^>]*>)/, `$1
+        <service android:name=".CodePadRuntimeService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-started Python interpreter and bot polling with visible stop notification" />
+        </service>`);
+if (!manifest.includes("android:networkSecurityConfig=")) manifest = manifest.replace(/(<application\b)/, '$1 android:networkSecurityConfig="@xml/codepad_network_security"');
+writeFileSync(manifestPath, manifest);
+const xmlDir = join(res, "xml");
+import { mkdirSync } from "node:fs";
+mkdirSync(xmlDir, { recursive: true });
+writeFileSync(join(xmlDir, "codepad_network_security.xml"), `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <base-config cleartextTrafficPermitted="false" />
+  <domain-config cleartextTrafficPermitted="true"><domain>127.0.0.1</domain><domain>localhost</domain></domain-config>
+</network-security-config>`);
+
 const javaPackagePath = appId.replaceAll(".", "/");
 const javaDir = join("android/app/src/main/java", javaPackagePath);
+for (const name of ["CodePadRuntimePlugin", "CodePadRuntimeService", "CodePadAssetServer", "ApkExportPlugin"]) {
+  writeFileSync(join(javaDir, name + ".java"), readFileSync("resources/android/" + name + ".java.in", "utf8").replaceAll("__APP_ID__", appId));
+}
 const pluginPath = join(javaDir, "TermuxBridgePlugin.java");
 const java = `package ${appId};
 
@@ -237,7 +262,7 @@ console.log("android resources prepared");
 const gradlePath = "android/app/build.gradle";
 if (existsSync(gradlePath)) {
   const gradle = readFileSync(gradlePath, "utf8")
-    .replace(/versionCode\s+\d+/, "versionCode 251")
-    .replace(/versionName\s+"[^"]+"/, 'versionName "2.5.1"');
+    .replace(/versionCode\s+\d+/, `versionCode ${versionCode}`)
+    .replace(/versionName\s+"[^"]+"/, `versionName "${version}"`);
   writeFileSync(gradlePath, gradle);
 }

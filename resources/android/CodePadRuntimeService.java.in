@@ -1,0 +1,172 @@
+package __APP_ID__;
+
+import android.app.Service;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.pm.ServiceInfo;
+import android.os.Build;
+import android.os.IBinder;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
+import android.util.Base64;
+import com.getcapacitor.JSObject;
+import org.json.JSONObject;
+import java.net.URL;
+import java.net.HttpURLConnection;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/** Owns the renderer across Activity pauses and recreation. No automatic bot restart. */
+public class CodePadRuntimeService extends Service {
+    static final String START = "__APP_ID__.RUNTIME_START", STOP = "__APP_ID__.RUNTIME_STOP";
+    static volatile CodePadRuntimeService instance;
+    private static String reservedChannel, reservedPayload;
+    private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    String channel = "";
+    private String payload;
+    private int jobId;
+    private boolean finished;
+    private String output = "", errors = "";
+    private WebView runtime;
+    private CodePadAssetServer assets;
+    private PowerManager.WakeLock wakeLock;
+    private final ExecutorService http = Executors.newFixedThreadPool(4);
+    private final ConcurrentHashMap<Integer, HttpURLConnection> connections = new ConcurrentHashMap<>();
+
+    static synchronized boolean reserve(String channel, String payload) {
+        if (instance != null || reservedChannel != null) return false;
+        reservedChannel = channel; reservedPayload = payload; return true;
+    }
+    static synchronized void clearReservation() { reservedChannel = null; reservedPayload = null; }
+    static synchronized void cancelReservation(String channel) {
+        if (channel.isEmpty() || channel.equals(reservedChannel)) clearReservation();
+    }
+    static JSObject status() {
+        CodePadRuntimeService service = instance;
+        JSObject result = new JSObject(); result.put("running", service != null && !service.finished);
+        if (service != null) { result.put("id", service.jobId); result.put("channel", service.channel); result.put("stdout", service.output); result.put("stderr", service.errors); }
+        return result;
+    }
+    @Override public IBinder onBind(Intent intent) { return null; }
+    @Override public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null || STOP.equals(intent.getAction())) { stopByUser(); return START_NOT_STICKY; }
+        if (runtime != null) return START_NOT_STICKY;
+        synchronized (CodePadRuntimeService.class) {
+            channel = reservedChannel; payload = reservedPayload; clearReservation();
+        }
+        if (channel == null || payload == null) { stopSelf(); return START_NOT_STICKY; }
+        instance = this;
+        try {
+            jobId = new JSONObject(payload).optInt("id", 0);
+            NotificationManager notifications = getSystemService(NotificationManager.class);
+            if (Build.VERSION.SDK_INT >= 26) notifications.createNotificationChannel(new NotificationChannel("codepad-runtime", "اجرای Python", NotificationManager.IMPORTANCE_LOW));
+            Intent open = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent content = PendingIntent.getActivity(this, 2100, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            Intent stop = new Intent(this, CodePadRuntimeService.class).setAction(STOP);
+            PendingIntent stopAction = PendingIntent.getService(this, 2101, stop, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, "codepad-runtime") : new Notification.Builder(this);
+            Notification notification = builder.setSmallIcon(android.R.drawable.ic_media_play).setContentTitle("کدپد · Python در حال اجراست")
+                .setContentText("برنامه در پس‌زمینه ادامه دارد؛ برای توقف از دکمهٔ زیر استفاده کن.")
+                .setContentIntent(content).setOngoing(true).addAction(android.R.drawable.ic_media_pause, "توقف", stopAction).build();
+            if (Build.VERSION.SDK_INT >= 34) startForeground(2100, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            else startForeground(2100, notification);
+            PowerManager power = (PowerManager)getSystemService(POWER_SERVICE);
+            wakeLock = power.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "CodePad:PythonRuntime"); wakeLock.acquire();
+            assets = new CodePadAssetServer(getAssets()); assets.start();
+            runtime = new WebView(this);
+            runtime.getSettings().setJavaScriptEnabled(true);
+            runtime.getSettings().setDomStorageEnabled(true);
+            runtime.getSettings().setAllowFileAccess(false);
+            runtime.getSettings().setAllowContentAccess(false);
+            if (Build.VERSION.SDK_INT >= 26) runtime.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
+            runtime.addJavascriptInterface(new Host(), "CodePadHost");
+            runtime.setWebViewClient(new WebViewClient() {
+                @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return true; }
+                @Override public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+                    finish("موتور Python توسط سیستم متوقف شد. برای ادامه دوباره اجرا کن."); return true;
+                }
+            });
+            runtime.loadUrl(assets.origin() + "/background/runner.html");
+        } catch (Exception error) { finish("اجرای Python شروع نشد: " + error.getClass().getSimpleName()); }
+        return START_NOT_STICKY;
+    }
+    private class Host {
+        @JavascriptInterface public void ready() { MAIN.post(() -> { if (!finished && runtime != null) runtime.evaluateJavascript("codepadStart(" + payload + ")", null); payload = null; }); }
+        @JavascriptInterface public void event(String json) { MAIN.post(() -> {
+            if (finished) return;
+            try {
+                JSObject data = new JSObject(json);
+                if (data.optBoolean("stream")) {
+                    if ("err".equals(data.optString("kind"))) errors = tail(errors + data.optString("text"));
+                    else output = tail(output + data.optString("text"));
+                }
+                CodePadRuntimePlugin.publish(channel, data);
+                if (data.optBoolean("done")) { finished = true; stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); }
+            } catch (Exception error) { finish("پاسخ موتور قابل خواندن نبود."); }
+        }); }
+        @JavascriptInterface public void http(String json) {
+            if (finished) return;
+            http.execute(() -> request(json));
+        }
+        @JavascriptInterface public void cancelHttp(int id) { HttpURLConnection connection = connections.remove(id); if (connection != null) connection.disconnect(); }
+    }
+    private void request(String json) {
+        JSONObject reply = new JSONObject(); HttpURLConnection connection = null; int id = 0;
+        try {
+            JSONObject request = new JSONObject(json); id = request.getInt("id"); reply.put("id", id);
+            URL url = new URL(request.getString("url"));
+            if (!"https".equals(url.getProtocol())) throw new IllegalArgumentException("HTTPS required");
+            connection = (HttpURLConnection)url.openConnection(); connections.put(id, connection);
+            connection.setConnectTimeout(20000); connection.setReadTimeout(70000); connection.setInstanceFollowRedirects(false);
+            String method = request.optString("method", "GET"); connection.setRequestMethod(method);
+            JSONObject headers = request.optJSONObject("headers");
+            if (headers != null) { Iterator<String> keys = headers.keys(); while (keys.hasNext()) { String key = keys.next(); if (!key.equalsIgnoreCase("host") && !key.equalsIgnoreCase("content-length")) connection.setRequestProperty(key, headers.getString(key)); } }
+            byte[] body = Base64.decode(request.optString("body", ""), Base64.DEFAULT);
+            if (body.length > 0) { connection.setDoOutput(true); connection.getOutputStream().write(body); connection.getOutputStream().close(); }
+            int code = connection.getResponseCode();
+            InputStream input = code >= 400 ? connection.getErrorStream() : connection.getInputStream();
+            byte[] response = readLimited(input, 40 * 1024 * 1024);
+            JSONObject responseHeaders = new JSONObject();
+            for (java.util.Map.Entry<String, java.util.List<String>> header : connection.getHeaderFields().entrySet()) if (header.getKey() != null) responseHeaders.put(header.getKey(), String.join(", ", header.getValue()));
+            reply.put("status", code); reply.put("headers", responseHeaders); reply.put("body", Base64.encodeToString(response, Base64.NO_WRAP));
+        } catch (Exception error) {
+            try { reply.put("id", id); reply.put("error", "درخواست شبکه انجام نشد؛ اتصال اینترنت را بررسی کن. (" + error.getClass().getSimpleName() + ")"); } catch (Exception ignored) {}
+        } finally { connections.remove(id); if (connection != null) connection.disconnect(); }
+        final String result = reply.toString(); MAIN.post(() -> { if (!finished && runtime != null) runtime.evaluateJavascript("codepadReply(" + result + ")", null); });
+    }
+    static byte[] readLimited(InputStream input, int max) throws java.io.IOException {
+        if (input == null) return new byte[0];
+        try (InputStream stream = input; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[16384]; int count;
+            while ((count = stream.read(buffer)) != -1) { if (out.size() + count > max) throw new java.io.IOException("Response limit"); out.write(buffer, 0, count); }
+            return out.toByteArray();
+        }
+    }
+    private static String tail(String text) { return text.length() > 262144 ? text.substring(text.length() - 262144) : text; }
+    void stopByUser() { MAIN.post(() -> finish("اجرا با درخواست شما متوقف شد.")); }
+    private void finish(String error) {
+        if (!finished && channel != null) { finished = true; JSObject result = new JSObject(); result.put("id", jobId); result.put("stdout", output); result.put("stderr", error); result.put("streamed", true); result.put("done", true); CodePadRuntimePlugin.publish(channel, result); }
+        stopForeground(STOP_FOREGROUND_REMOVE); stopSelf();
+    }
+    @Override public void onDestroy() {
+        finished = true;
+        if (runtime != null) { runtime.stopLoading(); runtime.removeJavascriptInterface("CodePadHost"); runtime.destroy(); runtime = null; }
+        for (HttpURLConnection connection : connections.values()) connection.disconnect(); connections.clear(); http.shutdownNow();
+        if (assets != null) assets.close();
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        if (instance == this) instance = null;
+        clearReservation(); super.onDestroy();
+    }
+}

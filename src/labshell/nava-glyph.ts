@@ -1,5 +1,6 @@
 /** Compact, Latin-only surface syntax for Nava. Existing Persian and lowercase forms remain valid. */
 export const NAVA_GLYPH_WORDS: Record<string, string> = {
+  Body: "جسم", Velocity: "سرعت", Impulse: "ضربه", Anim: "پویانمایی", PauseAnim: "مکثمدل", Gravity: "جاذبه", Physics: "فیزیک",
   Pg: "pg", Ap: "ap", Hd: "hd", Tx: "tx", Fg: "fg", Bg: "bg", Num: "num", Var: "var",
   In: "in", Out: "out", Bt: "bt", Btn: "bt",
   Img: "img", Alt: "alt", Sy: "sy", On: "on", Cal: "cal", Mb: "mb", Cnt: "cnt",
@@ -9,7 +10,7 @@ export const NAVA_GLYPH_WORDS: Record<string, string> = {
   Ret: "نتیجه", Return: "برگرد", Row: "ردیف", Show: "نمایش", Every: "هر", After: "بعد از",
   Touch: "وقتی لمس", Key: "وقتی کلید", Push: "افزودن", Del: "حذف", Clear: "خالی",
   List: "فهرست", Store: "ذخیره", Msg: "پیام", Tone: "صدا", Melody: "آهنگ",
-  Speak: "بگو", Ask: "بپرس", Canvas: "بوم", Scene: "صحنه", Cube: "مکعب",
+  Speak: "بگو", Ask: "بپرس", Canvas: "بوم", Scene: "صحنه", Model: "مدل", Mdl: "مدل", Cube: "مکعب",
   Ball: "کره", Pyramid: "هرم", Floor: "زمین", Rotate: "بچرخان", Move: "حرکت",
   Shift: "جابجا", Scale: "اندازه", Camera: "دوربین", ClearCanvas: "پاک",
   Circle: "دایره", Rect: "مستطیل", Line: "خط", DrawText: "نوشته", DrawImage: "تصویر",

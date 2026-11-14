@@ -286,7 +286,7 @@ export async function runMix(
     }
   }
   if (Object.keys(shared).length) out.push(`── داده مشترک ──\n${JSON.stringify(shared)}`);
-  if (hasHtml) {
+  if (hasHtml && !result.stderr.trim() && !result.aborted) {
     // داده‌ای که پایتون یا بلوک‌های دیگر در shared گذاشته‌اند به اسکریپت صفحه هم می‌رسد
     // window.shared در <head> تعریف می‌شود تا اسکریپت‌های داخل بلوک html هم به آن برسند
     const data = JSON.stringify(shared).replace(/</g, "\\u003c");

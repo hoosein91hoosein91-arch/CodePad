@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import test from "node:test";
+import test, { after } from "node:test";
 import {
   appNameFromHost,
-  createHeadInjector,
+  createHeadInjector as createHeadInjectorImpl,
   grokXCreatorHeadTags,
-  injectGrokPwaHead,
+  injectGrokPwaHead as injectGrokPwaHeadImpl,
   isDocumentPath,
   isInstallQuery,
   publicAppHost,
@@ -20,6 +20,11 @@ import {
 import { renderInstallPage } from "./grok-pwa-plugin.mjs";
 
 const TEMPLATE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+// Generic platform fixtures must not inherit this app's custom title/card.
+const EMPTY_WORKSPACE = mkdtempSync(join(tmpdir(), "codepad-pwa-fixture-"));
+after(() => rmSync(EMPTY_WORKSPACE, { recursive: true, force: true }));
+const injectGrokPwaHead = (html, context = {}) => injectGrokPwaHeadImpl(html, { cwd: EMPTY_WORKSPACE, ...context });
+const createHeadInjector = (context = {}) => createHeadInjectorImpl({ cwd: EMPTY_WORKSPACE, ...context });
 
 test("injects before </head>", () => {
   const out = injectGrokPwaHead("<html><head><title>x</title></head><body></body></html>");

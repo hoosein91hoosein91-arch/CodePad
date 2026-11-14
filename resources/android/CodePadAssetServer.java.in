@@ -1,0 +1,57 @@
+package __APP_ID__;
+
+import android.content.res.AssetManager;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.InetAddress;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/** Loopback only, immutable APK assets; no project source or token is served. */
+final class CodePadAssetServer {
+    private final AssetManager assets;
+    private final ServerSocket server;
+    private final ExecutorService threads = Executors.newFixedThreadPool(6);
+    CodePadAssetServer(AssetManager assets) throws java.io.IOException {
+        this.assets = assets; server = new ServerSocket(0, 16, InetAddress.getByName("127.0.0.1"));
+    }
+    String origin() { return "http://127.0.0.1:" + server.getLocalPort(); }
+    void start() {
+        Thread accept = new Thread(() -> { while (!server.isClosed()) { try { Socket socket = server.accept(); threads.execute(() -> serve(socket)); } catch (Exception error) { break; } } }, "CodePadAssets");
+        accept.setDaemon(true); accept.start();
+    }
+    private void serve(Socket socket) {
+        try (Socket client = socket) {
+            client.setSoTimeout(15000);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.US_ASCII));
+            String request = reader.readLine(); if (request == null) return;
+            String[] parts = request.split(" ");
+            String header; while ((header = reader.readLine()) != null && !header.isEmpty()) {}
+            if (parts.length < 2 || !(parts[0].equals("GET") || parts[0].equals("HEAD"))) { respond(client, 405, new byte[0], "text/plain", false); return; }
+            String path = URLDecoder.decode(parts[1].split("\\?", 2)[0], "UTF-8");
+            if (!path.startsWith("/") || path.contains("..") || path.contains("\\") || path.indexOf(0) >= 0) { respond(client, 403, new byte[0], "text/plain", false); return; }
+            try (InputStream input = assets.open("public" + path)) {
+                respond(client, 200, CodePadRuntimeService.readLimited(input, 40 * 1024 * 1024), mime(path), parts[0].equals("HEAD"));
+            } catch (java.io.FileNotFoundException error) { respond(client, 404, new byte[0], "text/plain", false); }
+        } catch (Exception ignored) {}
+    }
+    private void respond(Socket socket, int code, byte[] body, String type, boolean head) throws java.io.IOException {
+        OutputStream out = socket.getOutputStream();
+        out.write(("HTTP/1.1 " + code + " OK\r\nContent-Type: " + type + "\r\nContent-Length: " + body.length + "\r\nConnection: close\r\nCache-Control: no-cache\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
+        if (!head) out.write(body); out.flush();
+    }
+    private String mime(String path) {
+        if (path.endsWith(".js") || path.endsWith(".mjs")) return "application/javascript";
+        if (path.endsWith(".wasm")) return "application/wasm";
+        if (path.endsWith(".html")) return "text/html; charset=utf-8";
+        if (path.endsWith(".json")) return "application/json";
+        return "application/octet-stream";
+    }
+    void close() { try { server.close(); } catch (Exception ignored) {} threads.shutdownNow(); }
+}

@@ -298,10 +298,10 @@ export function navaEngine(P: any, io: any): any {
     frameTime = time; S["دلتا"] = dt; handle(P.onFrame);
     if (running && !reported) animationFrame = io.requestFrame(nextFrame);
   };
-  function stopTimers() { if (animationFrame) io.cancelFrame(animationFrame); animationFrame = 0; frameTime = null; for (const t of timers) io.clearInterval(t); timers = []; running = false; }
+  function stopTimers() { io.pause?.(true); if (animationFrame) io.cancelFrame(animationFrame); animationFrame = 0; frameTime = null; for (const t of timers) io.clearInterval(t); timers = []; running = false; }
   function startTimers() {
     if (running) return;
-    running = true;
+    running = true; io.pause?.(false);
     if (P.onFrame && io.requestFrame) animationFrame = io.requestFrame(nextFrame);
     for (const t of P.timers) {
       if (t.once) continue;
@@ -455,7 +455,7 @@ export function navaDom(P: any, engine: any, sceneFactory: any): void {
     clearInterval: (id: number) => window.clearInterval(id),
     setTimeout: (f: any, ms: number) => window.setTimeout(f, ms),
     toast, tone, error, load, save, ask, fileText, ready, draw, obj,
-    cam: scene3d.cam, scene: scene3d.scene,
+    cam: scene3d.cam, scene: scene3d.scene, pause: scene3d.pause,
     requestFrame: (fn: any) => requestAnimationFrame(fn),
     cancelFrame: (id: number) => cancelAnimationFrame(id),
     melody: (fs: number[], ms: number) => fs.forEach((f, i) => window.setTimeout(() => tone(f, ms), i * ms)),
