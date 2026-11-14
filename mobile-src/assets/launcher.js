@@ -82,6 +82,7 @@ import {
   xt as Fe,
   y as Ie,
   z as Le,
+  codepadAI,
 } from "./runtime.js";
 import { c as Re, h as ze, o as G, s as Be, u as Ve } from "./main.js";
 var He = G(`arrow-right`, [
@@ -535,8 +536,8 @@ function dt({ app: e, onOpenChange: t, accent: i, gemini: a }) {
           }),
           (0, q.jsxs)(`button`, {
             type: `button`,
-            disabled: g || !a.key,
-            title: a.key ? `` : `اول Gemini را وصل کن`,
+            disabled: g || !codepadAI.aiReady(a),
+            title: codepadAI.aiReady(a) ? `` : `اول هوش مصنوعی را وصل کن`,
             className: `${j} flex items-center justify-center gap-1 disabled:opacity-40`,
             onClick: () => void C(),
             children: [(0, q.jsx)(rt, { className: `size-4` }), g ? `…` : `Gemini`],
@@ -2880,6 +2881,141 @@ function tn({ settings: e, accent: t, open: n, page: r }) {
     ],
   });
 }
+
+const AI_FIELD_LABELS = { url: `آدرس سرور (endpoint)`, model: `نام مدل (اختیاری)`, key: `کلید / توکن (اختیاری)`, headers: `سرآیندها (JSON)`, body: `قالب درخواست (JSON)`, responsePath: `مسیر متن در پاسخ (خالی = خودکار)` };
+function CustomAiForm({ settings: aiSettings, setSettings: saveAi, accent: aiAccent, setMessage: aiNotify }) {
+  let [aiCfg, setAiCfg] = (0, K.useState)(aiSettings.custom),
+    [aiBusy, setAiBusy] = (0, K.useState)(false),
+    aiAbort = (0, K.useRef)(null),
+    aiSet = (patch) => setAiCfg((cur) => ({ ...cur, ...patch })),
+    aiPresets = codepadAI.AI_PRESETS,
+    aiField = (name, opts = {}) =>
+      (0, q.jsxs)(`label`, {
+        className: `text-xs text-white/60`,
+        children: [
+          AI_FIELD_LABELS[name],
+          opts.area
+            ? (0, q.jsx)(`textarea`, {
+                className: `${z} mt-2 min-h-20 resize-y font-mono text-[12px]`,
+                dir: `ltr`,
+                spellCheck: false,
+                "aria-label": AI_FIELD_LABELS[name],
+                value: aiCfg[name] ?? ``,
+                onChange: (e) => aiSet({ [name]: e.target.value }),
+              })
+            : (0, q.jsx)(`input`, {
+                className: `${z} mt-2 font-mono`,
+                dir: `ltr`,
+                type: name === `key` ? `password` : `text`,
+                autoComplete: `off`,
+                spellCheck: false,
+                placeholder: opts.placeholder,
+                "aria-label": AI_FIELD_LABELS[name],
+                value: aiCfg[name] ?? ``,
+                onChange: (e) => aiSet({ [name]: e.target.value }),
+              }),
+        ],
+      }),
+    aiSave = () => {
+      if (!codepadAI.isCustomReady(aiCfg)) return aiNotify(`آدرس باید کامل و با http:// یا https:// شروع شود.`), false;
+      try {
+        codepadAI.buildRequest(aiCfg, `test`);
+      } catch (e) {
+        return aiNotify(e instanceof Error ? e.message : String(e)), false;
+      }
+      saveAi({ ...aiSettings, provider: `custom`, custom: aiCfg });
+      return true;
+    },
+    aiTest = async () => {
+      if (!aiSave()) return;
+      aiAbort.current?.abort();
+      let ctl = new AbortController();
+      ((aiAbort.current = ctl), setAiBusy(true), aiNotify(`در حال آزمایش اتصال…`));
+      try {
+        let text = await Le({ ...aiSettings, provider: `custom`, custom: aiCfg }, `فقط یک کلمه بنویس: سلام`, { signal: ctl.signal });
+        aiNotify(`اتصال برقرار است. پاسخ سرور: ${text.slice(0, 160)}`);
+      } catch (e) {
+        (e instanceof DOMException && e.name === `AbortError`) || aiNotify(e instanceof Error ? e.message : String(e));
+      } finally {
+        setAiBusy(false);
+      }
+    };
+  (0, K.useEffect)(() => () => aiAbort.current?.abort(), []);
+  return (0, q.jsxs)(`div`, {
+    className: `grid gap-3`,
+    "data-testid": `custom-ai-form`,
+    children: [
+      (0, q.jsx)(`p`, {
+        className: `text-xs leading-5 text-white/60`,
+        children: `هر سروری که یک درخواست HTTP بگیرد و متن برگرداند. تنظیمات و کلید فقط روی همین گوشی ذخیره می‌شوند. سرور باید از طرف گوشی در دسترس باشد و (برای اپ) هدر CORS بدهد.`,
+      }),
+      (0, q.jsxs)(`label`, {
+        className: `text-xs text-white/60`,
+        children: [
+          `قالب آماده`,
+          (0, q.jsxs)(`select`, {
+            className: `${z} mt-2`,
+            "aria-label": `قالب آماده`,
+            value: ``,
+            onChange: (e) => {
+              let preset = aiPresets[e.target.value];
+              if (!preset) return;
+              let known = Object.values(aiPresets).some((x) => x.url === aiCfg.url);
+              aiSet({ url: !aiCfg.url.trim() || known ? preset.url : aiCfg.url, headers: preset.headers, body: preset.body, responsePath: preset.responsePath });
+            },
+            children: [
+              (0, q.jsx)(`option`, { value: ``, children: `انتخاب کن تا فیلدها پر شوند…` }, `none`),
+              ...Object.entries(aiPresets).map(([id, p]) => (0, q.jsx)(`option`, { value: id, children: p.label }, id)),
+            ],
+          }),
+        ],
+      }),
+      aiField(`url`, { placeholder: `http://192.168.1.10:8000/v1/chat/completions` }),
+      aiField(`model`, { placeholder: `my-model` }),
+      aiField(`key`),
+      (0, q.jsxs)(`details`, {
+        className: `rounded-2xl border border-white/10 bg-white/[.03] p-3`,
+        children: [
+          (0, q.jsx)(`summary`, { className: `min-h-11 cursor-pointer text-sm`, children: `تنظیمات پیشرفتهٔ قالب درخواست و پاسخ` }),
+          (0, q.jsxs)(`div`, {
+            className: `mt-3 grid gap-3`,
+            children: [
+              aiField(`headers`, { area: true }),
+              aiField(`body`, { area: true }),
+              (0, q.jsx)(`p`, {
+                className: `text-[11px] leading-5 text-white/50`,
+                dir: `ltr`,
+                children: `Placeholders: {{prompt}} {{system}} {{model}} {{key}} {{messages}} (= [{role:"system"},{role:"user"}])`,
+              }),
+              aiField(`responsePath`, { placeholder: `choices.0.message.content` }),
+            ],
+          }),
+        ],
+      }),
+      (0, q.jsxs)(`div`, {
+        className: `grid grid-cols-2 gap-2`,
+        children: [
+          (0, q.jsx)(`button`, {
+            type: `button`,
+            className: H,
+            style: { background: aiAccent },
+            onClick: () => {
+              aiSave() && aiNotify(`ذخیره شد. دستیار از این به بعد از سرور خودت جواب می‌گیرد.`);
+            },
+            children: `ذخیرهٔ اتصال`,
+          }),
+          (0, q.jsx)(`button`, {
+            type: `button`,
+            disabled: aiBusy,
+            className: `${j} disabled:opacity-40`,
+            onClick: () => void aiTest(),
+            children: aiBusy ? `در حال آزمایش…` : `آزمایش اتصال`,
+          }),
+        ],
+      }),
+    ],
+  });
+}
 function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, page: a }) {
   let [o, s] = (0, K.useState)(``),
     [l, u] = (0, K.useState)(n.model || c),
@@ -2888,8 +3024,10 @@ function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, 
     [g, _] = (0, K.useState)(!1),
     [v, y] = (0, K.useState)(``),
     b = (0, K.useRef)(null),
-    [x, S] = (0, K.useState)(`agent`),
-    C = !!n.key;
+    [xTab, S] = (0, K.useState)(`agent`),
+    custom = n.provider === `custom`,
+    x = custom ? `chat` : xTab,
+    C = codepadAI.aiReady(n);
   (0, K.useEffect)(() => {
     e ? (s(``), u(n.model || c)) : b.current?.abort();
   }, [e, n.model]);
@@ -2916,7 +3054,7 @@ function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, 
       }
     };
   return (0, q.jsxs)(_e, {
-    title: `جمنای · دستیار و ایجنت`,
+    title: custom ? `هوش مصنوعی من · دستیار` : `جمنای · دستیار و ایجنت`,
     icon: (0, q.jsx)(rt, { className: `size-5`, style: { color: i } }),
     open: e,
     onOpenChange: t,
@@ -2931,17 +3069,25 @@ function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, 
             style: C ? { background: i, boxShadow: `0 0 10px ${i}` } : void 0,
           }),
           C
-            ? (0, q.jsxs)(`span`, {
-                children: [
-                  `وصل است · کلید `,
-                  (0, q.jsx)(`code`, { dir: `ltr`, className: `font-mono`, children: D(n.key) }),
-                  ` · `,
-                  n.model,
-                ],
-              })
+            ? custom
+              ? (0, q.jsxs)(`span`, {
+                  children: [
+                    `وصل است · سرور خودم · `,
+                    (0, q.jsx)(`code`, { dir: `ltr`, className: `font-mono`, children: codepadAI.aiLabel(n) }),
+                    n.custom.model ? ` · ${n.custom.model}` : ``,
+                  ],
+                })
+              : (0, q.jsxs)(`span`, {
+                  children: [
+                    `وصل است · کلید `,
+                    (0, q.jsx)(`code`, { dir: `ltr`, className: `font-mono`, children: D(n.key) }),
+                    ` · `,
+                    n.model,
+                  ],
+                })
             : (0, q.jsx)(`span`, {
                 className: `text-white/60`,
-                children: `وصل نیست — یک بار کلید API خودت را وارد کن.`,
+                children: custom ? `وصل نیست — آدرس سرور هوش مصنوعی خودت را وارد و ذخیره کن.` : `وصل نیست — یک بار کلید API خودت را وارد کن.`,
               }),
         ],
       }),
@@ -2951,11 +3097,38 @@ function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, 
         children: [
           (0, q.jsxs)(`summary`, {
             className: `flex min-h-11 cursor-pointer items-center gap-2 text-sm`,
-            children: [(0, q.jsx)(Je, { className: `size-4` }), `تنظیم اتصال Gemini`],
+            children: [(0, q.jsx)(Je, { className: `size-4` }), `تنظیم اتصال هوش مصنوعی`],
           }),
           (0, q.jsxs)(`div`, {
             className: `mt-3 grid gap-3`,
             children: [
+              (0, q.jsx)(`div`, {
+                className: `agent-surface grid grid-cols-2 gap-1 p-1`,
+                role: `tablist`,
+                "aria-label": `ارائه‌دهندهٔ هوش مصنوعی`,
+                children: [
+                  [`gemini`, `Gemini`],
+                  [`custom`, `سرور خودم`],
+                ].map(([id, label]) =>
+                  (0, q.jsx)(
+                    `button`,
+                    {
+                      type: `button`,
+                      role: `tab`,
+                      "aria-selected": (n.provider ?? `gemini`) === id,
+                      "data-testid": `ai-provider-${id}`,
+                      className: `min-h-11 rounded-xl text-sm font-semibold ${(n.provider ?? `gemini`) === id ? `bg-panel-2 text-paper` : `text-mist`}`,
+                      onClick: () => {
+                        (b.current?.abort(), y(``), r({ ...n, provider: id }));
+                      },
+                      children: label,
+                    },
+                    id,
+                  ),
+                ),
+              }),
+              custom ? (0, q.jsx)(CustomAiForm, { settings: n, setSettings: r, accent: i, setMessage: y }) : null,
+              ...(custom ? [] : [
               (0, q.jsxs)(`div`, {
                 className: `flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3`,
                 children: [
@@ -3016,11 +3189,18 @@ function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, 
                   }),
                 ],
               }),
+              ]),
             ],
           }),
         ],
       }),
-      (0, q.jsxs)(`div`, {
+      custom
+        ? (0, q.jsx)(`p`, {
+            className: `text-xs leading-5 text-white/50`,
+            children: `حالت «ایجنت برنامه‌ساز» فعلاً فقط با Gemini کار می‌کند (به function calling نیاز دارد). با سرور خودت گفت‌وگو، ساخت و اصلاح برنامه، دستور gemini در ترمینال و «بپرس» در نوا کار می‌کنند.`,
+          })
+        : null,
+      custom ? null : (0, q.jsxs)(`div`, {
         className: `agent-surface grid grid-cols-2 gap-1 p-1`,
         role: `tablist`,
         "aria-label": `حالت جمنای`,
@@ -3107,7 +3287,7 @@ function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, 
         : null,
       (0, q.jsx)(`p`, {
         className: `text-xs leading-5 text-mist`,
-        children: `اینترنت لازم است؛ هزینه و سهمیه طبق حساب Google تو است.`,
+        children: custom ? `پرسش‌ها مستقیم از گوشی به سرور خودت می‌روند و جای دیگری نمی‌روند.` : `اینترنت لازم است؛ هزینه و سهمیه طبق حساب Google تو است.`,
       }),
     ],
   });
@@ -4857,7 +5037,7 @@ function In() {
         version: Mn,
         onOpenDev: () => v(`dev`),
         onOpenGemini: () => v(`gemini`),
-        geminiConnected: !!i.key,
+        geminiConnected: codepadAI.aiReady(i),
         onExport: () => void be(),
         onImport: (e) => void Se(e),
       }),

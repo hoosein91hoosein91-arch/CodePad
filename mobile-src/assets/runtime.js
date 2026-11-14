@@ -1,3 +1,4 @@
+import * as codepadAI from "./ai-provider.js";
 function navaPhysics(objects) {
     const bodies = new Map();
     let gravity = [0, -9.81, 0], enabled = true, accumulator = 0;
@@ -9827,16 +9828,21 @@ var GEMINI_KEY = `jibcode-gemini-key`,
   DEFAULT_GEMINI_MODEL = GEMINI_MODELS[0],
   GEMINI_BASE = `https://generativelanguage.googleapis.com/v1beta`;
 function loadGemini() {
+  let provider = codepadAI.loadProvider(),
+    custom = codepadAI.loadCustomAI();
   try {
     return {
       key: localStorage.getItem(`jibcode-gemini-key`) ?? ``,
       model: localStorage.getItem(`jibcode-gemini-model`) || DEFAULT_GEMINI_MODEL,
+      provider,
+      custom,
     };
   } catch {
-    return { key: ``, model: DEFAULT_GEMINI_MODEL };
+    return { key: ``, model: DEFAULT_GEMINI_MODEL, provider, custom };
   }
 }
 function saveGemini(e) {
+  (e.provider && codepadAI.saveProvider(e.provider), e.custom && codepadAI.saveCustomAI(e.custom));
   try {
     let t = e.key.trim();
     (t ? localStorage.setItem(GEMINI_KEY, t) : localStorage.removeItem(GEMINI_KEY),
@@ -9882,6 +9888,14 @@ function geminiRequest(e, t, n) {
 }
 var GEMINI_SYSTEM = `You are the built-in assistant of CodePad (JibCode), an offline Persian coding workshop for Android phones. Answer in the user's language (usually Persian). Be concise. When you write code, put it in one fenced code block. Apps run in a sandboxed iframe with no network and no external scripts.`;
 async function askGemini(e, t, n = {}) {
+  if (e.provider === `custom`)
+    return codepadAI.askCustom(e.custom, t, {
+      signal: n.signal,
+      fetcher: n.fetcher,
+      system:
+        n.system ??
+        `You are the built-in assistant of CodePad (JibCode), an offline Persian coding workshop for Android phones. Answer in the user's language (usually Persian). Be concise. When you write code, put it in one fenced code block. Apps run in a sandboxed iframe with no network and no external scripts.`,
+    });
   if (!e.key.trim()) throw Error(`Gemini وصل نیست: اول کلید API خودت را در «اتصال Gemini» وارد و ذخیره کن.`);
   if (!t.trim()) throw Error(`متن درخواست خالی است.`);
   let r = n.fetcher ?? ((e, t) => fetch(e, t)),
@@ -9944,12 +9958,18 @@ var APP_AI_SYSTEM = `You answer questions sent by a small user-made app (Nava la
   appRecent = new Map();
 async function appAsk(e, t, n = {}) {
   let r = n.settings ?? loadGemini();
-  if (!r.key.trim())
-    throw Error(`Gemini وصل نیست: در لانچر «اتصال Gemini» را باز کن و کلید API خودت را ذخیره کن.`);
+  if (!codepadAI.aiReady(r))
+    throw Error(
+      r.provider === `custom`
+        ? `سرور هوش مصنوعی وصل نیست: در لانچر «اتصال هوش مصنوعی» را باز کن و آدرس سرور خودت را ذخیره کن.`
+        : `Gemini وصل نیست: در لانچر «اتصال Gemini» را باز کن و کلید API خودت را ذخیره کن.`,
+    );
   if (!appAllowed.has(e)) {
     if (
       !(n.confirm ?? ((e) => window.confirm(e)))(
-        `برنامهٔ «${e}» می‌خواهد با کلید Gemini تو از هوش مصنوعی سؤال کند (سهمیه یا هزینهٔ حساب Google تو مصرف می‌شود). اجازه می‌دهی؟`,
+        r.provider === `custom`
+          ? `برنامهٔ «${e}» می‌خواهد از سرور هوش مصنوعی خودت (${codepadAI.aiLabel(r)}) سؤال کند. اجازه می‌دهی؟`
+          : `برنامهٔ «${e}» می‌خواهد با کلید Gemini تو از هوش مصنوعی سؤال کند (سهمیه یا هزینهٔ حساب Google تو مصرف می‌شود). اجازه می‌دهی؟`,
       )
     )
       throw Error(`اجازهٔ استفاده از هوش مصنوعی داده نشد.`);
@@ -29879,6 +29899,10 @@ function settle(e, t, n) {
 }
 function bindWorker(e, t, n) {
   (e.addEventListener(`message`, (e) => {
+    if (e.data.warmed) {
+      n && n();
+      return;
+    }
     let r = t.get(e.data.id);
     if (e.data.progress) {
       r?.progress?.(e.data.progress);
@@ -29922,7 +29946,7 @@ function abortMap(e) {
   for (let [t] of e) settle(e, t, { stdout: ``, stderr: ``, aborted: !0 });
 }
 function stopRuntimes() {
-  window.CodePadBackground?.stop();
+  ((pythonWarmRequested = !1), window.CodePadBackground?.stop());
   (pythonEpoch++,
     pythonWorker?.terminate(),
     (pythonWorker = null),
@@ -31155,6 +31179,33 @@ function ApkExportSheet({ target: e, onClose: t, accent: n = `#c6f135` }) {
     ],
   });
 }
+var pythonWarmRequested = !1;
+function warmPython() {
+  if (pythonWarmRequested || pythonWorker) return;
+  pythonWarmRequested = !0;
+  try {
+    python().postMessage({ warm: !0 });
+  } catch {
+    pythonWarmRequested = !1;
+  }
+}
+function looksPython(e) {
+  try {
+    let t = activeFile(activeProject(e));
+    return (
+      !!t && (/\.py$/i.test(t.name) || /^\s*@@\s*(python|پایتون)\b/im.test(t.content) || detectKind(t.content) === `python`)
+    );
+  } catch {
+    return !1;
+  }
+}
+if (typeof window < `u`) {
+  let idle = window.requestIdleCallback ? (e) => window.requestIdleCallback(e, { timeout: 3e3 }) : (e) => window.setTimeout(e, 800),
+    check = (e) => {
+      !pythonWarmRequested && !pythonWorker && looksPython(e) && idle(warmPython);
+    };
+  (useLab.subscribe(check), check(useLab.getState()));
+}
 export {
   saveExportFile as saveCodePadFile,
   NAVA_KEYWORDS as $,
@@ -31280,5 +31331,6 @@ export {
   runPython as y,
   takeSharedFiles as yt,
   askGemini as z,
+  codepadAI,
   BINARY_BAR as zt,
 };

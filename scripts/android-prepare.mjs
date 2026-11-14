@@ -46,8 +46,8 @@ import { mkdirSync } from "node:fs";
 mkdirSync(xmlDir, { recursive: true });
 writeFileSync(join(xmlDir, "codepad_network_security.xml"), `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-  <base-config cleartextTrafficPermitted="false" />
-  <domain-config cleartextTrafficPermitted="true"><domain>127.0.0.1</domain><domain>localhost</domain></domain-config>
+  <!-- http:// is allowed so the user's own AI server on the local network (e.g. http://192.168.1.10:8000) can be reached. -->
+  <base-config cleartextTrafficPermitted="true" />
 </network-security-config>`);
 
 const javaPackagePath = appId.replaceAll(".", "/");

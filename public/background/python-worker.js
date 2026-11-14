@@ -28,6 +28,8 @@ self.onmessage = event => {
     return;
   }
   if (data.nativeMode) { self.CODEPAD_NATIVE = true; return; }
+  // Pre-warm: load the Python engine in the background so the first Run does not pay the multi-second start-up.
+  if (data.warm) { queue = queue.then(() => boot()).then(() => self.postMessage({ warmed: true })).catch(() => {}); return; }
   queue = queue.then(() => run(data)).catch(error => emit({ stdout: '', stderr: String(error), done: true }));
 };
 async function boot() {

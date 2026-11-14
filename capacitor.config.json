@@ -7,6 +7,7 @@
     "androidScheme": "https"
   },
   "android": {
-    "adjustMarginsForEdgeToEdge": "disable"
+    "adjustMarginsForEdgeToEdge": "disable",
+    "allowMixedContent": true
   }
 }
