@@ -29,3 +29,12 @@ test("dynamic imports and exec in reachable code select the compatible engine; p
   assert.equal(useNativePython({ code: "import numpy\n" }, "native", stdlib, []), true);
   assert.equal(useNativePython({ code: "print(1)\n" }, "wasm", stdlib, []), false);
 });
+
+test("eval/exec/__import__ keep the compatible engine unless a native-only module is imported", () => {
+  assert.equal(route("print(eval('1+1'))\n", []), false);
+  assert.equal(route("import socket\nprint(eval('1+1'))\n", []), true);
+  assert.equal(route("import sqlite3, threading\nx = __import__('json')\n", []), true);
+  assert.equal(route("import desk\n", [m("desk.py", "import threading\nexec('1')\n")]), true);
+  assert.equal(route("import numpy\nimport socket\n", []), false, "unknown third-party import still wins");
+  assert.equal(route("import asyncio\nprint(eval('2'))\n", []), false, "asyncio works on both engines, so it does not force native");
+});
