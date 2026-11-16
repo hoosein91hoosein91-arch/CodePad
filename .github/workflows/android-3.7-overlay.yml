@@ -39,6 +39,16 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run build:mobile -- --offline
+      - name: Collect the desktop build inputs (needs files only present in the full 3.7.0 source)
+        run: |
+          mkdir desktop-src
+          cp -r CodePad-3.7.0/resources desktop-src/resources
+          cp -r CodePad-3.7.0/scripts desktop-src/scripts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-src
+          path: desktop-src
+          retention-days: 1
       - uses: actions/upload-artifact@v4
         with:
           name: web-dist
@@ -99,6 +109,10 @@ jobs:
         with:
           name: web-dist
           path: web-dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-src
+          path: desktop-src
       - name: Fetch the official Python embeddable package (bundled so CodePad has real Python out of the box)
         run: |
           curl -fL --retry 3 -o python-embed.zip https://www.python.org/ftp/python/3.13.1/python-3.13.1-embed-amd64.zip
@@ -112,8 +126,8 @@ jobs:
           mkdir tools && cd tools
           npm init -y >/dev/null
           npm install --no-audit --no-fund @electron/packager playwright
-          cp ../codepad-3.7-overlay/files/scripts/desktop-smoke.cjs .
-          node ../codepad-3.7-overlay/files/scripts/build-windows-desktop.mjs ../web-dist ../win-out
+          cp ../desktop-src/scripts/desktop-smoke.cjs .
+          node ../desktop-src/scripts/build-windows-desktop.mjs ../web-dist ../win-out
       - name: Smoke-test the packaged CodePad.exe on Windows
         working-directory: tools
         env:
@@ -121,7 +135,7 @@ jobs:
         run: node desktop-smoke.cjs ../win-out/CodePad-win32-x64/CodePad.exe
       - name: Package
         run: |
-          python codepad-3.7-overlay/files/scripts/zip-folder.py win-out/CodePad-win32-x64 CodePad-3.7-Desktop-Windows-x64.zip CodePad-3.7-Windows
+          python desktop-src/scripts/zip-folder.py win-out/CodePad-win32-x64 CodePad-3.7-Desktop-Windows-x64.zip CodePad-3.7-Windows
           sha256sum CodePad-3.7-Desktop-Windows-x64.zip | tee CodePad-3.7-Desktop-Windows-x64.sha256
       - uses: actions/upload-artifact@v4
         with:
