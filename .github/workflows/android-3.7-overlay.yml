@@ -73,3 +73,48 @@ jobs:
         run: |
           TAG="v3.7.0-ai-cyber.${GITHUB_RUN_NUMBER}"
           gh release create "$TAG" out/CodePad-3.7-AI-Cyber.apk out/CodePad-3.7-AI-Cyber.sha256 --draft --prerelease --target "$GITHUB_SHA" --title "CodePad 3.7 AI + Cyber (debug APK, build ${GITHUB_RUN_NUMBER})" --notes "Debug-signed APK built from the official 3.7.0 source plus codepad-3.7-overlay. Not tested on a physical device. See codepad-3.7-overlay/README.md."
+
+  windows:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Download official CodePad 3.7.0 source and apply the overlay
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v3.7.0 --repo "$GITHUB_REPOSITORY" --pattern CodePad-3.7.0-source.zip
+          unzip -q CodePad-3.7.0-source.zip
+          node codepad-3.7-overlay/apply.mjs CodePad-3.7.0
+      - name: Build web sources
+        working-directory: CodePad-3.7.0
+        run: |
+          npm install --no-audit --no-fund
+          npm run build:mobile -- --offline
+          npm run test:source
+      - name: Build launcher and package
+        working-directory: CodePad-3.7.0
+        run: |
+          (cd resources/windows/app-launcher && GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-H=windowsgui -s -w" -o ../../../CodePad.exe main.go)
+          file CodePad.exe
+          python3 scripts/package-windows.py dist/client CodePad.exe resources/windows/app-launcher/README-Windows.txt CodePad-3.7-AI-Cyber-Windows-x64.zip
+          sha256sum CodePad-3.7-AI-Cyber-Windows-x64.zip | tee CodePad-3.7-AI-Cyber-Windows-x64.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CodePad-3.7-AI-Cyber-windows
+          path: |
+            CodePad-3.7.0/CodePad-3.7-AI-Cyber-Windows-x64.zip
+            CodePad-3.7.0/CodePad-3.7-AI-Cyber-Windows-x64.sha256
+      - name: Attach to the draft pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v3.7.0-ai-cyber.${GITHUB_RUN_NUMBER}"
+          gh release upload "$TAG" CodePad-3.7.0/CodePad-3.7-AI-Cyber-Windows-x64.zip CodePad-3.7.0/CodePad-3.7-AI-Cyber-Windows-x64.sha256 --clobber

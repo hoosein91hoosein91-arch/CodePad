@@ -96,6 +96,18 @@
   "scripts/run-config.test.mjs": {
    "base": null,
    "new": "05663f5cefd1aa063dda80ff58007beada62244e8142d5c58233c8fbba73963f"
+  },
+  "resources/windows/app-launcher/main.go": {
+   "base": null,
+   "new": "8c882891f1d1ccb282bccd4c7e52a30f413d7669dac34332e1ab874b7641397f"
+  },
+  "resources/windows/app-launcher/README-Windows.txt": {
+   "base": null,
+   "new": "a70202d7ff64f3f2fb80a01f4b635c255a1c48ca1ef737249940a410adcb493c"
+  },
+  "scripts/package-windows.py": {
+   "base": null,
+   "new": "60a3eca997760c5e762ffae2b10c4f55c0328e78c71dd7dfd433460250ebee9d"
   }
  }
 }
