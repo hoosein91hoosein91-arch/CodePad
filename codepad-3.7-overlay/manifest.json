@@ -168,6 +168,10 @@
   "scripts/zip-folder.py": {
    "base": null,
    "new": "418f0ef6450077d29530d057ba3b94fc8fe72f34ec825fc446719bb0d291e84e"
+  },
+  "mobile-src/assets/editor.js": {
+   "base": "cde83abd5ce89a935f59ec42617bb1629ecb3e1f8a72728e60987257b6f1915d",
+   "new": "32ea662380fa2706eea89fe045b53c1efbfef653d6fb766ce9447d2fd074549b"
   }
  }
 }
