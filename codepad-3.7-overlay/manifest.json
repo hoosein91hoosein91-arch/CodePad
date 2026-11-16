@@ -135,7 +135,7 @@
   },
   "scripts/build-windows-desktop.mjs": {
    "base": null,
-   "new": "2255c508078122093ba9c7c8750e3067c3458cb2f1722faa488d5faf63db0591"
+   "new": "022a50c942111da99c17ec355d0936b5b366e79015c613f295642da54a01abc0"
   },
   "scripts/desktop-smoke.cjs": {
    "base": null,

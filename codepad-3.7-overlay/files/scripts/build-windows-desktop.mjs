@@ -15,12 +15,17 @@ const desktop = join(root, 'resources/windows/desktop');
 const stage = join(out, 'stage');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(stage, { recursive: true });
-for (const f of ['package.json', 'main.js', 'preload.js', 'icon.png']) cpSync(join(desktop, f), join(stage, f));
+for (const f of ['package.json', 'main.js', 'preload.js', 'system.js', 'icon.png']) cpSync(join(desktop, f), join(stage, f));
+// Fail the build (not the user's first launch) if main.js needs a file that is not in the package.
+for (const [, rel] of readFileSync(join(stage, 'main.js'), 'utf8').matchAll(/require\('\.\/([^']+)'\)/g)) {
+  if (!existsSync(join(stage, rel.endsWith('.js') ? rel : rel + '.js')) && !existsSync(join(stage, rel))) throw new Error(`main.js requires ./${rel} but it is not packaged`);
+}
 cpSync(dist, join(stage, 'web'), { recursive: true });
 // Python host for real CPython runs (same runner as the Android build) next to main.js
 cpSync(join(desktop, 'pyhost'), join(stage, 'pyhost'), { recursive: true });
 for (const f of ['codepad_console.py', 'codepad_runtime.py', 'codepad.py']) cpSync(join(root, 'resources/python', f), join(stage, 'pyhost', f));
 // Optional: bundle the official Python "embeddable" package so CodePad has real Python without installing it.
+for (const f of ['desktop_host.py', 'codepad_console.py', 'codepad_runtime.py', 'codepad.py']) if (!existsSync(join(stage, 'pyhost', f))) throw new Error(`pyhost/${f} is missing from the package`);
 const embed = process.env.CODEPAD_PYTHON_EMBED_DIR ? resolve(process.env.CODEPAD_PYTHON_EMBED_DIR) : '';
 const extra = join(out, 'extra', 'python');
 if (embed) {
