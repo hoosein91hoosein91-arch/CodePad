@@ -3,6 +3,7 @@
 // the private codepad://app/ scheme, which Chromium treats as a secure, stable origin so saved projects persist.
 const { app, BrowserWindow, Menu, WebContentsView, dialog, ipcMain, protocol, session, shell } = require('electron');
 const os = require('os');
+const { createSystem } = require('./system');
 const fs = require('fs');
 const path = require('path');
 const { Readable } = require('stream');
@@ -132,7 +133,32 @@ function ensureMapView() {
   wc.on('did-fail-load', (_e, code, description, _url, isMainFrame) => { if (isMainFrame && code !== -3) sendMapStatus({ state: 'error', id: mapId, error: description }); });
   return mapView;
 }
+let system = null;
+function registerSystemIpc() {
+  system = createSystem({ userData: app.getPath('userData'), resourcesPath: process.resourcesPath, hostDir: path.join(__dirname, 'pyhost') });
+  // every handler: only our own page may call, errors travel back as {__error}
+  const handle = (channel, fn) => ipcMain.handle(channel, async (e, ...args) => {
+    if (!trusted(e)) return { __error: 'Forbidden' };
+    try { return await fn(...args); } catch (error) { return { __error: String((error && error.message) || error) }; }
+  });
+  const emit = (message) => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('py:event', message); };
+  handle('sys:info', () => system.info());
+  handle('sys:location', () => system.location());
+  handle('sys:apps', () => system.apps());
+  handle('sys:openapp', (name) => system.openApp(name));
+  handle('shell:run', (command, options) => system.shellRun(command, options || {}));
+  handle('shell:kill', () => system.shellKill());
+  handle('shell:external', (cwd) => system.shellExternal(cwd));
+  handle('py:start', (options) => system.pythonStart(options, emit));
+  handle('py:input', (options) => system.pythonInput(options));
+  handle('py:stop', () => system.pythonStop());
+  handle('py:status', () => system.pythonStatus());
+  handle('py:exec', (options) => system.pythonExec(options));
+  handle('py:setpath', (p) => system.setPythonPath(p));
+}
+
 function registerIpc() {
+  registerSystemIpc();
   ipcMain.handle('music:info', (e) => (trusted(e) ? { dir: musicDir(), exists: fs.existsSync(musicDir()) } : null));
   ipcMain.handle('music:list', (e) => (trusted(e) ? scanMusic(musicDir()) : null));
   ipcMain.handle('music:choose', async (e) => {
@@ -225,4 +251,5 @@ if (!app.requestSingleInstanceLock()) {
     app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
   });
   app.on('window-all-closed', () => app.quit());
+  app.on('before-quit', () => { if (system) { system.pythonStop(); system.shellKill(); } });
 }

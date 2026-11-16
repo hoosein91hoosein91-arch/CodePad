@@ -99,7 +99,15 @@ jobs:
         with:
           name: web-dist
           path: web-dist
+      - name: Fetch the official Python embeddable package (bundled so CodePad has real Python out of the box)
+        run: |
+          curl -fL --retry 3 -o python-embed.zip https://www.python.org/ftp/python/3.13.1/python-3.13.1-embed-amd64.zip
+          python -m zipfile -e python-embed.zip pyembed
+          ./pyembed/python.exe --version
+          ./pyembed/python.exe -c "import sqlite3, ssl, socket, asyncio, hashlib; print('embedded stdlib ok', sqlite3.sqlite_version)"
       - name: Build the standalone Windows app (Electron)
+        env:
+          CODEPAD_PYTHON_EMBED_DIR: ${{ github.workspace }}/pyembed
         run: |
           mkdir tools && cd tools
           npm init -y >/dev/null
@@ -108,6 +116,8 @@ jobs:
           node ../codepad-3.7-overlay/files/scripts/build-windows-desktop.mjs ../web-dist ../win-out
       - name: Smoke-test the packaged CodePad.exe on Windows
         working-directory: tools
+        env:
+          CODEPAD_EXPECT_BUNDLED: '1'
         run: node desktop-smoke.cjs ../win-out/CodePad-win32-x64/CodePad.exe
       - name: Package
         run: |

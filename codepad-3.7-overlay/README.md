@@ -7,7 +7,7 @@ unzip CodePad-3.7.0-source.zip && cd CodePad-3.7.0
 node /path/to/repo/codepad-3.7-overlay/apply.mjs .      # اگر هش فایل پایه نخواند متوقف می‌شود
 npm install --ignore-scripts                            # توجه: npm ci با package-lock خود ۳٫۷٫۰ خطا می‌دهد (lock با package.json هم‌خوان نیست)
 npm run build:mobile -- --offline
-npm run test:source                                      # ۴۴ آزمون
+npm run test:source                                      # ۵۲ آزمون
 npm run dev                                              # پیش‌نمایش
 ```
 
@@ -53,6 +53,12 @@ Pyodide هنگام فعال‌بودن فایل پایتون از قبل بار�
 ## ۶) برنامهٔ دسکتاپ ویندوز (مستقل، مثل بازی‌ها)
 `CodePad-3.7-Desktop-Windows-x64.zip`: یک برنامهٔ Electron با Chromium همراه خودش. پنجرهٔ مستقل دارد، به مرورگر نصب‌شده یا پورت محلی نیاز ندارد (از پروتکل خصوصی `codepad://app/` استفاده می‌کند و هیچ پورتی باز نمی‌کند). F11 تمام‌صفحه، `--fullscreen` برای شروع تمام‌صفحه، داده‌ها در `%APPDATA%\CodePad`. دوربین و کلیپ‌بورد فقط برای خودِ برنامه مجاز است؛ پنجره‌های خارجی در مرورگر پیش‌فرض باز می‌شوند.
 منبع: `resources/windows/desktop/` (main.js و غیره) و `scripts/build-windows-desktop.mjs`. روتر برنامه آدرس غیر http(s) را «خارجی» می‌داند؛ اسکریپت ساخت فقط در کپی دسکتاپ همان یک شرط را برای `codepad:` باز می‌کند (اگر `main.js` تغییر کند ساخت با خطای واضح می‌ایستد). CI روی ویندوز واقعی بسته را می‌سازد و با `scripts/desktop-smoke.cjs` آزمایش می‌کند (پنجره، JSPI، Python + `input()`، ماندگاری) و بعد در انتشار پیش‌نویس می‌گذارد. بدون امضای دیجیتال (SmartScreen هشدار می‌دهد). Python روی WebAssembly است؛ Termux و ابزارهای دستگاه فقط اندروید.
+
+**جایگزین‌های ویندوزی برای بخش‌های اندرویدی** (فقط وقتی `window.cpDesktop` هست؛ نسخهٔ اندروید/وب دست‌نخورده است):
+- Termux ← PowerShell (`system.js`، فایل موقت `.ps1` با BOM و `-File` تا نقل‌قول و فارسی خراب نشود). تمام محل‌های فراخوانی Termux (`runTermux`، `TermuxBridge`، ترمینال Cyber Lab، ابزار ایجنت، دستور `termux`/`nmap` لانچر) از طریق `studio-core.js` به پوسته می‌روند؛ دستورهای bash در Cyber Lab معادل PowerShell دارند.
+- CPython اندروید ← Python واقعی (`desktop_host.py` + همان `codepad_runtime.py` اندروید، پروتکل JSON-lines): `desktop-worker.js` همان قاعدهٔ مسیریابی `python-engine.js` را به کار می‌برد؛ کتابخانهٔ استاندارد (و ماژول‌های فقط‌بومی مثل socket/sqlite3/threading) → Python واقعی، بقیه → WebAssembly. در بستهٔ ویندوز Python «embeddable» 3.13.1 همراه است (بدون tkinter/pip)؛ مسیر Python دلخواه از Studio ← ترمینال.
+- ابزارهای دستگاه: مکان (Location ویندوز)، فهرست برنامه‌ها (رجیستری)، بازکردن برنامه (Start Menu)؛ `install_apk` در ویندوز از فهرست ابزارهای ایجنت حذف می‌شود و متن ابزارها «Termux/Android» را به «PowerShell/Windows» تبدیل می‌کند.
+- آزمون: `scripts/desktop-system.test.mjs` (پوسته، Python واقعی، ورودی زنده، Stop) و آزمون دودی CI روی ویندوز واقعی. مکان/فهرست برنامه/بازکردن برنامهٔ ویندوز در CI آزمایش نمی‌شود.
 
 ## ۷) موسیقی، نقشهٔ حملات سایبری و تم پرنورتر
 - **پخش‌کنندهٔ موسیقی** (`music.js`، دکمهٔ ♪): LOCAL (دسکتاپ: پوشهٔ `Music\Phonk - Video Songs` خودکار، قابل‌تغییر؛ بقیهٔ پلتفرم‌ها: انتخاب فایل/پوشه)، RADIO (radio-browser.info با برچسب‌های phonk، drift phonk و… و دکمهٔ «موزیک بعدی»؛ فقط https)، FOCUS (`focus-playlist.js`: فهرست آهنگ برای تمرکز؛ فایل صوتی همراه برنامه نیست، آهنگ‌های موجود در پوشهٔ کاربر با نام فایل تطبیق و پخش می‌شوند، بقیه جست‌وجوی مرورگر). مینی‌پلیر هنگام کدنویسی می‌ماند.

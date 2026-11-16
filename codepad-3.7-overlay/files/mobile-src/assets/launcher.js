@@ -1735,6 +1735,32 @@ var Vt = { read: !0, edit: !1, delete: !1, run: !1, console: !1, packages: !1, p
     if (!e || typeof e != `object` || Array.isArray(e)) throw Error(`ورودی ابزار باید یک شیء باشد.`);
     return e;
   };
+// Desktop (Electron) build: a real PowerShell/Python replace Termux and the Android-only tools; mobile keeps its text.
+const isDesk = () => !!window.cpDesktop?.shell;
+if (isDesk()) {
+  Ht.termux = `اجرای فرمان در PowerShell ویندوز`;
+  Ht.device = `فهرست برنامه‌های نصب‌شده`;
+  Ut.termux_command = `فرمان PowerShell`;
+  Ut.run_native_python = `اجرای Python واقعی`;
+  Ut.device_apps = `برنامه‌های نصب‌شده`;
+  Ut.device_app_details = `اطلاعات برنامه`;
+  Ut.open_device_app = `بازکردن برنامه`;
+}
+const deskText = (t) =>
+  String(t)
+    .replace(/Execute a real shell command in installed Termux/g, `Execute a real Windows PowerShell command`)
+    .replace(/in real installed Termux/g, `with the real Python of this PC`)
+    .replace(/installed Termux/g, `Windows PowerShell`)
+    .replace(/\bTermux\b/g, `Windows PowerShell`)
+    .replace(/`ip -4 addr`/g, `\`ipconfig\``)
+    .replace(/List installed Android applications/g, `List installed Windows programs`)
+    .replace(/Launch installed Android app, without access to its UI or private data/g, `Launch an installed program from the Start Menu, without access to its UI or private data`)
+    .replace(/Read package version, permissions and nondefinitive technology hints\. APK does not provide editable original source\./g, `Read the program version and publisher. Installed programs do not provide editable original source.`)
+    .replace(/phone/g, `PC`)
+    .replace(/inside an Android coding app/g, `inside a Windows desktop coding app`)
+    .replace(/Android browser and app-list tools/g, `Browser and installed-program tools`);
+const PT = (tools) => (isDesk() ? tools.filter((d) => d.name !== `install_apk`).map((d) => ({ ...d, description: deskText(d.description) })) : tools);
+const PG = (text) => (isDesk() ? deskText(text) : text);
 function Z(e, t, n = 100) {
   if (typeof e[t] != `string` || e[t].length > n) throw Error(`ورودی نامعتبر: ${t}`);
   return e[t];
@@ -1977,8 +2003,8 @@ async function Yt(e, t, n, r) {
     if (!codepadAI.aiReady(e)) throw Error(`ابتدا آدرس سرور هوش مصنوعی را تنظیم کن.`);
     if (!t.trim() || t.length > 16e3) throw Error(`درخواست باید بین ۱ تا ۱۶۰۰۰ نویسه باشد.`);
     return codepadAI.runTextAgent(e.custom, `Selected target: ${n.name}\nPermissions: ${JSON.stringify(r.permissions)}\nRequest: ${t}`, {
-      system: Gt,
-      tools: Wt,
+      system: PG(Gt),
+      tools: PT(Wt),
       titles: Ut,
       signal: r.signal,
       fetcher: r.fetcher,
@@ -2015,8 +2041,8 @@ async function Yt(e, t, n, r) {
         headers: { "Content-Type": `application/json`, "x-goog-api-key": e.key.trim() },
         body: JSON.stringify({
           contents: i,
-          systemInstruction: { parts: [{ text: Gt }] },
-          tools: [{ functionDeclarations: Wt }],
+          systemInstruction: { parts: [{ text: PG(Gt) }] },
+          tools: [{ functionDeclarations: PT(Wt) }],
           toolConfig: { functionCallingConfig: { mode: `AUTO` } },
         }),
       });

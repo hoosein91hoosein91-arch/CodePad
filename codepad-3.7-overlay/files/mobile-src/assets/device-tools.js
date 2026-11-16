@@ -90,6 +90,7 @@ export async function deviceStatus() {
 }
 
 export async function getLocation({ highAccuracy = true, timeoutMs = 15000 } = {}) {
+  if (globalThis.cpDesktop?.system?.location) return globalThis.cpDesktop.system.location(); // Windows location service via the desktop shell
   const geo = globalThis.navigator?.geolocation;
   if (!geo) throw new Error("موقعیت‌یابی در این محیط پشتیبانی نمی‌شود.");
   const pos = await new Promise((resolve, reject) =>

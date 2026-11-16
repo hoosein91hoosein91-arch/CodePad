@@ -11,7 +11,7 @@
   },
   "mobile-src/assets/cyber-lab.js": {
    "base": null,
-   "new": "c372d54f15fd768428547c57beaed5cc79fb0e4e94432f9e9859b641eb76e0c3"
+   "new": "097ea955c9b21de939d2ecf8e4fa3ae37e839644453602afb8d8ca97fd70ec54"
   },
   "mobile-src/assets/cyber-samples.js": {
    "base": null,
@@ -19,7 +19,11 @@
   },
   "mobile-src/assets/device-tools.js": {
    "base": null,
-   "new": "0804bd40b0ce39702f66dcb13a14c648ac2f76ca68fff39c97b366841361b66a"
+   "new": "127927fe7faf6a767cee7da087dec7c32619e230f9a1704b3429456e2b5bea39"
+  },
+  "mobile-src/assets/focus-playlist.js": {
+   "base": null,
+   "new": "94ac1eb90803b214a8968ef352cb21fed2dba21e45ad516a26f521db30e90f6b"
   },
   "mobile-src/assets/hacker.css": {
    "base": null,
@@ -27,7 +31,15 @@
   },
   "mobile-src/assets/launcher.js": {
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
-   "new": "939332a38970f449dbaead5fc70f9bfbfe88b448b4d10ead114eb51c3bb6f9fb"
+   "new": "cb6e5fb16b55e2de0ba85ba423aabe34fefcf3345d786d0953b6ead9ef78559e"
+  },
+  "mobile-src/assets/music.css": {
+   "base": null,
+   "new": "f72e6e66f9f1b2eefaf687bd9217c0ebdfac808b07e9323cacb9691292ea9f1a"
+  },
+  "mobile-src/assets/music.js": {
+   "base": null,
+   "new": "58e6d15a241a5175a44697999f844c42612182b22c4148e675ecfc85edfdb2a5"
   },
   "mobile-src/assets/project-zip.js": {
    "base": "d39bd45c49a366aa0152a0ee3c3dd613e123de5dbfaf764f144084a0dc7818c2",
@@ -49,17 +61,25 @@
    "base": "ff4218a9802a6804384fb45414c2cdbe2bd6632af1f8fffdd09a7a4a524aa2c8",
    "new": "256c0cc965637c4e3fbf71ec1c7c67d675c424741bf087b59064accf40089e14"
   },
+  "mobile-src/assets/studio-core.js": {
+   "base": "a439c1b911dc64bb50a2cac1ee5bd60a1e0faef66210e29b1738dd422f5769f9",
+   "new": "15a86c62753ceeced9a23883a465a3e0a7f1abafa2669d926cfab9cc1121f277"
+  },
   "mobile-src/assets/studio.js": {
    "base": "7aa11c842338e4db85b1d6787b25a9b24bdf9ffeda24a4fd5716541ade6f5d8f",
-   "new": "c80b6ca16b061a3729655c28d3a108f01e1da65262f547511d4a55c267820c04"
+   "new": "52c640a1ddcbd7b27aa6d5427de9793d12fde25d904af94abb46c702c985e630"
   },
   "mobile-src/index.html": {
    "base": "eddf31ab45fbae51a673637b45befd1998ed83b3f06fa9f95a78b70b8644307d",
-   "new": "ed53fbc85d254e94f7f48e91dcfa98a52fb412d61d8f0ee4c8fc16502f12c82d"
+   "new": "ceed2487e3ef987c986aaab1c5407d8925cace9d44fe06d825fe3487968f9409"
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
-   "new": "e145c5b3c4efd1b14102123446b047391c39518610578bbb536b8c3650384463"
+   "new": "7d131b22265595fb5a63e407464984657465151ba6e3bf22f62631514bb750cb"
+  },
+  "public/background/desktop-worker.js": {
+   "base": null,
+   "new": "59fd6d5a497810b0a022e05de61b3d3cbfe1d7e02868e4d9b2b3b4797086790f"
   },
   "public/background/python-worker.js": {
    "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
@@ -73,6 +93,38 @@
    "base": "bc8d515dbd4ae73552c6e6a3592d0f66936fd7f785fbd9aaab73a9e5958f2855",
    "new": "9b6a883afbebb6cb48083cd875f78b81c388acca3fb13c5bf520a985d25e9351"
   },
+  "resources/windows/desktop/README-Desktop.txt": {
+   "base": null,
+   "new": "33e3228b24bdbf45869bc4683b72ba1e56934fc0c7cc4110779511d91d0a154b"
+  },
+  "resources/windows/desktop/icon.ico": {
+   "base": null,
+   "new": "30d34daab290659a6d9c39d1e05e103f2dc6fdcc51f6351deb97b839a65aa95d"
+  },
+  "resources/windows/desktop/icon.png": {
+   "base": null,
+   "new": "a4c8353f44cfd990b2d08123c91611d19183e11134dfdf95425d6ec3380234f6"
+  },
+  "resources/windows/desktop/main.js": {
+   "base": null,
+   "new": "a022f4aed783a20a5bd297ca190f895b252b8fa401892dc32ea7c0f6fa76d26f"
+  },
+  "resources/windows/desktop/package.json": {
+   "base": null,
+   "new": "3c60491c93fe6a0f6535fedec8ee75d4974b31cb6ffe6c227335204ebb8288b2"
+  },
+  "resources/windows/desktop/preload.js": {
+   "base": null,
+   "new": "e540d7a5e22331ad1b537756414faa1a3b63c2f51db1179061b420143ba5b033"
+  },
+  "resources/windows/desktop/pyhost/desktop_host.py": {
+   "base": null,
+   "new": "3796a817fba5b65ba0f9ad4939bae21223a4345197fa4d1702c9c74c5e7a4207"
+  },
+  "resources/windows/desktop/system.js": {
+   "base": null,
+   "new": "533ff69345c398dcc8ae2530358f2b8d8b0ef18cdfad56121880d1d539295812"
+  },
   "scripts/ai-provider.test.mjs": {
    "base": null,
    "new": "f7cc1047a8fbb5a8ff529b573704b705abe185a83d3fce00ae9a4413303619d0"
@@ -81,9 +133,25 @@
    "base": "338408499cde41ec970826172330c78d83b147abcee62f1eb2e01d97cebc4303",
    "new": "2fafd5742c58f60b92eb374a535ae23473a7a67b6e0ca3a9d4842cf383825bbd"
   },
+  "scripts/build-windows-desktop.mjs": {
+   "base": null,
+   "new": "2255c508078122093ba9c7c8750e3067c3458cb2f1722faa488d5faf63db0591"
+  },
+  "scripts/desktop-smoke.cjs": {
+   "base": null,
+   "new": "ab21b595349609711d774f913d1618adf18fe652100ca68d043c04f85aef2db7"
+  },
+  "scripts/desktop-system.test.mjs": {
+   "base": null,
+   "new": "dd54ee1e39c37bcbab4f681f9deee777e5fa4697c56451d647dc95395d8995ab"
+  },
   "scripts/device-tools.test.mjs": {
    "base": null,
    "new": "786c4aa413d4eace8d6347f8ddae32b8e47d3165afdb6ba82126b93e03cbfcfc"
+  },
+  "scripts/music.test.mjs": {
+   "base": null,
+   "new": "26217a604d1a70dd530422367599e1f104cea4b912d509bf2f1ef90c115f0bf3"
   },
   "scripts/python-host.test.mjs": {
    "base": null,
@@ -97,57 +165,9 @@
    "base": null,
    "new": "05663f5cefd1aa063dda80ff58007beada62244e8142d5c58233c8fbba73963f"
   },
-  "resources/windows/desktop/main.js": {
-   "base": null,
-   "new": "0c61c216e9b8fb9952539adef63123ea87e1e295d23b30aae15178277960cbb8"
-  },
-  "resources/windows/desktop/package.json": {
-   "base": null,
-   "new": "3c60491c93fe6a0f6535fedec8ee75d4974b31cb6ffe6c227335204ebb8288b2"
-  },
-  "resources/windows/desktop/icon.png": {
-   "base": null,
-   "new": "a4c8353f44cfd990b2d08123c91611d19183e11134dfdf95425d6ec3380234f6"
-  },
-  "resources/windows/desktop/icon.ico": {
-   "base": null,
-   "new": "30d34daab290659a6d9c39d1e05e103f2dc6fdcc51f6351deb97b839a65aa95d"
-  },
-  "resources/windows/desktop/README-Desktop.txt": {
-   "base": null,
-   "new": "e83caa1d22e3c24aabdfc1849444d8b45ea0d48da927b24939c3ae7d8ecb2db3"
-  },
-  "scripts/build-windows-desktop.mjs": {
-   "base": null,
-   "new": "0d2185cc315ca1be84c3b7ece26cb5a08a42f9738cc1d144e3e6b62636a56d9a"
-  },
   "scripts/zip-folder.py": {
    "base": null,
    "new": "418f0ef6450077d29530d057ba3b94fc8fe72f34ec825fc446719bb0d291e84e"
-  },
-  "scripts/desktop-smoke.cjs": {
-   "base": null,
-   "new": "ebbe8f437e783ad7ac5f8230cfa4197779bbc661fb15f20bd497296a993d43a0"
-  },
-  "resources/windows/desktop/preload.js": {
-   "base": null,
-   "new": "4d77d030e17c71b64a99572aaa9a5711a1c55e59e8ff781b22ca558ec0e12170"
-  },
-  "mobile-src/assets/music.js": {
-   "base": null,
-   "new": "58e6d15a241a5175a44697999f844c42612182b22c4148e675ecfc85edfdb2a5"
-  },
-  "mobile-src/assets/music.css": {
-   "base": null,
-   "new": "f72e6e66f9f1b2eefaf687bd9217c0ebdfac808b07e9323cacb9691292ea9f1a"
-  },
-  "mobile-src/assets/focus-playlist.js": {
-   "base": null,
-   "new": "94ac1eb90803b214a8968ef352cb21fed2dba21e45ad516a26f521db30e90f6b"
-  },
-  "scripts/music.test.mjs": {
-   "base": null,
-   "new": "26217a604d1a70dd530422367599e1f104cea4b912d509bf2f1ef90c115f0bf3"
   }
  }
 }

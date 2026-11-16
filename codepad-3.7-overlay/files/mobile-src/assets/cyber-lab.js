@@ -25,12 +25,22 @@ export function setHackerTheme(level) {
 
 /** فقط نویسه‌های بی‌خطر برای آرگومان‌های اسکریپت/نشانی؛ هیچ نقل‌قول یا عملگر shell */
 export const SAFE_ARGS = /^[\w@%+=:,./\-؀-ۿ ]{0,300}$/;
-const SAFE_WORD = /^[\w@%+=:,./\-~]+$/;
-export const q = (s) => "'" + String(s).replaceAll("'", "'\\''") + "'";
+const SAFE_WORD = /^[\w@%+=:,./\-~\\]+$/;
+// دسکتاپ ویندوز: PowerShell به‌جای Termux؛ تکه‌های وابسته به bash در اینجا معادل ویندوزی می‌گیرند.
+const desk = () => globalThis.cpDesktop;
+export const isWin = () => desk()?.os === "win32";
+export const onDesktop = () => !!desk()?.shell;
+export const shellName = () => (isWin() ? "PowerShell" : onDesktop() ? "Shell" : "Termux");
+export const q = (s) => (isWin() ? "'" + String(s).replaceAll("'", "''") + "'" : "'" + String(s).replaceAll("'", "'\\''") + "'");
 
 export function sampleCommand(sample, args) {
   if (!SAFE_ARGS.test(args)) throw new Error("آرگومان فقط می‌تواند حروف، عدد و . , : / - _ @ = + % باشد.");
   if (sample.code.includes("\nCPEOF")) throw new Error("نمونهٔ نامعتبر.");
+  if (isWin()) {
+    if (sample.code.includes("\n'@")) throw new Error("نمونهٔ نامعتبر.");
+    const list = args.split(/\s+/).filter(Boolean).map(q).join(" ");
+    return `$f = Join-Path $env:TEMP 'cp_lab.py'\n$c = @'\n${sample.code}\n'@\n[IO.File]::WriteAllText($f, $c, (New-Object Text.UTF8Encoding($false)))\n& python -X utf8 $f ${list}`;
+  }
   return `python3 - ${args} <<'CPEOF'\n${sample.code}\nCPEOF`;
 }
 
@@ -38,7 +48,7 @@ export function gitCommand(action, { url = "", dir = "" } = {}) {
   const d = String(dir).trim() || ".";
   if (!SAFE_WORD.test(d)) throw new Error("نام پوشه نامعتبر است.");
   switch (action) {
-    case "install": return "pkg install -y git";
+    case "install": return isWin() ? "winget install -e --id Git.Git --accept-package-agreements --accept-source-agreements" : "pkg install -y git";
     case "clone":
       if (!/^(https:\/\/|git@)[\w@.\-:/~]+$/.test(url.trim())) throw new Error("آدرس مخزن باید با https:// یا git@ شروع شود.");
       return `git clone ${q(url.trim())} ${d === "." ? "" : q(d)}`.trim();
@@ -87,7 +97,7 @@ async function run(command, { echo = command.split("\n")[0].slice(0, 160) } = {}
     println(`[exit ${r.exitCode ?? "?"}]`, "dim");
   } catch (e) {
     println(e instanceof Error ? e.message : String(e), "err");
-    println("نکته: Termux باید نصب و بار اول باز شده باشد و در Termux مقدار allow-external-apps=true تنظیم شود (راهنمای Studio).", "dim");
+    println(onDesktop() ? "نکته: ابزار لازم (python، git، nmap) باید نصب و در PATH باشد؛ دکمهٔ «ابزارها» وضعیت را نشان می‌دهد." : "نکته: Termux باید نصب و بار اول باز شده باشد و در Termux مقدار allow-external-apps=true تنظیم شود (راهنمای Studio).", "dim");
   } finally {
     running = false;
     root.classList.remove("busy");
@@ -166,12 +176,25 @@ function mapsTab() {
 const tools = {
   maps() { return mapsTab(); },
   terminal() {
-    const input = h("input", { type: "text", dir: "ltr", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: "$ فرمان Termux…", "aria-label": "فرمان Termux" });
+    const input = h("input", { type: "text", dir: "ltr", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: isWin() ? "PS> فرمان PowerShell…" : "$ فرمان " + shellName() + "…", "aria-label": "فرمان " + shellName() });
     const go = () => { const v = input.value.trim(); if (v) { input.value = ""; run(v); } };
     input.addEventListener("keydown", (e) => e.key === "Enter" && go());
     const chip = (label, cmd) => h("button", { type: "button", onclick: () => run(cmd) }, label);
+    if (isWin()) {
+      const toolsHelp = () => { println("نصب ابزارها (در یک PowerShell با دسترسی Administrator؛ دکمهٔ «PowerShell جدا» را بزن):", "cmd"); println("winget install -e --id Python.Python.3.13\nwinget install -e --id Git.Git\nwinget install -e --id Insecure.Nmap", ""); };
+      return [
+        h("div", { class: "card" }, h("h3", {}, "WINDOWS POWERSHELL"), h("p", {}, "فرمان‌ها در PowerShell ویندوز اجرا می‌شوند و stdout/stderr/exit واقعی برمی‌گردد (غیرتعاملی). برای ترمینال تعاملی دکمهٔ «PowerShell جدا» را بزن."),
+          h("div", { class: "row" }, input, h("button", { type: "button", class: "pri", onclick: go }, "اجرا"))),
+        h("div", { class: "row" },
+          h("button", { type: "button", onclick: () => desk().shell.external().catch((e) => println(e.message, "err")) }, "↗ PowerShell جدا"),
+          chip("ابزارها", "Get-Command python,git,nmap,winget -ErrorAction SilentlyContinue | Format-Table Name,Source -AutoSize | Out-String -Width 200"),
+          h("button", { type: "button", onclick: toolsHelp }, "نصب ابزارها"),
+          chip("ipconfig", "ipconfig"), chip("arp -a", "arp -a"),
+          chip("سیستم", "systeminfo | Select-String 'OS Name','OS Version','System Type'")),
+      ];
+    }
     return [
-      h("div", { class: "card" }, h("h3", {}, "TERMUX SHELL"), h("p", {}, "فرمان‌ها در Termux واقعی اجرا می‌شوند و stdout/stderr/exit برمی‌گردد (بدون PTY تعاملی)."),
+      h("div", { class: "card" }, h("h3", {}, onDesktop() ? "SHELL" : "TERMUX SHELL"), h("p", {}, onDesktop() ? "فرمان‌ها در پوستهٔ سیستم اجرا می‌شوند و stdout/stderr/exit برمی‌گردد." : "فرمان‌ها در Termux واقعی اجرا می‌شوند و stdout/stderr/exit برمی‌گردد (بدون PTY تعاملی)."),
         h("div", { class: "row" }, input, h("button", { type: "button", class: "pri", onclick: go }, "اجرا"))),
       h("div", { class: "row" },
         chip("نصب ابزارها", "pkg install -y python git nmap curl openssl dnsutils"),
@@ -217,7 +240,8 @@ const tools = {
     });
   },
   notes() {
-    return CYBER_CHEATS.map((c) => h("div", { class: "card" }, h("h3", {}, c.title), h("pre", { class: "cheat" }, c.lines.join("\n"))));
+    const winLine = (line) => line.replace(/^pkg install git\s+نصب/, "winget install -e --id Git.Git  نصب").replace(/^root لازم.*$/, "بدون Npcap و Administrator فقط -sT کار می‌کند؛ -sS و -O به Npcap و Administrator نیاز دارند");
+    return CYBER_CHEATS.map((c) => h("div", { class: "card" }, h("h3", {}, isWin() ? c.title.replace("(Termux)", "(Windows)") : c.title), h("pre", { class: "cheat" }, (isWin() ? c.lines.map(winLine) : c.lines).join("\n"))));
   },
 };
 
@@ -269,7 +293,7 @@ function build() {
 
 function start() {
   const { gate, main } = root.__chips;
-  [...root.children].slice(1).forEach((el) => el.remove());
+  [...root.children].filter((el) => !el.classList.contains("cy-head") && !el.classList.contains("cy-rain")).forEach((el) => el.remove()); // keep header + rain canvas
   if (store.get(OK_KEY) !== "1") { root.append(gate()); return; }
   root.append(tabsEl, main);
   renderTabs();
@@ -306,7 +330,8 @@ export function open() {
   const ai = window.CodePadAI;
   root.__chips.aiChip.classList.toggle("on", !!ai?.ready());
   root.__chips.aiChip.textContent = ai?.ready() ? "AI ●" : "AI ○";
-  root.__chips.termuxChip.classList.toggle("on", !!globalThis.Capacitor?.isNativePlatform?.());
+  root.__chips.termuxChip.textContent = isWin() ? "POWERSHELL" : onDesktop() ? "SHELL" : "TERMUX";
+  root.__chips.termuxChip.classList.toggle("on", onDesktop() || !!globalThis.Capacitor?.isNativePlatform?.());
   root.hidden = false;
   start();
   startRain();

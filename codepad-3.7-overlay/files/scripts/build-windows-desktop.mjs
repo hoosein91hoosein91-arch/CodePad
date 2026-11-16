@@ -17,6 +17,16 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(stage, { recursive: true });
 for (const f of ['package.json', 'main.js', 'preload.js', 'icon.png']) cpSync(join(desktop, f), join(stage, f));
 cpSync(dist, join(stage, 'web'), { recursive: true });
+// Python host for real CPython runs (same runner as the Android build) next to main.js
+cpSync(join(desktop, 'pyhost'), join(stage, 'pyhost'), { recursive: true });
+for (const f of ['codepad_console.py', 'codepad_runtime.py', 'codepad.py']) cpSync(join(root, 'resources/python', f), join(stage, 'pyhost', f));
+// Optional: bundle the official Python "embeddable" package so CodePad has real Python without installing it.
+const embed = process.env.CODEPAD_PYTHON_EMBED_DIR ? resolve(process.env.CODEPAD_PYTHON_EMBED_DIR) : '';
+const extra = join(out, 'extra', 'python');
+if (embed) {
+  if (!existsSync(join(embed, 'python.exe'))) throw new Error('CODEPAD_PYTHON_EMBED_DIR must contain python.exe');
+  cpSync(embed, extra, { recursive: true });
+}
 
 // The bundled router treats any non-http(s) location as an external link and would render nothing under the private
 // codepad:// scheme. Allow our own scheme in the copy that ships with the desktop app; the web/APK builds are untouched.
@@ -31,6 +41,7 @@ const packager = typeof loaded === 'function' ? loaded : (loaded.packager ?? loa
 const options = {
   dir: stage, name: 'CodePad', platform: 'win32', arch: 'x64', electronVersion: ELECTRON_VERSION,
   out, overwrite: true, asar: false, prune: false, appVersion: '3.7.0', quiet: true,
+  ...(embed ? { extraResource: [extra] } : {}),
 };
 if (process.platform === 'win32') { // icon/metadata editing needs rcedit, which runs natively only on Windows
   options.icon = join(desktop, 'icon.ico');
