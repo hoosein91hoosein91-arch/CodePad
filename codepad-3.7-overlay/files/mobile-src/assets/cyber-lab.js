@@ -10,12 +10,17 @@ const store = {
   set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* حافظه در دسترس نیست */ } },
 };
 
-export function hackerThemeOn() {
-  return store.get(THEME_KEY) !== "0";
+/** 2 = HYPER (پیش‌فرض)، 1 = ON، 0 = OFF */
+export function hackerLevel() {
+  const v = store.get(THEME_KEY);
+  return v === "0" ? 0 : v === "1" ? 1 : 2;
 }
-export function setHackerTheme(on) {
-  store.set(THEME_KEY, on ? "1" : "0");
-  document.documentElement.classList.toggle("cp-hacker", on);
+export const hackerThemeOn = () => hackerLevel() > 0;
+export function setHackerTheme(level) {
+  const n = level === true ? 2 : level === false ? 0 : Math.max(0, Math.min(2, Number(level)));
+  store.set(THEME_KEY, String(n));
+  document.documentElement.classList.toggle("cp-hacker", n > 0);
+  document.documentElement.classList.toggle("cp-hyper", n === 2);
 }
 
 /** فقط نویسه‌های بی‌خطر برای آرگومان‌های اسکریپت/نشانی؛ هیچ نقل‌قول یا عملگر shell */
@@ -57,7 +62,7 @@ const h = (tag, attrs = {}, ...kids) => {
   return el;
 };
 
-let root, log, tabsEl, paneEl, current = "terminal", running = false;
+let root, log, tabsEl, paneEl, current = "maps", running = false, mapState = { id: null, off: [] };
 
 function println(text, cls = "") {
   const line = h("div", { class: cls }, text);
@@ -89,7 +94,77 @@ async function run(command, { echo = command.split("\n")[0].slice(0, 160) } = {}
   }
 }
 
+
+// ───────── نقشهٔ حملات سایبری زنده ─────────
+// دسکتاپ: داخل پنجره (نمای جدا و ایزوله، چون این سایت‌ها iframe را نمی‌پذیرند). اندروید: مرورگر داخلی برنامه. وب: تب جدید.
+export const ATTACK_MAPS = [
+  { id: "kaspersky", name: "Kaspersky", full: "Cyberthreat Real-time Map", url: "https://cybermap.kaspersky.com/" },
+  { id: "checkpoint", name: "Check Point", full: "Live Cyber Threat Map", url: "https://threatmap.checkpoint.com/" },
+  { id: "fortiguard", name: "FortiGuard", full: "Threat Map", url: "https://threatmap.fortiguard.com/" },
+  { id: "radware", name: "Radware", full: "Live Threat Map", url: "https://livethreatmap.radware.com/" },
+  { id: "digitalattack", name: "Digital Attack Map", full: "DDoS worldwide", url: "https://www.digitalattackmap.com/" },
+  { id: "netscout", name: "NETSCOUT", full: "Cyber Threat Horizon", url: "https://horizon.netscout.com/" },
+];
+
+async function openInAppBrowser(url) {
+  try {
+    if (globalThis.Capacitor?.isNativePlatform?.()) return (await import("./studio-core.js")).openBrowser(url);
+  } catch { /* برمی‌گردیم به window.open */ }
+  window.open(url, "_blank", "noopener");
+}
+
+function hideMap() {
+  mapState.off.forEach((f) => f());
+  mapState.off = [];
+  window.cpDesktop?.maps.hide().catch(() => {});
+}
+
+function mapsTab() {
+  const desktop = !!window.cpDesktop?.maps;
+  const slot = h("div", { class: "cy-map-slot" }, desktop ? "یک نقشه را انتخاب کن…" : "این سایت‌ها داخل صفحه نمایش داده نمی‌شوند؛ دکمهٔ باز کردن را بزن.");
+  const status = h("div", { class: "cy-map-status", role: "status" });
+  const bar = h("div", { class: "cy-map-bar" });
+  const info = h("div", { class: "card" }, h("h3", {}, "LIVE ATTACK MAPS"), h("p", {}, "نقشه‌های زندهٔ حملات سایبری شرکت‌های امنیتی (داده‌ها مال خودِ آن سایت‌هاست و اینترنت لازم است؛ اگر یکی در منطقهٔ تو بسته بود، بعدی را بزن)."));
+
+  const place = () => {
+    const r = slot.getBoundingClientRect();
+    window.cpDesktop.maps.show(mapState.id, { x: r.left, y: r.top, width: r.width, height: r.height });
+  };
+  const select = (m) => {
+    mapState.id = m.id;
+    for (const b of bar.querySelectorAll("button[data-id]")) b.classList.toggle("on", b.dataset.id === m.id);
+    if (desktop) {
+      slot.textContent = "";
+      status.textContent = "در حال بارگذاری " + m.name + "…";
+      place();
+    } else {
+      status.textContent = "";
+      openInAppBrowser(m.url);
+    }
+  };
+  for (const m of ATTACK_MAPS) bar.append(h("button", { type: "button", "data-id": m.id, title: m.full, onclick: () => select(m) }, m.name));
+  if (desktop) {
+    bar.append(
+      h("button", { type: "button", onclick: () => window.cpDesktop.maps.reload() }, "↻"),
+      h("button", { type: "button", onclick: () => mapState.id && window.cpDesktop.maps.external(mapState.id) }, "↗ مرورگر"));
+    const ro = new ResizeObserver(() => mapState.id && place());
+    ro.observe(slot);
+    const onResize = () => mapState.id && place();
+    window.addEventListener("resize", onResize);
+    const offStatus = window.cpDesktop.maps.onStatus((st) => {
+      status.textContent = st.state === "loading" ? "در حال بارگذاری…" : st.state === "error" ? "بارگذاری نشد: " + st.error + " — نقشهٔ دیگری را امتحان کن یا «↗ مرورگر» را بزن." : "";
+    });
+    mapState.off = [() => ro.disconnect(), () => window.removeEventListener("resize", onResize), offStatus];
+    queueMicrotask(() => select(ATTACK_MAPS[0]));
+  } else {
+    slot.replaceChildren(h("div", {}, h("p", {}, "مرورگر داخلی برنامه نقشه را باز می‌کند."), h("button", { type: "button", class: "pri", onclick: () => select(ATTACK_MAPS.find((m) => m.id === mapState.id) ?? ATTACK_MAPS[0]) }, "OPEN MAP")));
+    mapState.id = ATTACK_MAPS[0].id;
+  }
+  return [info, bar, status, slot];
+}
+
 const tools = {
+  maps() { return mapsTab(); },
   terminal() {
     const input = h("input", { type: "text", dir: "ltr", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: "$ فرمان Termux…", "aria-label": "فرمان Termux" });
     const go = () => { const v = input.value.trim(); if (v) { input.value = ""; run(v); } };
@@ -146,9 +221,11 @@ const tools = {
   },
 };
 
-const TABS = [["terminal", "TERMINAL"], ["scan", "NMAP"], ["git", "GIT"], ["labs", "LABS"], ["notes", "NOTES"]];
+const TABS = [["maps", "ATTACK MAPS"], ["terminal", "TERMINAL"], ["scan", "NMAP"], ["git", "GIT"], ["labs", "LABS"], ["notes", "NOTES"]];
 
 function renderTabs() {
+  hideMap();
+  root.classList.toggle("cy-maps", current === "maps");
   tabsEl.replaceChildren(...TABS.map(([id, label]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === current), onclick: () => { current = id; renderTabs(); } }, label)));
   paneEl.replaceChildren(...tools[current]());
 }
@@ -180,7 +257,8 @@ function build() {
         h("button", { type: "button", onclick: () => (log.textContent = "") }, "پاک"),
         h("button", { type: "button", onclick: aiAnalyze }, "تحلیل با AI")),
       log));
-  const themeBtn = h("button", { type: "button", "aria-label": "تم هکری", onclick: () => { setHackerTheme(!hackerThemeOn()); themeBtn.textContent = hackerThemeOn() ? "THEME ON" : "THEME OFF"; } }, hackerThemeOn() ? "THEME ON" : "THEME OFF");
+  const themeLabel = () => ["THEME OFF", "THEME ON", "HYPER"][hackerLevel()];
+  const themeBtn = h("button", { type: "button", "aria-label": "تم هکری", onclick: () => { setHackerTheme((hackerLevel() + 2) % 3); themeBtn.textContent = themeLabel(); } }, themeLabel());
   root.append(
     h("div", { class: "cy-head" }, h("div", { class: "cy-title" }, "CYBER LAB", h("small", {}, "terminal · nmap · git · security labs")), termuxChip, aiChip, themeBtn, h("button", { type: "button", "aria-label": "بستن", onclick: close }, "✕")),
     tabsEl, main);
@@ -201,6 +279,28 @@ function start() {
   }
 }
 
+
+// باران ماتریکسی پشت Cyber Lab (فقط وقتی باز است؛ ۱۵ فریم در ثانیه)
+let rainTimer = 0;
+function startRain() {
+  if (!root || rainTimer || matchMedia("(prefers-reduced-motion: reduce)").matches || hackerLevel() === 0) return;
+  let canvas = root.querySelector(".cy-rain");
+  if (!canvas) { canvas = h("canvas", { class: "cy-rain", "aria-hidden": "true" }); root.prepend(canvas); }
+  const ctx = canvas.getContext("2d");
+  const glyphs = "01アイウエオカキクケコ{}[]<>/\\$#%&*=+-".split("");
+  let cols = [], size = 16;
+  const resize = () => { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; cols = Array.from({ length: Math.ceil(canvas.width / size) }, () => Math.random() * canvas.height / size); };
+  resize();
+  rainTimer = setInterval(() => {
+    if (root.hidden) return;
+    if (canvas.width !== canvas.clientWidth) resize();
+    ctx.fillStyle = "rgba(1,4,3,.16)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = size + "px monospace";
+    cols.forEach((y, i) => { ctx.fillStyle = Math.random() > .96 ? "#eafff5" : "#00ff9c"; ctx.fillText(glyphs[(Math.random() * glyphs.length) | 0], i * size, y * size); cols[i] = y * size > canvas.height && Math.random() > .975 ? 0 : y + 1; });
+  }, 66);
+}
+function stopRain() { clearInterval(rainTimer); rainTimer = 0; }
+
 export function open() {
   if (!root) build();
   const ai = window.CodePadAI;
@@ -209,9 +309,10 @@ export function open() {
   root.__chips.termuxChip.classList.toggle("on", !!globalThis.Capacitor?.isNativePlatform?.());
   root.hidden = false;
   start();
+  startRain();
 }
 export function close() {
-  if (root) root.hidden = true;
+  if (root) { root.hidden = true; hideMap(); stopRain(); }
 }
 
 // دکمهٔ ورود در نوار کارگاه ویرایشگر (لانچر دکمهٔ خودش را در dock دارد)
@@ -222,8 +323,8 @@ function mountEntry() {
 }
 
 if (typeof window !== "undefined") {
-  window.CodePadCyber = { open, close, setHackerTheme, hackerThemeOn, validateScanTarget };
-  document.documentElement.classList.toggle("cp-hacker", hackerThemeOn());
+  window.CodePadCyber = { open, close, setHackerTheme, hackerThemeOn, hackerLevel, validateScanTarget, ATTACK_MAPS };
+  setHackerTheme(hackerLevel());
   let queued = false;
   new MutationObserver(() => {
     if (queued) return;

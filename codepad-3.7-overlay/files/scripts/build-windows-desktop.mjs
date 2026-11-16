@@ -15,7 +15,7 @@ const desktop = join(root, 'resources/windows/desktop');
 const stage = join(out, 'stage');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(stage, { recursive: true });
-for (const f of ['package.json', 'main.js', 'icon.png']) cpSync(join(desktop, f), join(stage, f));
+for (const f of ['package.json', 'main.js', 'preload.js', 'icon.png']) cpSync(join(desktop, f), join(stage, f));
 cpSync(dist, join(stage, 'web'), { recursive: true });
 
 // The bundled router treats any non-http(s) location as an external link and would render nothing under the private

@@ -70,3 +70,51 @@ html.cp-hacker ::-webkit-scrollbar-thumb{background:var(--cp-line);border-radius
 #cp-cyber .cy-head button{min-height:34px;padding:2px 8px;font-size:11px}
 #cp-cyber .cy-tabs{direction:ltr}
 #cp-cyber input::placeholder{text-overflow:ellipsis;overflow:hidden;opacity:.55}
+
+/* ───────── v2: brighter, higher contrast, more neon (the first version was too dim) ───────── */
+html.cp-hacker{
+ --cp-bg:#010504;--cp-panel:#03130d;--cp-raised:#07281c;--cp-line:#14b878;
+ --cp-fg:#eafff5;--cp-muted:#a8f0cf;--cp-accent:#00ff9c;--cp-cyan:#22e8ff;--cp-glow:0 0 18px rgba(0,255,156,.5);
+ --color-line:#14b878;--color-paper:#eafff5;--color-mist:#a8f0cf;--color-panel:#03130d;--color-panel-2:#07281c;
+}
+html.cp-hacker body{background-color:#010504;background-image:radial-gradient(1200px 520px at 50% -8%,rgba(0,255,156,.16),transparent 62%),linear-gradient(rgba(0,255,156,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,156,.055) 1px,transparent 1px);background-size:auto,34px 34px,34px 34px;color:#eafff5}
+html.cp-hacker body::before{background:repeating-linear-gradient(to bottom,transparent 0 3px,rgba(0,0,0,.07) 3px 4px)}
+html.cp-hacker body::after{display:none}
+/* dim Tailwind greys → readable */
+html.cp-hacker :is([class~="text-white/30"],[class~="text-white/40"],[class~="text-white/50"],[class~="text-white/60"],[class~="text-white/70"],[class~="text-white/75"],.text-mist,.text-muted){color:#bff5dc!important}
+html.cp-hacker ::placeholder{color:#7fd8b0;opacity:1}
+html.cp-hacker :is(input,textarea,select){border-color:#14b878!important;background-color:#01110b!important;color:#eafff5}
+html.cp-hacker :is(input,textarea,select):focus{border-color:#00ff9c!important;box-shadow:0 0 0 1px #00ff9c,0 0 16px rgba(0,255,156,.55)}
+html.cp-hacker :is(.agent-surface,.cp-appbar,.cp-toolbar,.cp-workspaces,.cp-file-tabs){border-color:#14b878;box-shadow:0 0 0 1px rgba(0,255,156,.32),0 0 22px rgba(0,255,156,.16)}
+html.cp-hacker button:not(:disabled):hover{box-shadow:0 0 16px rgba(0,255,156,.65);border-color:#00ff9c}
+html.cp-hacker .cp-workspaces button[aria-current=page]{color:#00160d;background:#00ff9c;box-shadow:0 0 16px rgba(0,255,156,.7)}
+html.cp-hacker [data-codepad-run]{box-shadow:0 0 18px rgba(0,255,156,.65);font-weight:700}
+html.cp-hacker .cp-brand strong{color:#00ff9c;text-shadow:0 0 14px #00ff9c,0 0 30px rgba(0,255,156,.55)}
+html.cp-hacker .cp-brand small{color:#22e8ff;text-shadow:0 0 8px rgba(34,232,255,.7)}
+html.cp-hacker ::-webkit-scrollbar-thumb{background:#14b878;box-shadow:0 0 6px rgba(0,255,156,.6)}
+/* HYPER (default): extra glow, cyan accents, a slow neon pulse and CRT flicker on headings */
+html.cp-hyper :is(h1,h2,h3,.cp-brand strong){animation:cp-flicker 7s steps(1) infinite}
+html.cp-hyper [data-codepad-run]{animation:cp-neon 2.4s ease-in-out infinite}
+html.cp-hyper :is(.cp-file-tabs [aria-selected=true],.cp-file-tabs .active){box-shadow:inset 0 -2px 0 #00ff9c,0 0 14px rgba(0,255,156,.45)}
+html.cp-hyper ::selection{background:#00ff9c;color:#00160d}
+@keyframes cp-flicker{0%,91%,95%,100%{opacity:1}92%{opacity:.78}93%{opacity:1}94%{opacity:.85}}
+@keyframes cp-neon{50%{box-shadow:0 0 28px rgba(0,255,156,.95)}}
+@media (prefers-reduced-motion:reduce){html.cp-hyper :is(h1,h2,h3,.cp-brand strong,[data-codepad-run]){animation:none}}
+
+/* Cyber Lab: brighter + rain canvas + maps tab */
+#cp-cyber{color:#eafff5}
+#cp-cyber .cy-rain{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5}
+#cp-cyber>*:not(.cy-rain){position:relative;z-index:1}
+#cp-cyber .cy-head,#cp-cyber .cy-tabs{background:rgba(1,10,6,.88)}
+#cp-cyber .cy-title{color:#00ff9c;text-shadow:0 0 12px #00ff9c,0 0 30px rgba(0,255,156,.6)}
+#cp-cyber .card{border-color:#14b878;background:rgba(2,22,14,.82);box-shadow:0 0 0 1px rgba(0,255,156,.14),0 0 18px rgba(0,255,156,.1)}
+#cp-cyber .card p,#cp-cyber label{color:#bff5dc}
+#cp-cyber input,#cp-cyber select,#cp-cyber textarea{border-color:#14b878;color:#eafff5}
+#cp-cyber .cy-log{color:#9fffd2}
+#cp-cyber.cy-maps .cy-out{display:none}
+#cp-cyber.cy-maps .cy-pane{overflow:hidden;flex:1 1 auto}
+#cp-cyber .cy-map-slot{flex:1 1 auto;min-height:260px;border:1px solid #14b878;border-radius:6px;background:rgba(0,20,12,.6);display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;color:#bff5dc}
+#cp-cyber .cy-map-bar{display:flex;gap:6px;flex-wrap:wrap}
+#cp-cyber .cy-map-bar button.on{background:#22e8ff;color:#001418;border-color:#22e8ff;font-weight:700}
+#cp-cyber .cy-map-status{min-height:1.4em;color:#ffd23f;direction:ltr;text-align:left}
+#cp-cyber .cy-map-bar{direction:ltr}

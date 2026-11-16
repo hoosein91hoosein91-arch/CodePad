@@ -11,7 +11,7 @@
   },
   "mobile-src/assets/cyber-lab.js": {
    "base": null,
-   "new": "ded18f8953fe7d85a7dae756db6062ed5632970fed133b60cf2dd2b7fb9f1666"
+   "new": "c372d54f15fd768428547c57beaed5cc79fb0e4e94432f9e9859b641eb76e0c3"
   },
   "mobile-src/assets/cyber-samples.js": {
    "base": null,
@@ -23,7 +23,7 @@
   },
   "mobile-src/assets/hacker.css": {
    "base": null,
-   "new": "cab99b571da844a841efbfebab78b4872ecb62b08bc7ecce06c5de2f21197ce8"
+   "new": "2e4d1784cf691175a978c234e41cfa3bca004860b30d3019cd752011330d4b55"
   },
   "mobile-src/assets/launcher.js": {
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
@@ -55,11 +55,11 @@
   },
   "mobile-src/index.html": {
    "base": "eddf31ab45fbae51a673637b45befd1998ed83b3f06fa9f95a78b70b8644307d",
-   "new": "41ea425452c90dd00bd63e3d7a80d576a0117a82ff56b68f5f57bafb23151849"
+   "new": "ed53fbc85d254e94f7f48e91dcfa98a52fb412d61d8f0ee4c8fc16502f12c82d"
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
-   "new": "38360225e13c6de9f4529382beb1e17cb44de2d2f8811338ebe2133ae8b763fd"
+   "new": "e145c5b3c4efd1b14102123446b047391c39518610578bbb536b8c3650384463"
   },
   "public/background/python-worker.js": {
    "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
@@ -99,7 +99,7 @@
   },
   "resources/windows/desktop/main.js": {
    "base": null,
-   "new": "94fec1a8aa83e71d032a23e5fd28751777a151667f4de900879557eafdb516d2"
+   "new": "0c61c216e9b8fb9952539adef63123ea87e1e295d23b30aae15178277960cbb8"
   },
   "resources/windows/desktop/package.json": {
    "base": null,
@@ -115,11 +115,11 @@
   },
   "resources/windows/desktop/README-Desktop.txt": {
    "base": null,
-   "new": "5df5dd53b96978597f34284ce082413289890bf95c7d9e5ae41e011cc5dbac18"
+   "new": "e83caa1d22e3c24aabdfc1849444d8b45ea0d48da927b24939c3ae7d8ecb2db3"
   },
   "scripts/build-windows-desktop.mjs": {
    "base": null,
-   "new": "cb5610754fcbfb5187c1e21130cd0b040e49421f691bb61eb1e937eb056dd985"
+   "new": "0d2185cc315ca1be84c3b7ece26cb5a08a42f9738cc1d144e3e6b62636a56d9a"
   },
   "scripts/zip-folder.py": {
    "base": null,
@@ -127,7 +127,27 @@
   },
   "scripts/desktop-smoke.cjs": {
    "base": null,
-   "new": "7952f7f47e71e52a189a8063e77f3a303b5bf5e9f5e691781e4682a3a8ed12a9"
+   "new": "ebbe8f437e783ad7ac5f8230cfa4197779bbc661fb15f20bd497296a993d43a0"
+  },
+  "resources/windows/desktop/preload.js": {
+   "base": null,
+   "new": "4d77d030e17c71b64a99572aaa9a5711a1c55e59e8ff781b22ca558ec0e12170"
+  },
+  "mobile-src/assets/music.js": {
+   "base": null,
+   "new": "58e6d15a241a5175a44697999f844c42612182b22c4148e675ecfc85edfdb2a5"
+  },
+  "mobile-src/assets/music.css": {
+   "base": null,
+   "new": "f72e6e66f9f1b2eefaf687bd9217c0ebdfac808b07e9323cacb9691292ea9f1a"
+  },
+  "mobile-src/assets/focus-playlist.js": {
+   "base": null,
+   "new": "94ac1eb90803b214a8968ef352cb21fed2dba21e45ad516a26f521db30e90f6b"
+  },
+  "scripts/music.test.mjs": {
+   "base": null,
+   "new": "26217a604d1a70dd530422367599e1f104cea4b912d509bf2f1ef90c115f0bf3"
   }
  }
 }
