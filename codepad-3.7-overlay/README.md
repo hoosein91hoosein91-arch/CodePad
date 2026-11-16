@@ -7,7 +7,7 @@ unzip CodePad-3.7.0-source.zip && cd CodePad-3.7.0
 node /path/to/repo/codepad-3.7-overlay/apply.mjs .      # اگر هش فایل پایه نخواند متوقف می‌شود
 npm install --ignore-scripts                            # توجه: npm ci با package-lock خود ۳٫۷٫۰ خطا می‌دهد (lock با package.json هم‌خوان نیست)
 npm run build:mobile -- --offline
-npm run test:source                                      # ۳۹ آزمون
+npm run test:source                                      # ۴۰ آزمون
 npm run dev                                              # پیش‌نمایش
 ```
 
@@ -43,6 +43,7 @@ Pyodide هنگام فعال‌بودن فایل پایتون از قبل بار�
 ## ۵) پروژه‌های Python بزرگ (ربات، ابزار شبکه، چندفایلی) — مثال: iran-marketing-radar.zip
 در APK، پروژه‌ای که فقط از کتابخانهٔ استاندارد استفاده می‌کند روی **CPython 3.13 بومی** اجرا می‌شود (سوکت واقعی، `urllib`، `sqlite3`، thread، فایل پایدار). چند چیز جلوی اجرای چنین پروژه‌ای را می‌گرفت که حالا درست شده:
 - **مسیریابی موتور:** اگر فایل تست پروژه ماژول اصلی (`import bale_bot`) را می‌خواند، کل پروژه به Python WebAssembly می‌رفت (بدون شبکه و sqlite). حالا فقط کدِ قابل‌دسترس از فایل شروع تعیین‌کنندهٔ موتور است. (`python-engine.js` + `python-routing-reachability.test.mjs`)
+- **`eval`/`exec`/`__import__` و ماژول‌های فقط‌بومی:** وجود یکی از این سه در کد، پروژه را به WebAssembly می‌فرستاد، حتی اگر همان پروژه `threading`، `socket` یا `sqlite3` می‌خواست که در WebAssembly وجود ندارند. حالا اگر چنین ماژولی import شود، CPython بومی انتخاب می‌شود. (آزمون روی ۱۰۰ برنامهٔ بلند: پاس‌شده ۹۱ ← ۹۵)
 - **فایل شروع خودکار:** در ZIP، اسکریپتی که `if __name__ == "__main__":` دارد (نه تست) پیش‌فرض انتخاب می‌شود (`project-zip.js`).
 - **آرگومان و متغیر محیطی:** Studio ← ترمینال ← «تنظیم اجرای پروژهٔ فعال». مثال: `BALE_TOKEN=…`، `RADAR_MODEL_MODE=ollama`، آرگومان `--daily-at 09:30`. برای هر پروژه جدا ذخیره می‌شود و فقط روی همین دستگاه می‌ماند (`run-config.js`؛ هر دو موتور CPython و WebAssembly).
 - **`getpass`:** کادر ورودی رمز را مخفی می‌کند و جواب را echo نمی‌کند، به‌جای هشدار «Password input may be echoed».
