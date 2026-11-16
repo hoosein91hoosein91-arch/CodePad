@@ -83,7 +83,7 @@
   },
   "public/background/python-worker.js": {
    "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
-   "new": "f4c1dc65e993f65c39f8a3f985d860022a61fdd130f7237e7a57eff966544afc"
+   "new": "ad290967c0bd3960c2051d47744e7476feef3307bf773b1b249c52590de56d67"
   },
   "resources/python/codepad_console.py": {
    "base": "cce71f2147c985ffb347f97d8f3a271dea3d0d7732e2371bf9ac29e259673d44",

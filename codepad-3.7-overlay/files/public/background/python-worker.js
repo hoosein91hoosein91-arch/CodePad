@@ -203,9 +203,14 @@ _codepad_tree = ast.fix_missing_locations(_CodePadAsyncRun().visit(_codepad_tree
     emit({ phase: 'run' });
     let failure = '';
     try {
+      // sys.exit() ends the program normally (exit code 0 is silent, like the native runtime); other codes are reported by value
       await py.runPythonAsync(`
-_codepad_value = eval(compile(_codepad_tree, _codepad_filename, 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT))
-if inspect.isawaitable(_codepad_value): await _codepad_value
+_codepad_exit = None
+try:
+    _codepad_value = eval(compile(_codepad_tree, _codepad_filename, 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT))
+    if inspect.isawaitable(_codepad_value): await _codepad_value
+except SystemExit as _codepad_exit_error:
+    _codepad_exit = _codepad_exit_error.code
 `);
       await py.runPythonAsync(`
 async def _codepad_wait():
@@ -221,6 +226,8 @@ async def _codepad_wait():
             raise
 await _codepad_wait()
 `);
+      const exitCode = py.globals.get('_codepad_exit');
+      if (exitCode !== undefined && exitCode !== null && exitCode !== 0) failure = 'SystemExit: ' + exitCode;
     } catch (error) {
       failure = error instanceof Error ? error.message : String(error);
       await py.runPythonAsync(`
