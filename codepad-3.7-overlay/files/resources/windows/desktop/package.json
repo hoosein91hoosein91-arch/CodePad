@@ -1,0 +1,11 @@
+{
+  "name": "codepad",
+  "productName": "CodePad",
+  "version": "3.7.0",
+  "description": "CodePad desktop: offline multi-language coding workshop with AI and Cyber Lab",
+  "main": "main.js",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": "CodePad",
+  "homepage": "https://github.com/hoosein91hoosein91-arch/CodePad"
+}

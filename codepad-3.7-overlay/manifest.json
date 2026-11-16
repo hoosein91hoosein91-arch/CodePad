@@ -97,17 +97,37 @@
    "base": null,
    "new": "05663f5cefd1aa063dda80ff58007beada62244e8142d5c58233c8fbba73963f"
   },
-  "resources/windows/app-launcher/main.go": {
+  "resources/windows/desktop/main.js": {
    "base": null,
-   "new": "8c882891f1d1ccb282bccd4c7e52a30f413d7669dac34332e1ab874b7641397f"
+   "new": "94fec1a8aa83e71d032a23e5fd28751777a151667f4de900879557eafdb516d2"
   },
-  "resources/windows/app-launcher/README-Windows.txt": {
+  "resources/windows/desktop/package.json": {
    "base": null,
-   "new": "a70202d7ff64f3f2fb80a01f4b635c255a1c48ca1ef737249940a410adcb493c"
+   "new": "3c60491c93fe6a0f6535fedec8ee75d4974b31cb6ffe6c227335204ebb8288b2"
   },
-  "scripts/package-windows.py": {
+  "resources/windows/desktop/icon.png": {
    "base": null,
-   "new": "60a3eca997760c5e762ffae2b10c4f55c0328e78c71dd7dfd433460250ebee9d"
+   "new": "a4c8353f44cfd990b2d08123c91611d19183e11134dfdf95425d6ec3380234f6"
+  },
+  "resources/windows/desktop/icon.ico": {
+   "base": null,
+   "new": "30d34daab290659a6d9c39d1e05e103f2dc6fdcc51f6351deb97b839a65aa95d"
+  },
+  "resources/windows/desktop/README-Desktop.txt": {
+   "base": null,
+   "new": "5df5dd53b96978597f34284ce082413289890bf95c7d9e5ae41e011cc5dbac18"
+  },
+  "scripts/build-windows-desktop.mjs": {
+   "base": null,
+   "new": "cb5610754fcbfb5187c1e21130cd0b040e49421f691bb61eb1e937eb056dd985"
+  },
+  "scripts/zip-folder.py": {
+   "base": null,
+   "new": "418f0ef6450077d29530d057ba3b94fc8fe72f34ec825fc446719bb0d291e84e"
+  },
+  "scripts/desktop-smoke.cjs": {
+   "base": null,
+   "new": "7952f7f47e71e52a189a8063e77f3a303b5bf5e9f5e691781e4682a3a8ed12a9"
   }
  }
 }
