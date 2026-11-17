@@ -5,3 +5,7 @@ node_modules/
 .output/
 .vercel/
 .node_modules.lock
+
+# Tactical 8v8 (python game)
+tactical8v8/__pycache__/
+tactical8v8/t8_save.json

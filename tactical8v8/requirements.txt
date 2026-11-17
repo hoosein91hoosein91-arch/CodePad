@@ -1,0 +1,5 @@
+pygame>=2.1
+numpy>=1.21
+# optional - enables the Persian (Farsi) interface:
+arabic-reshaper>=3.0
+python-bidi>=0.4.2
