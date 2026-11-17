@@ -69,25 +69,25 @@ print("فارسی OK")
   assert.ok(events.some((e) => e.phase === "run" && /CPython/.test(e.engine)));
 });
 
-test("live input(), getpass (masked marker), argv and env from the run config", async () => {
+test("input() and getpass are answered from the prepared input (no dialog is ever requested); argv and env from the run config", async () => {
   const sys = make();
   const code = `
 import sys, os, getpass
 print("argv", sys.argv[1:], os.environ.get("CP_TOKEN"))
 name = input("Name: "); print("hello", name)
 print("secret", getpass.getpass("Token: "))
+try:
+    input("More: ")
+except EOFError as e:
+    print("EOF:", str(e)[:12])
 `;
-  const { events, done } = collect(sys, job(code, { runConfig: { argv: ["--daily-at", "09:30"], env: { CP_TOKEN: "abc" } } }));
-  const waitFor = async (n) => { for (let i = 0; i < 200; i++) { const reqs = events.filter((e) => e.inputRequest); if (reqs.length >= n) return reqs[n - 1]; await new Promise((r) => setTimeout(r, 25)); } throw new Error("no input request " + n); };
-  const first = await waitFor(1); assert.equal(first.prompt, "Name: ");
-  sys.pythonInput({ channel: "c1", id: 7, requestId: first.requestId, value: "کدپد" });
-  const second = await waitFor(2); assert.match(second.prompt, /^\x01secret\x01Token: /);
-  assert.throws(() => sys.pythonInput({ channel: "c1", id: 7, requestId: 999, value: "x" }), /دیگر فعال نیست/);
-  sys.pythonInput({ channel: "c1", id: 7, requestId: second.requestId, value: "s3" });
+  const { events, done } = collect(sys, job(code, { stdin: "کدپد\ns3", runConfig: { argv: ["--daily-at", "09:30"], env: { CP_TOKEN: "abc" } } }));
   const end = await done;
+  assert.equal(events.filter((e) => e.inputRequest).length, 0, "the host never asks the page for input");
   const out = events.filter((e) => e.stream && e.kind === "out").map((e) => e.text).join("");
-  assert.match(out, /argv \['--daily-at', '09:30'\] abc/); assert.match(out, /hello کدپد/); assert.match(out, /secret s3/);
+  assert.match(out, /argv \['--daily-at', '09:30'\] abc/); assert.match(out, /Name: کدپد/); assert.match(out, /hello کدپد/); assert.match(out, /secret s3/);
   assert.ok(!/s3[\s\S]*s3/.test(out.replace("secret s3", "")), "secret is not echoed");
+  assert.match(out, /EOF: ورودی آماده/, "running out of answers is a normal EOFError with a clear message");
   assert.equal(end.done, true);
 });
 
@@ -122,4 +122,45 @@ test("info reports the shell and Python it found", () => {
   const i = make().info();
   assert.equal(i.shell, process.platform === "win32" ? "powershell" : "sh");
   assert.ok(i.python && /^3\.\d+$/.test(i.python.version));
+});
+
+import { safeReportName, saveReportFile, isInsideDir } from "../resources/windows/desktop/system.js";
+import { mkdtempSync as mkd, readFileSync as rd, existsSync as ex, symlinkSync as sym, writeFileSync as wr } from "node:fs";
+import { tmpdir as tmp } from "node:os";
+import { join as jn } from "node:path";
+
+test("reports are saved into the public reports folder with safe, unique names", () => {
+  const dir = jn(mkd(jn(tmp(), "cprep-")), "CodePad", "Reports");
+  const b64 = (s) => Buffer.from(s).toString("base64");
+  const a = saveReportFile(dir, "network_report-2026-11-17_2230.txt", b64("گزارش ۱"));
+  assert.equal(rd(a.path, "utf8"), "گزارش ۱");
+  assert.equal(a.dir.endsWith(jn("CodePad", "Reports")), true);
+  const b = saveReportFile(dir, "network_report-2026-11-17_2230.txt", b64("دوم"));
+  assert.notEqual(b.path, a.path, "never overwrites an existing report");
+  assert.equal(rd(a.path, "utf8"), "گزارش ۱");
+  assert.match(b.name, /-1\.txt$/);
+});
+test("report names cannot escape the folder or become runnable files", () => {
+  assert.equal(safeReportName("../../Windows/evil.txt"), "evil.txt");
+  assert.equal(safeReportName("..\\..\\x.txt"), "x.txt");
+  assert.equal(safeReportName("run.bat"), "run.bat.txt");
+  assert.equal(safeReportName("setup.EXE"), "setup.EXE.txt");
+  assert.equal(safeReportName("con.txt"), "_con.txt");
+  assert.equal(safeReportName(""), "report.txt");
+  assert.equal(safeReportName("a<b>c:d.txt"), "a_b_c_d.txt");
+  const dir = mkd(jn(tmp(), "cprep2-"));
+  assert.throws(() => saveReportFile(dir, "x.txt", ""), /Empty/);
+  assert.throws(() => saveReportFile(dir, "x.txt", Buffer.alloc(20).toString("base64"), 10), /too large/);
+  const s = saveReportFile(dir, "../../escape.txt", Buffer.from("hi").toString("base64"));
+  assert.equal(s.path.startsWith(s.dir), true);
+});
+test("reveal is limited to files inside the reports folder (symlinks included)", () => {
+  const base = mkd(jn(tmp(), "cprep3-")), dir = jn(base, "Reports"), outside = jn(base, "secret.txt");
+  const r = saveReportFile(dir, "ok.txt", Buffer.from("x").toString("base64"));
+  wr(outside, "s");
+  assert.equal(isInsideDir(dir, r.path), true);
+  assert.equal(isInsideDir(dir, outside), false);
+  assert.equal(isInsideDir(dir, jn(dir, "missing.txt")), false);
+  sym(outside, jn(dir, "link.txt"));
+  assert.equal(isInsideDir(dir, jn(dir, "link.txt")), false, "a link out of the folder is not a report");
 });

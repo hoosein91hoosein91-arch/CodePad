@@ -15,7 +15,7 @@ class Bridge:
     def flush(self): pass
     def finish(self, failure): log.append("FAIL:" + failure if failure else "DONE")
     def requestInput(self, prompt):
-        log.append("ASK:" + repr(prompt)); return "s3cret"
+        log.append("ASK:" + repr(prompt)); return "never-used"
     def display(self, j): pass
 code = """
 import sys, os, getpass
@@ -23,20 +23,20 @@ print("argv", sys.argv[1:])
 print("env", os.environ.get("CP_TEST"))
 print("got", getpass.getpass("Token: "))
 """
-payload = json.dumps({"projectKey": "t", "entryFile": "main.py", "code": code, "assets": [],
+payload = json.dumps({"projectKey": "t", "entryFile": "main.py", "code": code, "assets": [], "stdin": "s3cret",
     "runConfig": {"argv": ["--daily-at", "09:30"], "env": {"CP_TEST": "yes", "PATH": "/evil", "bad name": "x"}}})
 before = os.environ.get("PATH")
 codepad_runtime.run(payload, tempfile.mkdtemp(), Bridge())
 print(json.dumps({"log": "".join(log), "env_after": os.environ.get("CP_TEST"), "path_same": os.environ.get("PATH") == before}))
 `;
 
-test("native host applies run config, masks getpass and restores the environment", () => {
+test("native host applies run config, answers getpass from the prepared input and restores the environment", () => {
   const r = spawnSync("python3", ["-I", "-c", script, host], { encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr);
   const out = JSON.parse(r.stdout.trim().split("\n").at(-1));
   assert.match(out.log, /argv \['--daily-at', '09:30'\]/);
   assert.match(out.log, /env yes/);
-  assert.match(out.log, /ASK:'\\x01secret\\x01Token: '/);
+  assert.ok(!/ASK:/.test(out.log), "no interactive question is ever sent to the page");
   assert.match(out.log, /got s3cret/);
   assert.ok(!/s3cret[\s\S]*s3cret/.test(out.log.replace("got s3cret", "")), "secret answer must not be echoed");
   assert.match(out.log, /DONE/);

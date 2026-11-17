@@ -36,6 +36,11 @@ contextBridge.exposeInMainWorld('cpDesktop', {
       return () => ipcRenderer.removeListener('py:event', handler);
     },
   },
+  files: {
+    save: (name, base64) => call('files:save', String(name), String(base64)),
+    reveal: (file) => call('files:reveal', String(file)),
+    dir: () => call('files:dir'),
+  },
   music: {
     info: () => ipcRenderer.invoke('music:info'),
     choose: () => ipcRenderer.invoke('music:choose'),

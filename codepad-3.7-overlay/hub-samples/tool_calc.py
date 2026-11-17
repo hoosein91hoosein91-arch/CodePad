@@ -2,6 +2,9 @@
 # desc: پارس عبارت با ast؛ تمرین امنیتی در برابر تزریق کد
 # cat: tools
 # level: 3
+# stdin: 2+3*4
+# stdin: sqrt(144)+2**10
+# stdin: __import__('os').system('id')
 import ast, math, operator as op
 
 OPS = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv, ast.Pow: op.pow, ast.Mod: op.mod, ast.USub: op.neg}
@@ -13,7 +16,10 @@ def ev(n):
     if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in FUNCS: return FUNCS[n.func.id](*map(ev, n.args))
     raise ValueError("عبارت مجاز نیست")
 while True:
-    s = input("عبارت (خالی = خروج): ")
+    try:
+        s = input("عبارت (خالی = خروج): ")
+    except EOFError:
+        break
     if not s: break
     try:
         print("=", ev(ast.parse(s, mode="eval").body))

@@ -88,7 +88,8 @@ export async function importSample(s, { run = false, files = [], patch } = {}) {
   }
   close();
   await goEditor();
-  rt.pt.setState((st) => ({ projects: st.projects.map((p) => (p.id === id ? { ...p, entryFile: name } : p)) }));
+  // جواب‌های آماده‌ی input() همراه نمونه می‌آید (CodePad پنجرهٔ سؤال ندارد؛ فقط از «جواب‌های آماده» می‌خواند)
+  rt.pt.setState((st) => ({ projects: st.projects.map((p) => (p.id === id ? { ...p, entryFile: name, files: s.stdin ? p.files.map((f) => ({ ...f, stdin: s.stdin })) : p.files } : p)) }));
   if (run) clickRun();
 }
 /** دکمهٔ اجرای ویرایشگر را وقتی آماده شد می‌زند (تا ۵ ثانیه صبر می‌کند). */
@@ -156,6 +157,20 @@ function viewPython() {
     h("div", { class: "hb-bar" }, search, count), chips, list);
 }
 
+function viewDiag() {
+  const out = h("div", {}), btn = h("button", { type: "button", class: "hb-btn pri" }, "🧪 بررسی سازگاری سه‌بعدی روی این دستگاه");
+  btn.addEventListener("click", async () => {
+    btn.disabled = true; btn.textContent = "در حال بررسی… (تا ۳۰ ثانیه)"; out.replaceChildren();
+    try {
+      const r = await window.CodePadPython3D.diagnose();
+      out.append(h("p", { class: r.ok ? "hb-lead" : "hb-warn", role: "status" }, r.ok ? "✔ سه‌بعدی روی این دستگاه آماده است." : "✖ مشکلی پیدا شد؛ ردیف‌های قرمز را ببین و گزارش را برای پشتیبانی بفرست."),
+        h("ul", { class: "hb-find" }, r.items.map((x) => h("li", {}, `${x.ok ? "✅" : "❌"} ${x.name}${x.detail ? " — " + x.detail : ""}`))),
+        h("div", { class: "hb-row" }, h("button", { type: "button", class: "hb-btn", onclick: () => navigator.clipboard?.writeText(r.report).then(() => alert("گزارش کپی شد.")) }, "کپی گزارش")));
+    } catch (e) { out.append(h("p", { class: "hb-warn" }, "بررسی اجرا نشد: " + (e?.message || e))); }
+    btn.disabled = false; btn.textContent = "🧪 بررسی دوبارهٔ سازگاری سه‌بعدی";
+  });
+  return h("section", { class: "hb-sec" }, h("h3", {}, "اگر سه‌بعدی باز نمی‌شود"), h("p", { class: "hb-lead" }, "این بررسی بدون Python کتابخانه، WebGL و نمایشگر را امتحان می‌کند و دلیل دقیق را می‌گوید."), btn, out);
+}
 function viewLibs() {
   const libs = window.CodePadLibs?.list?.() || [];
   const three = HUB_SAMPLES.filter((s) => s.cat === "3d");
@@ -167,6 +182,7 @@ function viewLibs() {
       const sample = HUB_SAMPLES.find((s) => s.ext === "html" && s.code.includes(`lib:${id}`));
       return card({ three: "🧊", p5: "🎨", matter: "⚙️", chart: "📊" }[id] || "📦", id, sample ? sample.title : "کتابخانه", () => sample && importSample(sample, { run: true }));
     })),
+    viewDiag(),
     h("h3", {}, "سه‌بعدی با Python"),
     h("p", { class: "hb-lead" }, "با ", h("code", { dir: "ltr" }, "from codepad3d import Scene"), " صحنهٔ سه‌بعدی زنده بساز؛ حرکت با WASD یا جوی‌استیک، نگاه با ماوس/انگشت."),
     h("div", { class: "hb-list" }, three.map(sampleCard)));

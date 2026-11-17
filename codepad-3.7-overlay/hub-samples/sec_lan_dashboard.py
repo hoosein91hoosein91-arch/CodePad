@@ -142,7 +142,11 @@ def main():
         print("✖", e)
         return
     print("شبکهٔ هدف:", net, "(%d آدرس)" % net.num_addresses, "· پورت‌ها:", len(PORTS))
-    ans = input("تأیید می‌کنم که این شبکه مال خودم است یا اجازهٔ کتبی دارم (بله/y): ").strip().lower()
+    try:
+        ans = input("تأیید می‌کنم که این شبکه مال خودم است یا اجازهٔ کتبی دارم (بله/y): ").strip().lower()
+    except EOFError:
+        print("برای شروع اسکن باید تأیید کنی که شبکه مال خودت است: در کادر «جواب‌های آماده» فقط حرف y را بنویس و دوباره اجرا کن.")
+        return
     if ans not in ("y", "yes", "بله", "ب"):
         print("لغو شد. اسکن شبکهٔ دیگران ممنوع است.")
         return
@@ -163,9 +167,14 @@ def main():
     try:
         with open("network_report.txt", "w", encoding="utf-8") as f:
             f.write(text)
-        print("گزارش در network_report.txt ذخیره شد.")
     except OSError:
-        pass
+        return
+    try:
+        import codepad
+        codepad.share_file("network_report.txt", title="گزارش شبکهٔ خانه")   # کارت «ذخیره / اشتراک» باز می‌شود
+        print("کارت ذخیره/اشتراک گزارش باز شد (ذخیره ← پوشهٔ عمومی).")
+    except Exception:
+        print("گزارش در network_report.txt ذخیره شد (در پوشهٔ کاری برنامه).")
 
 
 if __name__ == "__main__":

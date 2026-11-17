@@ -17,13 +17,17 @@ for f in sorted(x for x in os.listdir(d) if x.endswith(('.py','.html'))):
         code=t  # keep the header comment as part of file
         ext='html'
     else:
+        stdin=[]
         for line in t.splitlines():
-            m=re.match(r'#\s*(title|desc|cat|level):\s*(.*)',line)
-            if m: meta[m.group(1)]=m.group(2).strip()
-            else: break
+            if not line.startswith('#'): break
+            m=re.match(r'#\s*(title|desc|cat|level|stdin):\s?(.*)',line)
+            if m:
+                if m.group(1)=='stdin': stdin.append(m.group(2))
+                else: meta[m.group(1)]=m.group(2).strip()
+        meta['stdin']='\n'.join(stdin)
         code=t; ext='py'
     cat=f.split('_')[0]
-    out.append({'id':f.rsplit('.',1)[0],'file':f,'ext':ext,'cat':meta.get('cat',cat),'title':meta.get('title',f),'desc':meta.get('desc',''),'level':int(meta.get('level',1) or 1),'code':code})
+    out.append({'id':f.rsplit('.',1)[0],'file':f,'ext':ext,'cat':meta.get('cat',cat),'title':meta.get('title',f),'desc':meta.get('desc',''),'level':int(meta.get('level',1) or 1),'stdin':meta.get('stdin',''),'code':code})
 js='// تولید خودکار از hubsamples؛ نمونه‌های آفلاین هاب CodePad\nexport const HUB_SAMPLES = '+json.dumps(out,ensure_ascii=False,indent=1)+';\n'
 open(str(HERE.parent/'files/mobile-src/assets/hub-data.js'),'w',encoding='utf-8').write(js)
 print(len(out),len(js))

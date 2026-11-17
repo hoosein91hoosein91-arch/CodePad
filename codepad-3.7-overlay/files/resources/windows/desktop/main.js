@@ -3,7 +3,7 @@
 // the private codepad://app/ scheme, which Chromium treats as a secure, stable origin so saved projects persist.
 const { app, BrowserWindow, Menu, WebContentsView, dialog, ipcMain, protocol, session, shell } = require('electron');
 const os = require('os');
-const { createSystem } = require('./system');
+const { createSystem, saveReportFile, isInsideDir } = require('./system');
 const fs = require('fs');
 const path = require('path');
 const { Readable } = require('stream');
@@ -155,6 +155,11 @@ function registerSystemIpc() {
   handle('py:status', () => system.pythonStatus());
   handle('py:exec', (options) => system.pythonExec(options));
   handle('py:setpath', (p) => system.setPythonPath(p));
+  // reports: a public folder next to the user's own documents (not the private app data)
+  const reportsDir = () => process.env.CODEPAD_REPORTS_DIR || path.join(app.getPath('documents') || path.join(os.homedir(), 'Documents'), 'CodePad', 'Reports');
+  handle('files:save', (name, b64) => saveReportFile(reportsDir(), name, b64));
+  handle('files:reveal', (file) => { if (typeof file !== 'string' || !isInsideDir(reportsDir(), file)) throw new Error('Not a CodePad report'); shell.showItemInFolder(file); return true; });
+  handle('files:dir', () => reportsDir());
 }
 
 function registerIpc() {

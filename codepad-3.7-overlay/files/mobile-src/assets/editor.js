@@ -22572,7 +22572,7 @@ function Lw() {
                     children: [
                       (0, $.jsx)(`span`, {
                         className: `mt-1 font-mono text-xs text-lime`,
-                        children: C.lang === `python` ? `ورودی آماده (اختیاری)` : `ورودی`,
+                        children: C.lang === `python` ? `جواب‌های آماده (هر خط یک جواب)` : `ورودی`,
                       }),
                       (0, $.jsx)(`textarea`, {
                         value: C.stdin,

@@ -26,11 +26,11 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
   assert.match(lab.stdout, /alg=none/, 'lab sample ran: ' + JSON.stringify(lab));
   // Python projects use real CPython here: sockets + sqlite3 + threads + live input()
   const program = 'import socket, sqlite3, threading, sys\nsrv = socket.socket(); srv.bind(("127.0.0.1", 0)); srv.listen(1)\nthreading.Thread(target=lambda: (lambda c: (c.sendall(c.recv(8).upper()), c.close()))(srv.accept()[0])).start()\nc = socket.create_connection(("127.0.0.1", srv.getsockname()[1])); c.sendall(b"smoke"); net = c.recv(8)\ndb = sqlite3.connect(":memory:"); db.execute("create table t(x)"); db.execute("insert into t values (9)")\nname = input("Name: ")\nprint("SMOKE-OK", name, sum(range(101)), net, db.execute("select x from t").fetchone()[0], sys.implementation.name)\n';
-  await win.evaluate(async (code) => { const m = await import('/assets/runtime.js'); m.pt.getState().importProject('smoke', [{ name: 'main.py', lang: 'python', content: code }]); }, program);
+  // input() is answered from the prepared-input box; the app never opens a question dialog
+  await win.evaluate(async (code) => { const m = await import('/assets/runtime.js'); m.pt.getState().importProject('smoke', [{ name: 'main.py', lang: 'python', content: code }]); m.pt.setState((s) => ({ projects: s.projects.map((p) => p.id === s.activeProjectId ? { ...p, files: p.files.map((f) => ({ ...f, stdin: 'codepad' })) } : p) })); }, program);
   await win.getByRole('button', { name: 'اجرا', exact: true }).click();
-  const field = win.locator('dialog.cp-python-input input'); await field.waitFor({ timeout: 120000 });
-  await field.fill('codepad'); await win.keyboard.press('Enter');
   await win.getByText(/SMOKE-OK codepad 5050 b'SMOKE' 9 cpython/).first().waitFor({ timeout: 60000 });
+  assert.equal(await win.locator('dialog.cp-python-input').count(), 0, 'no input dialog exists');
   // Stop kills a running program; numpy still runs on the WebAssembly engine
   await win.evaluate(async () => { const m = await import('/assets/runtime.js'); m.pt.getState().importProject('loop', [{ name: 'main.py', lang: 'python', content: 'import time\nprint("LOOP-READY", flush=True)\nwhile True: time.sleep(0.2)\n' }]); });
   await win.getByRole('button', { name: 'اجرا', exact: true }).click();

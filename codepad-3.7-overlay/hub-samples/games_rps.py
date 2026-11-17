@@ -2,11 +2,20 @@
 # desc: بازی با کامپیوتر؛ پایان با اولین ۳ برد
 # cat: games
 # level: 1
+# stdin: قیچی
+# stdin: قیچی
+# stdin: قیچی
+# stdin: قیچی
+# stdin: سنگ
 import random
 beats = {"سنگ": "قیچی", "کاغذ": "سنگ", "قیچی": "کاغذ"}
+random.seed(11)   # انتخاب‌های ثابت کامپیوتر برای نمایش
 score = [0, 0]
 while max(score) < 3:
-    me = input("سنگ / کاغذ / قیچی؟ ").strip()
+    try:
+        me = input("سنگ / کاغذ / قیچی؟ ").strip()
+    except EOFError:
+        print("\n(جواب‌های آماده تمام شد؛ حرکت‌های بیشتری در کادر «جواب‌های آماده» بنویس.)"); break
     if me not in beats:
         print("یکی از سه گزینه را بنویس."); continue
     cpu = random.choice(list(beats))

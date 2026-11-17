@@ -164,6 +164,7 @@ class Scene:
         self.joy = (0.0, 0.0)           # touch joystick, each -1..1 (x right, y forward)
         self.closed = False
         self.ready = False
+        self._error = None
         self._started = False
         self._last_hb = 0.0
         self._pending = {}
@@ -208,6 +209,8 @@ class Scene:
                 self._call(fn, d.get("k"), bool(d.get("down")))
         elif t == "closed":
             self.closed = True
+        elif t == "error":
+            self._error = str(d.get("msg") or "unknown viewer error")
 
     def _call(self, fn, *args):
         try:
@@ -314,12 +317,17 @@ class Scene:
             self._last_hb = now
             self._send({"t": "frame", "ops": ops})
 
-    async def wait_ready(self, timeout=15.0):
+    async def wait_ready(self, timeout=45.0):
         t0 = time.perf_counter()
         while not self.ready and not self.closed:
+            if self._error:
+                raise RuntimeError("3D viewer error: " + self._error)
             if time.perf_counter() - t0 > timeout:
-                raise RuntimeError("The 3D viewer did not open (is this program running inside CodePad?).")
+                raise RuntimeError("The 3D viewer did not open within %d s. Is this program running inside CodePad? "
+                                   "Run the 3D self-test in Hub > 3D to see what this device lacks." % int(timeout))
             await asyncio.sleep(0.05)
+        if self._error and not self.ready:
+            raise RuntimeError("3D viewer error: " + self._error)
 
     async def run(self, update=None, fps=60):
         """Drive the scene.  `update(dt)` may be a normal function or `async def`.  Returns when the viewer is closed."""
@@ -329,6 +337,8 @@ class Scene:
         last = time.perf_counter()
         try:
             while not self.closed:
+                if self._error:
+                    raise RuntimeError("3D viewer error: " + self._error)
                 now = time.perf_counter()
                 dt = min(0.1, now - last)
                 last = now

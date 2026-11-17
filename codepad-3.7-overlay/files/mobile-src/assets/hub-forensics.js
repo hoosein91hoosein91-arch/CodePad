@@ -147,3 +147,18 @@ export async function analyze(bytes, name = "file") {
   const [sha256, sha1] = await Promise.all([digest(bytes, "SHA-256"), digest(bytes, "SHA-1")]);
   return { name, size: bytes.length, type, entropy: e, md5: md5(bytes), sha1, sha256, strings: strings.slice(0, 60), hexdump: hexdump(bytes, 256), zip, findings };
 }
+
+/** گزارش متنی قابل ذخیره/اشتراک از نتیجهٔ analyze(). */
+export function buildAnalysisReport(r, now = new Date()) {
+  const icon = { high: "[HIGH]  ", medium: "[MEDIUM]", info: "[INFO]  " };
+  const lines = [
+    "CodePad — گزارش تحلیل فایل", "=".repeat(44),
+    `فایل: ${r.name}`, `اندازه: ${r.size} بایت`, `نوع (از روی بایت‌ها): ${r.type.desc}`, `آنتروپی: ${r.entropy.toFixed(2)} / 8`,
+    `زمان: ${now.toISOString()}`, "",
+    "هش‌ها", `MD5     ${r.md5}`, `SHA-1   ${r.sha1}`, `SHA-256 ${r.sha256}`, "",
+    "یافته‌ها", ...(r.findings.length ? r.findings.map((f) => `${icon[f.level] || "[INFO]  "} ${f.text}`) : ["نشانهٔ مشکوکی در این بررسی ساده پیدا نشد (این به معنی بی‌خطر بودن نیست)."]), "",
+  ];
+  if (r.zip) lines.push(`محتوای ZIP (${r.zip.length} مورد)`, ...r.zip.slice(0, 300).map((e) => `${String(e.usize).padStart(10)}  ${e.name}${e.encrypted ? "  (رمزدار)" : ""}`), "");
+  lines.push("رشته‌های قابل‌خواندن", ...(r.strings.length ? r.strings : ["—"]), "", "هگزدامپ ۲۵۶ بایت اول", r.hexdump, "", "این گزارش فقط از بررسی ایستا ساخته شده؛ فایل اجرا نشده است.");
+  return lines.join("\n");
+}

@@ -1,7 +1,7 @@
 // بخش «امنیت» هاب: سایت تمرین آسیب‌پذیر، اشتراک روی شبکه، CTF، تحلیل فایل، داشبورد شبکه و کارت‌های CVE.
 // همهٔ این‌ها فقط روی دستگاه خودت کار می‌کنند و به هدف بیرونی حمله نمی‌کنند.
 import { CTF_CHALLENGES, progress as ctfProgress, submit as ctfSubmit, reset as ctfReset } from "./hub-ctf.js";
-import { analyze } from "./hub-forensics.js";
+import { analyze, buildAnalysisReport } from "./hub-forensics.js";
 
 const NOTES_KEY = "codepad-cve-notes-v1";
 export const CVE_RE = /CVE-\d{4}-\d{4,7}/i;
@@ -61,7 +61,7 @@ export function viewSecurity(c) {
     ctfBox.replaceChildren(h("p", { class: "hb-lead" }, `پیشرفت: ${p.count}/${p.total} چالش · ${p.points}/${p.maxPoints} امتیاز`));
     if (!openId) {
       ctfBox.append(h("div", { class: "hb-grid" }, CTF_CHALLENGES.map((ch) => h("button", { type: "button", class: "hb-card" + (p.solved[ch.id] ? " done" : ""), onclick: () => renderCtf(ch.id) }, h("b", {}, (p.solved[ch.id] ? "✔ " : "") + ch.title), h("small", {}, `${ch.cat} · ${ch.pts} امتیاز`)))));
-      ctfBox.append(row(btn("پاک‌کردن پیشرفت", () => { if (confirm("همهٔ پیشرفت CTF پاک شود؟")) { ctfReset(); renderCtf(); } })));
+      ctfBox.append(row(btn("💾 ذخیره / 📤 اشتراک نتیجه", () => { const q = ctfProgress(); window.CodePadReports?.show({ name: "ctf-progress.txt", mime: "text/plain", title: "نتیجهٔ CTF", text: ["CodePad CTF", `حل‌شده: ${q.count}/${q.total} · امتیاز ${q.points}/${q.maxPoints}`, "", ...CTF_CHALLENGES.map((c) => `${q.solved[c.id] ? "[x]" : "[ ]"} ${c.title} (${c.pts})`)].join("\n") }); }), btn("پاک‌کردن پیشرفت", () => { if (confirm("همهٔ پیشرفت CTF پاک شود؟")) { ctfReset(); renderCtf(); } })));
       return;
     }
     const ch = CTF_CHALLENGES.find((x) => x.id === openId);
@@ -97,14 +97,14 @@ export function viewSecurity(c) {
         r.zip ? h("details", {}, h("summary", {}, `محتوای ZIP (${r.zip.length} مورد)`), h("pre", { class: "hb-pre", dir: "ltr" }, r.zip.slice(0, 200).map((e) => `${String(e.usize).padStart(10)}  ${e.name}${e.encrypted ? "  🔒" : ""}`).join("\n"))) : null,
         h("details", {}, h("summary", {}, "رشته‌های قابل‌خواندن"), h("pre", { class: "hb-pre", dir: "ltr" }, r.strings.join("\n") || "—")),
         h("details", {}, h("summary", {}, "هگزدامپ ۲۵۶ بایت اول"), h("pre", { class: "hb-pre", dir: "ltr" }, r.hexdump)),
-        r.sha256 ? row(btn("🔎 جست‌وجوی SHA-256 در VirusTotal", () => openUrl("https://www.virustotal.com/gui/file/" + r.sha256))) : null);
+        row(btn("💾 ذخیره / 📤 اشتراک گزارش", () => window.CodePadReports?.show({ name: "file-analysis-" + r.name.replace(/[^\w.\-\u0600-\u06ff]+/g, "_") + ".txt", text: buildAnalysisReport(r), mime: "text/plain", title: "گزارش تحلیل فایل: " + r.name }), "pri"), btn("🔎 جست‌وجوی SHA-256 در VirusTotal", () => openUrl("https://www.virustotal.com/gui/file/" + r.sha256))));
     } catch (e) { rep.replaceChildren(h("p", { class: "hb-warn" }, "بررسی نشد: " + (e?.message || e))); }
   });
   root.append(sec("🔬 تحلیل فایل مشکوک", note("فایل را انتخاب کن: نوع واقعی (از روی بایت‌ها)، هش‌ها، آنتروپی، رشته‌ها و محتوای ZIP/APK. فایل هرگز اجرا یا آپلود نمی‌شود؛ همه‌چیز روی همین دستگاه است. فقط دکمهٔ VirusTotal هش را (نه فایل را) در مرورگر باز می‌کند."), fin, rep));
 
   // ── ۵) داشبورد شبکه ──
   const dash = sampleById("sec_lan_dashboard");
-  root.append(sec("🏠 داشبورد شبکهٔ خانه", note("دستگاه‌های روشن شبکهٔ خودت و پورت‌های پرخطر (Telnet، SMB، RDP…) را پیدا می‌کند و توصیهٔ سخت‌سازی می‌دهد. فقط بازهٔ خصوصی خودت و فقط بعد از تأیید تو. وقتی برنامه پرسید، y را بنویس."), row(btn("▶ اجرا", () => importSample(dash, { run: false }), "pri"), btn("پیش از اجرا، کد را بخوان", () => importSample(dash))), note("لازم: Python واقعی (ویندوز/اندروید). اسکن شبکهٔ دیگران بدون اجازه ممنوع است.")));
+  root.append(sec("🏠 داشبورد شبکهٔ خانه", note("دستگاه‌های روشن شبکهٔ خودت و پورت‌های پرخطر (Telnet، SMB، RDP…) را پیدا می‌کند و توصیهٔ سخت‌سازی می‌دهد. فقط بازهٔ خصوصی خودت و فقط بعد از تأیید تو. برای تأیید، y را در «جواب‌های آماده» بنویس."), row(btn("باز کردن در ویرایشگر", () => importSample(dash), "pri")), note("برای تأیید اینکه شبکه مال خودت است، در کادر «جواب‌های آماده» پایین ویرایشگر فقط حرف y را بنویس و بعد «اجرا» را بزن؛ بدون آن اسکن شروع نمی‌شود. لازم: Python واقعی (ویندوز/اندروید). اسکن شبکهٔ دیگران بدون اجازه ممنوع است.")));
 
   // ── ۶) کارت‌های CVE ──
   const notes = h("div", {});
@@ -122,7 +122,8 @@ export function viewSecurity(c) {
     }
   };
   renderNotes();
-  root.append(sec("📌 کارت‌های آسیب‌پذیری (CVE)", note("از اخبار هک ذخیره کن و یادداشت بنویس؛ اگر AI شخصی‌ات وصل باشد می‌تواند فارسی توضیح بدهد (متن خبر به همان سرویس فرستاده می‌شود)."), notes));
+  const exportNotes = () => { const list = loadNotes(); if (!list.length) { alert("هنوز کارتی نداری."); return; } window.CodePadReports?.show({ name: "cve-cards.txt", mime: "text/plain", title: "کارت‌های آسیب‌پذیری", text: list.map((n) => `${n.id}\n${n.title}\n${n.url}${n.text ? "\nیادداشت: " + n.text : ""}`).join("\n\n----\n\n") }); };
+  root.append(sec("📌 کارت‌های آسیب‌پذیری (CVE)", row(btn("💾 ذخیره / 📤 اشتراک همهٔ کارت‌ها", exportNotes)), note("از اخبار هک ذخیره کن و یادداشت بنویس؛ اگر AI شخصی‌ات وصل باشد می‌تواند فارسی توضیح بدهد (متن خبر به همان سرویس فرستاده می‌شود)."), notes));
 
   root.append(sec("🛡 ابزارهای دیگر", row(btn("Cyber Lab (ترمینال، nmap، نقشهٔ حمله)", () => { close(); window.CodePadCyber?.open(); }))));
   return { el: root, refreshNotes: renderNotes };

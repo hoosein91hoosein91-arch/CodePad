@@ -2,8 +2,17 @@
 # desc: تبدیل‌های رایج در CTF و تحلیل بدافزار
 # cat: security
 # level: 2
+# stdin: Hello CodePad!
+def ask(prompt, default=""):
+    """جواب را از «جواب‌های آماده» می‌خواند؛ اگر نبود، مقدار پیش‌فرض."""
+    try:
+        return input(prompt)
+    except EOFError:
+        print()
+        return default
+
 import base64, binascii, codecs, string
-msg = input("متن: ") or "CodePad Cyber Lab"
+msg = ask("متن: ") or "CodePad Cyber Lab"
 print("Base64 :", base64.b64encode(msg.encode()).decode())
 print("Base32 :", base64.b32encode(msg.encode()).decode())
 print("Hex    :", binascii.hexlify(msg.encode()).decode())

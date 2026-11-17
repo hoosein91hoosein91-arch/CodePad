@@ -67,3 +67,21 @@ test("analyze: double extension, PowerShell payload and leaked private key are r
   const clean = await analyze(enc("just a normal note about groceries"), "notes.txt");
   assert.equal(clean.findings.length, 0);
 });
+
+import { buildAnalysisReport } from "../mobile-src/assets/hub-forensics.js";
+import { reportFileName, isText } from "../mobile-src/assets/report-export.js";
+test("analysis report is a readable text file with hashes, findings and a hexdump", async () => {
+  const r = await analyze(enc("MZ\u0000 powershell.exe -enc AAA"), "invoice.pdf.exe");
+  const t = buildAnalysisReport(r, new Date("2026-11-17T10:00:00Z"));
+  assert.match(t, /CodePad — گزارش تحلیل فایل/); assert.match(t, /SHA-256 [0-9a-f]{64}/); assert.match(t, /\[HIGH\]/); assert.match(t, /هگزدامپ/); assert.match(t, /2026-11-17T10:00:00/);
+});
+test("report file names are dated, never contain paths and never end in a runnable extension", () => {
+  const d = new Date(2026, 10, 17, 22, 5);
+  assert.equal(reportFileName("network_report.txt", d), "network_report-2026-11-17_2205.txt");
+  assert.equal(reportFileName("../../x/y.csv", d), "y-2026-11-17_2205.csv");
+  assert.equal(reportFileName("run.bat", d), "run.bat.txt");
+  assert.equal(reportFileName("tool.EXE", d), "tool.exe.txt");
+  assert.equal(reportFileName("", d), "report-2026-11-17_2205.txt");
+  assert.equal(reportFileName("noext", d), "noext-2026-11-17_2205.txt");
+  assert.ok(isText("text/plain", "a") && isText("application/json", "a") && isText("", "x.csv") && !isText("image/png", "a.png"));
+});

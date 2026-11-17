@@ -2,8 +2,17 @@
 # desc: CIDR، محدودهٔ میزبان‌ها و تقسیم شبکه با ipaddress
 # cat: security
 # level: 2
+# stdin: 192.168.1.0/24
+def ask(prompt, default=""):
+    """جواب را از «جواب‌های آماده» می‌خواند؛ اگر نبود، مقدار پیش‌فرض."""
+    try:
+        return input(prompt)
+    except EOFError:
+        print()
+        return default
+
 import ipaddress
-net = ipaddress.ip_network(input("شبکه (مثلاً 192.168.1.0/24): ") or "192.168.1.0/24", strict=False)
+net = ipaddress.ip_network(ask("شبکه (مثلاً 192.168.1.0/24): ") or "192.168.1.0/24", strict=False)
 print("نوع:", "خصوصی" if net.is_private else "عمومی")
 print("ماسک:", net.netmask, "| بُرودکست:", net.broadcast_address)
 print("تعداد میزبان:", net.num_addresses - 2, "| اولی:", net[1], "| آخری:", net[-2])

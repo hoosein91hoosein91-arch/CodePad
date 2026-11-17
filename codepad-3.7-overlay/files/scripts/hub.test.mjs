@@ -121,3 +121,17 @@ test("every practice program only touches the network deliberately: lab = loopba
   assert.match(share, /ONLY_PRIVATE_CLIENTS = True/);
   assert.ok(!/import subprocess|subprocess\.|os\.system\(|os\.popen\(|os\.exec/.test(lab + share), "no real command execution");
 });
+
+import { useNativePython } from "../mobile-src/assets/python-engine.js";
+import { stdlib } from "../mobile-src/assets/python-stdlib.js";
+test("3D programs always run on the browser interpreter, even if the native engine is forced", () => {
+  const p = (code) => ({ code, entryFile: "main.py", assets: [] });
+  const three = "import math\nfrom codepad3d import Scene\ns = Scene()\n";
+  for (const mode of ["auto", "native", "wasm"]) assert.equal(useNativePython(p(three), mode, stdlib), false, mode);
+  assert.equal(useNativePython(p("import json\nprint(1)"), "native", stdlib), true, "ordinary stdlib programs still go native when forced");
+  assert.equal(useNativePython(p("import json\nprint(1)"), "auto", stdlib), true);
+  assert.equal(useNativePython(p("import numpy\n"), "native", stdlib), true, "forcing native is still honoured");
+  assert.equal(useNativePython(p("import numpy\n"), "auto", stdlib), false);
+  assert.equal(useNativePython(p("from js import document\n"), "native", stdlib), false);
+  for (const s of HUB_SAMPLES.filter((x) => x.cat === "3d")) assert.equal(useNativePython(p(s.code), "native", stdlib), false, s.id);
+});

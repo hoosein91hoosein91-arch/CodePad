@@ -1,7 +1,7 @@
 // Python 3-D viewer: shows the scene that a Python program builds with `codepad3d` (see public/background/codepad3d.py).
 // Python (Pyodide worker) <-> this page talk over a BroadcastChannel; the scene is drawn by three.js in a sandboxed iframe.
 const CHANNEL = 'codepad3d';
-let dialog = null, frame = null, channel = null, lastBeat = 0, watchdog = 0, current = null;
+let dialog = null, frame = null, channel = null, lastBeat = 0, watchdog = 0, current = null, loadTimer = 0;
 const send = (m) => { try { channel?.postMessage(JSON.stringify({ ...m, from: 'ui' })); } catch { /* channel closed */ } };
 
 const VIEWER = String.raw`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -23,6 +23,8 @@ canvas{display:block;width:100%;height:100%;outline:none}
 (function(){
 'use strict';
 var P=function(m){parent.postMessage(Object.assign({from:'viewer'},m),'*')};
+window.addEventListener('error',function(e){P({t:'error',msg:'viewer script error: '+(e.message||e.type)})});
+if(typeof THREE==='undefined'){P({t:'error',msg:'three.js could not be loaded (libs/three.min.js missing or blocked).'});return}
 var cfg=null,scene,camera,renderer,ctl=null,orbit=null,ents={},solids=[],lights=[];
 var camP={mode:'orbit',pos:[0,3,8],target:[0,1,0],fov:70,speed:4.5,gravity:22,jump:7.4,height:1.7};
 var keys={},mouse={x:0,y:0},joy={x:0,y:0},yaw=0,pitch=0,vel=new THREE.Vector3(),pos=new THREE.Vector3(0,3,8),grounded=false;
@@ -30,9 +32,23 @@ var touch=('ontouchstart' in window)||navigator.maxTouchPoints>0, locked=false;
 var canvas=document.getElementById('c'),hudEl=document.getElementById('hud'),hint=document.getElementById('hint');
 var ray=new THREE.Raycaster(),tmp=new THREE.Vector3();
 function css(c){try{return new THREE.Color(c)}catch(e){return new THREE.Color('#cccccc')}}
+function webglReport(){try{var c=document.createElement('canvas'),g2=!!c.getContext('webgl2'),c2=document.createElement('canvas'),g1=!!(c2.getContext('webgl')||c2.getContext('experimental-webgl'));return 'webgl2='+g2+', webgl1='+g1}catch(e){return 'webgl check failed'}}
+function makeRenderer(){
+  var tries=[{antialias:true,powerPreference:'high-performance'},{antialias:false},{antialias:false,powerPreference:'low-power'},{antialias:false,precision:'mediump',depth:true,stencil:false}];
+  for(var i=0;i<tries.length;i++){
+    try{
+      var o=Object.assign({canvas:canvas},tries[i]),r=new THREE.WebGLRenderer(o);
+      return r;
+    }catch(e){
+      var nc=document.createElement('canvas');nc.id='c';canvas.replaceWith(nc);canvas=nc;   // a canvas whose context failed cannot be reused
+    }
+  }
+  return null;
+}
 function init(o){
   cfg=o;
-  try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,powerPreference:'high-performance'});}catch(e){P({t:'error',msg:'WebGL is not available on this device.'});return}
+  renderer=makeRenderer();
+  if(!renderer){P({t:'error',msg:'WebGL is not available on this device ('+webglReport()+'). Enable hardware acceleration / update the system WebView or browser.'});return}
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   scene=new THREE.Scene();scene.background=css(o.sky);
   if(o.fog>0)scene.fog=new THREE.FogExp2(css(o.sky),o.fog);
@@ -233,6 +249,8 @@ function openViewer(cfg) {
   frame = f;
   lastBeat = performance.now();
   if (!dialog.open) dialog.showModal();
+  clearTimeout(loadTimer);
+  loadTimer = setTimeout(() => { const msg = 'نمایشگر سه‌بعدی بارگذاری نشد (کتابخانهٔ three.js یا WebView؟)'; const st = dialog?.querySelector('.cp-py3d-status'); if (st) st.textContent = msg; send({ t: 'error', msg: 'the viewer page did not load in 25 s (three.js or the WebView)' }); }, 25000);
   clearInterval(watchdog);
   watchdog = setInterval(() => {
     const idle = performance.now() - lastBeat;
@@ -252,8 +270,8 @@ function closeViewer(notifyPython) {
 window.addEventListener('message', (event) => {
   const d = event.data;
   if (!frame || event.source !== frame.contentWindow || !d || d.from !== 'viewer') return;
-  if (d.t === 'loaded') { frame.contentWindow.postMessage({ from: 'host', t: 'init', cfg: current }, '*'); return; }
-  if (d.t === 'error') { dialog.querySelector('.cp-py3d-status').textContent = d.msg; return; }
+  if (d.t === 'loaded') { clearTimeout(loadTimer); frame.contentWindow.postMessage({ from: 'host', t: 'init', cfg: current }, '*'); return; }
+  if (d.t === 'error') { clearTimeout(loadTimer); dialog.querySelector('.cp-py3d-status').textContent = d.msg; send({ t: 'error', msg: String(d.msg).slice(0, 300) }); return; }
   const { from, ...msg } = d;
   send(msg);                         // ready / state / click / key  ->  Python
 });
@@ -272,4 +290,39 @@ function start() {
   };
 }
 start();
-window.CodePadPython3D = { open: openViewer, close: () => closeViewer(true), isOpen: () => !!frame };
+/** بررسی سازگاری: همان مسیری را می‌رود که برنامهٔ Python می‌رود (کتابخانه، WebGL، پنجرهٔ ایزوله، شروع نمایشگر)، بدون نیاز به Python. */
+async function diagnose() {
+  const items = [], add = (ok, name, detail = '') => items.push({ ok, name, detail });
+  add(typeof BroadcastChannel !== 'undefined', 'BroadcastChannel (ارتباط Python و نمایشگر)');
+  add(typeof HTMLDialogElement !== 'undefined' && !!HTMLDialogElement.prototype.showModal, 'پنجرهٔ dialog');
+  try {
+    const r = await fetch(new URL('libs/three.min.js', document.baseURI)); const t = r.ok ? await r.text() : '';
+    add(r.ok && t.length > 100000, 'فایل three.js همراه برنامه', r.ok ? `${Math.round(t.length / 1024)} KB` : 'HTTP ' + r.status);
+  } catch (e) { add(false, 'فایل three.js همراه برنامه', String(e?.message || e)); }
+  let gl2 = false, gl1 = false, info = '';
+  try {
+    const c2 = document.createElement('canvas'), g2 = c2.getContext('webgl2'); gl2 = !!g2;
+    const c1 = document.createElement('canvas'), g1 = c1.getContext('webgl') || c1.getContext('experimental-webgl'); gl1 = !!g1;
+    const g = g2 || g1, ext = g && g.getExtension('WEBGL_debug_renderer_info');
+    info = g ? (ext ? g.getParameter(ext.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER)) + ' · max texture ' + g.getParameter(g.MAX_TEXTURE_SIZE) : '';
+  } catch (e) { info = String(e?.message || e); }
+  add(gl2 || gl1, 'WebGL', `webgl2=${gl2} webgl1=${gl1}${info ? ' · ' + info : ''}`);
+  // شروع واقعی نمایشگر در یک iframe ایزوله و نامرئی
+  const result = await new Promise((resolve) => {
+    const f = document.createElement('iframe');
+    f.setAttribute('sandbox', 'allow-scripts allow-pointer-lock');
+    f.style.cssText = 'position:fixed;left:-9999px;top:0;width:320px;height:200px;border:0';
+    const done = (ok, detail) => { clearTimeout(t); removeEventListener('message', on); f.remove(); resolve({ ok, detail }); };
+    const on = (e) => { const d = e.data; if (e.source !== f.contentWindow || !d || d.from !== 'viewer') return;
+      if (d.t === 'loaded') f.contentWindow.postMessage({ from: 'host', t: 'init', cfg: { title: 'test', sky: '#000000', ground: null, fog: 0, grid: false, shadows: false, hud_font: 16 } }, '*');
+      else if (d.t === 'ready') done(true, 'نمایشگر راه افتاد');
+      else if (d.t === 'error') done(false, d.msg); };
+    const t = setTimeout(() => done(false, 'نمایشگر در ۲۵ ثانیه بالا نیامد'), 25000);
+    addEventListener('message', on); document.body.append(f); f.srcdoc = VIEWER;
+  });
+  add(result.ok, 'راه‌اندازی نمایشگر سه‌بعدی', result.detail);
+  const ok = items.every((x) => x.ok);
+  const report = [`CodePad 3D self-test: ${ok ? 'OK' : 'PROBLEM'}`, ...items.map((x) => `${x.ok ? '[ok]  ' : '[FAIL]'} ${x.name}${x.detail ? ' — ' + x.detail : ''}`), `UA: ${navigator.userAgent}`, `DPR: ${devicePixelRatio}, screen: ${screen.width}x${screen.height}`].join('\n');
+  return { ok, items, report };
+}
+window.CodePadPython3D = { open: openViewer, close: () => closeViewer(true), isOpen: () => !!frame, diagnose };

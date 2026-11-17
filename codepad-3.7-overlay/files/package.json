@@ -27,7 +27,7 @@
     "build:react": "VITE_AUTH_ENABLED=false vite build -c vite.mobile.config.ts",
     "dev:mobile": "node scripts/serve-mobile.mjs",
     "preview:mobile": "node scripts/serve-mobile.mjs --port 8081",
-    "test:source": "node --test scripts/hub.test.mjs scripts/hub-ctf.test.mjs scripts/hub-forensics.test.mjs scripts/security-lab.test.mjs scripts/security-share.test.mjs scripts/security-netcheck.test.mjs scripts/desktop-system.test.mjs scripts/music.test.mjs scripts/python-routing.test.mjs scripts/python-routing-reachability.test.mjs scripts/run-config.test.mjs scripts/python-host.test.mjs scripts/ai-provider.test.mjs scripts/device-tools.test.mjs scripts/mobile-source.test.mjs scripts/nava-models.test.mjs scripts/nava-physics.test.mjs",
+    "test:source": "node --test scripts/hub.test.mjs scripts/hub-input.test.mjs scripts/hub-ctf.test.mjs scripts/hub-forensics.test.mjs scripts/security-lab.test.mjs scripts/security-share.test.mjs scripts/security-netcheck.test.mjs scripts/desktop-system.test.mjs scripts/music.test.mjs scripts/python-routing.test.mjs scripts/python-routing-reachability.test.mjs scripts/run-config.test.mjs scripts/python-host.test.mjs scripts/ai-provider.test.mjs scripts/device-tools.test.mjs scripts/mobile-source.test.mjs scripts/nava-models.test.mjs scripts/nava-physics.test.mjs",
     "test:continuous:node": "node scripts/continuous-runtime-node-test.mjs",
     "dev:react": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
     "test:upgrade": "node scripts/upgrade-browser-test.mjs && node scripts/nava-graphics-browser-test.mjs",

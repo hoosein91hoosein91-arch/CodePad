@@ -5,7 +5,7 @@
 (function () {
   if (window.CodePadLibs) return;
   var LIBS = {
-    three: { file: 'libs/three.min.js', global: 'THREE', name: 'three.js r170 (+OrbitControls, PointerLockControls)' },
+    three: { file: 'libs/three.min.js', global: 'THREE', name: 'three.js r162 (+OrbitControls, PointerLockControls; WebGL 1 and 2)' },
     p5: { file: 'libs/p5.min.js', global: 'p5', name: 'p5.js 1.11' },
     matter: { file: 'libs/matter.min.js', global: 'Matter', name: 'matter.js 0.20 (2-D physics)' },
     chart: { file: 'libs/chart.min.js', global: 'Chart', name: 'Chart.js 4.4' },

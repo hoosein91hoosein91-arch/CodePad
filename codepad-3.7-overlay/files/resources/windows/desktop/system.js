@@ -246,4 +246,29 @@ Get-ItemProperty $p -ErrorAction SilentlyContinue|Where-Object{$_.DisplayName -a
   };
 }
 
-module.exports = { createSystem, shellCommand };
+// ── reports: saved into a public, user-visible folder (Documents\CodePad\Reports), never into the app's private data ──
+const BLOCKED_REPORT_EXT = /\.(exe|bat|cmd|ps1|vbs|js|jse|wsf|msi|dll|scr|com|lnk|hta|jar|sh|apk|reg|msc|cpl)$/i;
+function safeReportName(name) {
+  let base = String(name || 'report.txt').split(/[\\/]/).pop().replace(/[\u0000-\u001f<>:"|?*]/g, '_').replace(/^\.+/, '').replace(/[. ]+$/, '').trim().slice(0, 120) || 'report.txt';
+  if (/^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(base)) base = '_' + base;
+  if (BLOCKED_REPORT_EXT.test(base)) base += '.txt';
+  return base;
+}
+function saveReportFile(dir, name, base64, maxBytes = 8 * 1024 * 1024) {
+  const data = Buffer.from(String(base64 || ''), 'base64');
+  if (!data.length) throw new Error('Empty report');
+  if (data.length > maxBytes) throw new Error('Report is too large');
+  fs.mkdirSync(dir, { recursive: true });
+  const root = fs.realpathSync(dir), safe = safeReportName(name), ext = path.extname(safe), stem = safe.slice(0, safe.length - ext.length);
+  for (let n = 0; n < 1000; n++) {
+    const file = path.join(root, n ? `${stem}-${n}${ext}` : safe);
+    try { fs.writeFileSync(file, data, { flag: 'wx' }); return { path: file, dir: root, name: path.basename(file), bytes: data.length }; }
+    catch (e) { if (e.code !== 'EEXIST') throw e; }
+  }
+  throw new Error('Could not find a free file name');
+}
+function isInsideDir(dir, file) {
+  try { const root = fs.realpathSync(dir), target = fs.realpathSync(file); return target.startsWith(root + path.sep); } catch { return false; }
+}
+
+module.exports = { createSystem, shellCommand, safeReportName, saveReportFile, isInsideDir };
