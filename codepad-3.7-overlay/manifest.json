@@ -383,7 +383,7 @@
   },
   "scripts/security-lab.test.mjs": {
    "base": null,
-   "new": "8d1f3ba1f2ea35e7c09d5bf30445dcdfba7c2b1fc063853dfb187c349960361a"
+   "new": "bbae4c796fad8c61981727491258623a2e2bf6d248131ac2493d9427bb69644b"
   },
   "scripts/security-netcheck.test.mjs": {
    "base": null,
@@ -391,7 +391,7 @@
   },
   "scripts/security-share.test.mjs": {
    "base": null,
-   "new": "aba5e4e680d778b5d1599b02028a90aa3bafe4e11630991e23cd34ac5cc9adea"
+   "new": "362c4b04969750078c8e9ad091f5e6ed69f6738130eef298343e608a90058337"
   },
   "scripts/zip-folder.py": {
    "base": null,

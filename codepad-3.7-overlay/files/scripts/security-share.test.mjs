@@ -35,7 +35,7 @@ before(async () => {
   mkdirSync(join(root, "site")); writeFileSync(join(root, "site", "index.html"), "<h1>my site</h1>");
   mkdirSync(join(root, "docs")); writeFileSync(join(root, "docs", "a.bin"), Buffer.from([1, 2, 3]));
   symlinkSync(outside, join(root, "escape"));
-  proc = spawn(py, ["lan_share.py"], { cwd: root, env: { ...process.env, CP_SHARE_PORT: String(PORT) } });
+  proc = spawn(py, ["-u", "lan_share.py"], { cwd: root, env: { ...process.env, PYTHONUNBUFFERED: "1", CP_SHARE_PORT: String(PORT) } });
   proc.stdout.on("data", (d) => (out += d));
   for (let i = 0; i < 80 && !/http:\/\/127\.0\.0\.1:\d+\/[\w-]+\//.test(out); i++) await new Promise((r) => setTimeout(r, 100));
   token = out.match(/http:\/\/127\.0\.0\.1:\d+\/([\w-]+)\//)?.[1];

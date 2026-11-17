@@ -29,7 +29,7 @@ before(async () => {
   if (!py) return;
   const sample = HUB_SAMPLES.find((s) => s.id === "sec_lab_site");
   writeFileSync(join(dir, "lab.py"), sample.code);
-  proc = spawn(py, ["lab.py"], { cwd: dir, env: { ...process.env, CP_LAB_PORT: String(PORT) } });
+  proc = spawn(py, ["-u", "lab.py"], { cwd: dir, env: { ...process.env, PYTHONUNBUFFERED: "1", CP_LAB_PORT: String(PORT) } });
   for (let i = 0; i < 60; i++) { try { await get("/"); break; } catch { await new Promise((r) => setTimeout(r, 100)); } }
   flags = JSON.parse(readFileSync(join(dir, "cp_lab_progress.json"), "utf8")).flags;
 });
