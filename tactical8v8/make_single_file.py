@@ -3,8 +3,8 @@
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ORDER = ["t8_data", "t8_textures", "t8_world", "t8_render", "t8_models", "t8_audio", "t8_entities", "t8_game",
-         "t8_scene", "t8_ui"]
+ORDER = ["t8_data", "t8_textures", "t8_world", "t8_models", "t8_audio", "t8_entities", "t8_game", "t8_ui",
+         "p3_geom", "p3_world", "p3_models", "p3_scene"]
 
 
 def main():

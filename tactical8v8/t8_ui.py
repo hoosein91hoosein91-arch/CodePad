@@ -108,15 +108,17 @@ class Fonts:
 
 
 class UI:
-    def __init__(self, screen, fonts):
+    def __init__(self, screen, fonts, views=True):
         self.fonts = fonts
         self.lang = 0
         self.weapon_views = {}
         self.menu_rects = []
         self.shop_rects = []
         self._vig = None
+        self.mouse_pos = None            # set by the 3D front-end (canvas coordinates)
         self.resize(screen)
-        self.build_weapon_views()
+        if views:
+            self.build_weapon_views()
 
     # ------------------------------------------------------------------------------------------------
     def tr(self, key, **fmt):
@@ -129,7 +131,7 @@ class UI:
         self.u = self.H / 720.0
         self._vig = None
         self._scope = None
-        self._flash_surf = pygame.Surface((self.W, self.H))
+        self._flash_surf = pygame.Surface((self.W, self.H), pygame.SRCALPHA if (screen.get_flags() & pygame.SRCALPHA) else 0)
         if self.weapon_views:
             self.build_weapon_views()
 
@@ -197,8 +199,15 @@ class UI:
         v.set_alpha(int(255 * max(0.0, min(1.0, strength))))
         self.screen.blit(v, (0, 0))
 
+    def mouse(self):
+        return self.mouse_pos if self.mouse_pos is not None else pygame.mouse.get_pos()
+
     def additive_flash(self, color, strength):
         if strength <= 0.01:
+            return
+        if self.screen.get_flags() & pygame.SRCALPHA:        # overlay canvas (3D front-end): plain alpha fill
+            self._flash_surf.fill((*color, int(min(255, 150 * strength))))
+            self.screen.blit(self._flash_surf, (0, 0))
             return
         c = tuple(int(min(255, ch * strength)) for ch in color)
         self._flash_surf.fill(c)
@@ -348,6 +357,39 @@ class UI:
             self.text(self.tr("next_wave", n=max(0, int(game.phase_t) + 1)), 20, YELLOW, (cx, H - 160 * u), "center")
         elif game.phase == "intermission" and game.wave == 0:
             self.text(self.tr("get_ready"), 26, YELLOW, (cx, H - 160 * u), "center")
+
+    def draw_world_markers(self, game, scene):
+        """Health bars above soldiers and UAV markers, projected from the real 3D camera."""
+        p = game.player
+        W, H = self.W, self.H
+        u = self.u
+        cam_eye = (scene.cx, scene.cy, scene.cz)
+        for s in game.soldiers:
+            if not s.alive:
+                continue
+            pr = scene.project(s.x, s.y, s.height + 0.4, W, H)
+            if pr is None:
+                continue
+            sx, sy, d = pr
+            uav = (s.team == 1 and p.uav_t > 0)
+            if d > (75 if s.team == 1 else 45) and not uav:
+                continue
+            if not (-40 < sx < W + 40 and -40 < sy < H + 40):
+                continue
+            vis = game.world.los(cam_eye[0], cam_eye[1], cam_eye[2], s.x, s.y, s.height + 0.2)
+            if not vis and not uav:
+                continue
+            w = int(max(26 * u, min(90 * u, 190 * u / max(d, 2.5))))
+            x0, y0 = int(sx - w / 2), int(sy)
+            if vis:
+                pygame.draw.rect(self.screen, (0, 0, 0, 255), (x0 - 1, y0 - 1, w + 2, int(5 * u) + 2))
+                fr = max(0.0, s.hp / s.max_hp)
+                colb = (0, 229, 255) if s.team == 0 else (255, 23, 68)
+                pygame.draw.rect(self.screen, colb, (x0, y0, max(1, int(w * fr)), max(2, int(5 * u))))
+            if uav:
+                tri = [(sx - 7 * u, sy - 20 * u), (sx + 7 * u, sy - 20 * u), (sx, sy - 8 * u)]
+                pygame.draw.polygon(self.screen, (255, 40, 60), tri)
+                pygame.draw.polygon(self.screen, (255, 200, 200), tri, 1)
 
     def draw_crosshair(self, game, rend):
         p = game.player
@@ -636,9 +678,9 @@ class UI:
         if sub:
             self.text(sub, 24, (255, 200, 60), (W // 2, int(H * 0.2)), "center")
         n = len(items)
-        bw, bh, gap = int(430 * u), int(52 * u), int(12 * u)
-        y0 = int(H * 0.30) if title else int(H * 0.30)
-        mouse = pygame.mouse.get_pos()
+        bw, bh, gap = int(430 * u), int(48 * u), int(10 * u)
+        y0 = int(H * 0.27) if title else int(H * 0.27)
+        mouse = self.mouse()
         for i, (iid, label) in enumerate(items):
             r = pygame.Rect(W // 2 - bw // 2, y0 + i * (bh + gap), bw, bh)
             hot = (i == getattr(self, "sel", 0)) or r.collidepoint(mouse)
@@ -692,7 +734,7 @@ class UI:
         iw = (bw - 24 * u * 3) // cols
         ih = int(70 * u)
         self.shop_rects = []
-        mouse = pygame.mouse.get_pos()
+        mouse = self.mouse()
         for i, (iid, price, maxn) in enumerate(SHOP):
             col, row = i % cols, i // cols
             r = pygame.Rect(int(bx + 24 * u + col * (iw + 24 * u)), int(by + 72 * u + row * (ih + 10 * u)), int(iw), ih)

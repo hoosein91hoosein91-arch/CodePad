@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
-"""TACTICAL 8v8 : ULTRA  -  a 3D first-person squad shooter written in pure Python (pygame + numpy).
+"""TACTICAL 8v8 : ULTRA  -  a fully 3D first-person squad shooter in Python (Panda3D engine + pygame HUD/audio).
 
-Run:   pip install pygame numpy arabic-reshaper python-bidi
-       python main.py
+    pip install panda3d pygame numpy arabic-reshaper python-bidi
+    python main.py
+
 (arabic-reshaper / python-bidi are optional: they enable the Persian interface.)
+A software-rendered 2.5D version for very old machines is available as  main_lite.py.
 """
 import argparse
 import math
 import os
 import random
 import sys
-import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
     import numpy as np
     import pygame
+    import panda3d  # noqa: F401
 except ImportError:
-    print("Missing libraries.  Install them with:\n    pip install pygame numpy arabic-reshaper python-bidi\n"
-          "کتابخانه‌ها نصب نیستند. با این دستور نصب کن:\n    pip install pygame numpy arabic-reshaper python-bidi")
+    print("Missing libraries.  Install them with:\n    pip install panda3d pygame numpy arabic-reshaper python-bidi\n"
+          "کتابخانه‌ها نصب نیستند. با این دستور نصب کن:\n    pip install panda3d pygame numpy arabic-reshaper python-bidi")
     raise SystemExit(1)
 
-QUALITY = [("LOW", 180), ("MEDIUM", 225), ("HIGH", 270), ("ULTRA", 360)]
+QUALITY = ["LOW", "MEDIUM", "HIGH"]
 
 
 def parse_args():
@@ -31,203 +33,395 @@ def parse_args():
     ap.add_argument("--frames", type=int, default=0, help="quit after N frames (testing)")
     ap.add_argument("--shot", default="", help="save screenshots into this folder (testing)")
     ap.add_argument("--shot-every", type=int, default=120)
+    ap.add_argument("--fixed-dt", type=float, default=0.0, help="advance the simulation by a fixed step (testing)")
     ap.add_argument("--diff", default="regular")
     ap.add_argument("--quality", type=int, default=2)
     ap.add_argument("--size", default="1280x720")
     ap.add_argument("--lang", default="auto")
     ap.add_argument("--skip-menu", action="store_true")
     ap.add_argument("--wave", type=int, default=0, help="start at wave N (testing)")
+    ap.add_argument("--fps", action="store_true", help="show frame-rate meter")
+    ap.add_argument("--no-vsync", action="store_true")
     return ap.parse_args()
 
 
-def loading(screen, fonts_ui, frac, msg):
-    W, H = screen.get_size()
-    screen.fill((6, 10, 16))
-    f = pygame.font.Font(None, int(H * 0.07))
-    t = f.render("TACTICAL 8v8 : ULTRA", True, (255, 196, 40))
-    screen.blit(t, t.get_rect(center=(W // 2, H // 2 - 40)))
-    f2 = pygame.font.Font(None, int(H * 0.035))
-    m = f2.render(msg, True, (170, 190, 205))
-    screen.blit(m, m.get_rect(center=(W // 2, H // 2 + 10)))
-    bw = int(W * 0.4)
-    pygame.draw.rect(screen, (40, 50, 62), (W // 2 - bw // 2, H // 2 + 46, bw, 10))
-    pygame.draw.rect(screen, (255, 152, 0), (W // 2 - bw // 2, H // 2 + 46, int(bw * frac), 10))
-    pygame.display.flip()
-    pygame.event.pump()
+ARGS = parse_args()
+W0, H0 = [int(v) for v in ARGS.size.lower().split("x")]
+
+from panda3d.core import (loadPrcFileData, WindowProperties, Texture, CardMaker, TransparencyAttrib, KeyboardButton,
+                          MouseButton, ModifierButtons, AntialiasAttrib, Filename)
+
+loadPrcFileData("", """
+window-title TACTICAL 8v8 : ULTRA
+win-size %d %d
+sync-video %d
+framebuffer-multisample 1
+multisamples 4
+audio-library-name null
+textures-power-2 none
+notify-level warning
+default-directnotify-level warning
+show-frame-rate-meter %d
+""" % (W0, H0, 0 if ARGS.no_vsync else 1, 1 if ARGS.fps else 0))
+
+from direct.showbase.ShowBase import ShowBase
 
 
-def main():
-    args = parse_args()
-    if args.shot or args.bot:
-        pass
-    pygame.mixer.pre_init(22050, -16, 1, 512)
-    pygame.init()
-    pygame.display.set_caption("TACTICAL 8v8 : ULTRA")
-    w, h = [int(v) for v in args.size.lower().split("x")]
-    flags = pygame.RESIZABLE
-    screen = pygame.display.set_mode((w, h), flags)
-    windowed_size = (w, h)
-    loading(screen, None, 0.02, "textures...")
+def key_down(app, ch):
+    return app.mouseWatcherNode.isButtonDown(KeyboardButton.asciiKey(ch))
 
-    from t8_textures import Atlas
-    from t8_world import World
-    from t8_render import Renderer
-    from t8_models import SpriteBank
-    from t8_audio import Audio
-    from t8_ui import UI, Fonts
-    from t8_game import Game, Inputs
-    from t8_scene import SceneState, setup_camera, draw_scene
-    from t8_render import Camera
-    from t8_data import DIFF_ORDER
 
-    atlas = Atlas()
-    loading(screen, None, 0.12, "arena & navigation...")
-    world = World(atlas)
-    loading(screen, None, 0.22, "soldiers & weapons (baking sprites)...")
-    bank = SpriteBank(progress=lambda f: loading(screen, None, 0.22 + f * 0.5, "soldiers & weapons (baking sprites)..."))
-    loading(screen, None, 0.75, "sound effects...")
-    audio = Audio()
-    loading(screen, None, 0.85, "interface...")
-    fonts = Fonts()
-    ui = UI(screen, fonts)
-    q_idx = max(0, min(3, args.quality))
-    aspect = w / h
+class TacticalApp(ShowBase):
+    def __init__(self):
+        ShowBase.__init__(self)
+        self.disableMouse()
+        pygame.font.init()
+        self.render.setShaderOff()
+        # --- heavy resources with a tiny loading screen
+        from t8_textures import Atlas
+        from t8_world import World
+        from t8_audio import Audio
+        from t8_ui import UI, Fonts
+        from t8_game import Game, Inputs
+        from p3_scene import Scene3D
+        self.Game, self.Inputs = Game, Inputs
+        self.atlas = Atlas()
+        self.world = World(self.atlas)
+        self.audio = Audio()
+        self.fonts = Fonts()
+        self.scene = Scene3D(self, self.world, self.atlas)
+        # --- HUD canvas (pygame surface uploaded as a full-screen overlay texture)
+        self.hud_tex = Texture("hud")
+        self.hud_card = None
+        self.hud = None
+        self.ui = None
+        self._make_hud()
+        self.ui.lang = 1 if (ARGS.lang in ("fa", "auto") and self.fonts.fa_ok) else 0
+        # --- state
+        self.state = "menu"
+        self.sel = 0
+        self.diff_i = ["recruit", "regular", "hardened", "veteran"].index(ARGS.diff) if ARGS.diff in (
+            "recruit", "regular", "hardened", "veteran") else 1
+        self.q_idx = max(0, min(2, ARGS.quality))
+        self.apply_quality()
+        self.game = None
+        self.inp = Inputs()
+        self.fire_held = False
+        self.ads_held = False
+        self.assist = False
+        self.shop_sel = 0
+        self.t_total = 0.0
+        self.frame_no = 0
+        self.tab_down = False
+        self.menu_t = 0.0
+        self.focus_ok = True
+        self.skip_mouse = 3
+        self.fullscreen = False
+        self.windowed_size = (W0, H0)
+        self.shot_dir = ARGS.shot
+        if self.shot_dir:
+            os.makedirs(self.shot_dir, exist_ok=True)
+        self.audio.start_ambient()
+        self._bind_input()
+        self.taskMgr.add(self.tick, "tick")
+        self.accept("aspectRatioChanged", self._make_hud)
+        self.accept("window-event", self._on_window_event)
+        if ARGS.skip_menu or ARGS.bot:
+            self.new_game()
 
-    def make_renderer():
-        Hq = QUALITY[q_idx][1]
-        Wq = int(Hq * screen.get_width() / screen.get_height()) // 2 * 2
-        return Wq, Hq
-
-    Wq, Hq = make_renderer()
-    rend = Renderer(world, atlas, Wq, Hq)
-    scene = SceneState()
-    menu_cam = Camera()
-    loading(screen, None, 1.0, "ready")
-
-    # language
-    if args.lang == "fa" and fonts.fa_ok:
-        ui.lang = 1
-    elif args.lang == "auto" and fonts.fa_ok:
-        ui.lang = 1
-    else:
-        ui.lang = 0
-
-    clock = pygame.time.Clock()
-    state = "menu"
-    sel = 0
-    ui.sel = 0
-    diff_i = DIFF_ORDER.index(args.diff) if args.diff in DIFF_ORDER else 1
-    game = None
-    inp = Inputs()
-    fire_held = False
-    ads_held = False
-    mouse_dx = mouse_dy = 0.0
-    fullscreen = False
-    t_total = 0.0
-    frame_no = 0
-    shot_dir = args.shot
-    if shot_dir:
-        os.makedirs(shot_dir, exist_ok=True)
-    frame_hold = None
-    shop_sel = 0
-    slow_t = 0.0
-    fps_acc = []
-    assist = False
-    sens = 1.0
-    bg_t = 0.0
-    audio.start_ambient()
-
-    def grab(on):
-        try:
-            pygame.event.set_grab(on)
-            pygame.mouse.set_visible(not on)
-        except Exception:
-            pass
-
-    def new_game():
-        nonlocal game, state
-        game = Game(world, audio, DIFF_ORDER[diff_i])
-        game.player.assist = assist
-        game.player.sens = 0.0022 * sens
-        if args.wave > 1:
-            game.wave = args.wave - 1
-        state = "playing"
-        grab(True)
-
-    def apply_quality():
-        nonlocal Wq, Hq
-        Wq, Hq = make_renderer()
-        rend.resize(Wq, Hq)
-
-    def resized():
-        nonlocal screen
-        screen = pygame.display.get_surface()
-        ui.resize(screen)
-        apply_quality()
-
-    def toggle_fullscreen():
-        nonlocal screen, fullscreen, windowed_size
-        fullscreen = not fullscreen
-        if fullscreen:
-            windowed_size = screen.get_size()
-            screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    # ------------------------------------------------------------------------------------------------ HUD overlay
+    def _make_hud(self, *a):
+        ar = self.getAspectRatio()
+        ch = 720
+        cw = max(320, int(round(ch * ar)))
+        if self.hud is not None and self.hud.get_size() == (cw, ch):
+            return
+        self.hud = pygame.Surface((cw, ch), pygame.SRCALPHA)
+        if self.ui is None:
+            from t8_ui import UI
+            self.ui = UI(self.hud, self.fonts, views=False)
         else:
-            screen = pygame.display.set_mode(windowed_size, pygame.RESIZABLE)
-        ui.resize(screen)
-        apply_quality()
+            self.ui.resize(self.hud)
+        self.hud_tex.setup2dTexture(cw, ch, Texture.T_unsigned_byte, Texture.F_rgba8)
+        self.hud_tex.setMagfilter(Texture.FT_linear)
+        self.hud_tex.setMinfilter(Texture.FT_linear)
+        self.hud_tex.setWrapU(Texture.WM_clamp)
+        self.hud_tex.setWrapV(Texture.WM_clamp)
+        if self.hud_card is None:
+            cm = CardMaker("hud")
+            cm.setFrame(-1, 1, -1, 1)
+            self.hud_card = self.render2d.attachNewNode(cm.generate())
+            self.hud_card.setTexture(self.hud_tex)
+            self.hud_card.setTransparency(TransparencyAttrib.MAlpha)
+            self.hud_card.setDepthTest(False)
+            self.hud_card.setDepthWrite(False)
+            self.hud_card.setBin("fixed", 100)
 
-    def menu_items():
-        dn = ui.tr("difficulty") + ":  " + __import__("t8_data").DIFF_NAMES[DIFF_ORDER[diff_i]][ui.lang]
-        items = [("start", ui.tr("start")), ("diff", dn), ("help", ui.tr("controls")),
-                 ("assist", f"{ui.tr('assist')}:  {ui.tr('on') if assist else ui.tr('off')}"),
-                 ("quality", f"{ui.tr('quality')}:  {QUALITY[q_idx][0]}"),
-                 ("lang", ui.tr("language") if fonts.fa_ok else "LANGUAGE:  ENGLISH  (pip install arabic-reshaper python-bidi)"),
-                 ("full", ui.tr("fullscreen")), ("quit", ui.tr("quit"))]
-        return items
+    def _upload_hud(self):
+        # Panda keeps RGBA textures as BGRA in RAM, so hand it BGRA directly (no slow conversion)
+        self.hud_tex.setRamImage(pygame.image.tostring(self.hud, "BGRA", True))
 
-    def pause_items():
+    def _on_window_event(self, win):
+        self.focus_ok = win.getProperties().getForeground() if win is not None else True
+        ShowBase.windowEvent(self, win)
+
+    # ------------------------------------------------------------------------------------------------ settings
+    def apply_quality(self):
+        self.render.setAntialias(AntialiasAttrib.MNone if self.q_idx == 0 else AntialiasAttrib.MAuto)
+        if hasattr(self, "scene"):
+            if self.q_idx == 0:
+                self.scene.b_shadow.np.hide()
+            else:
+                self.scene.b_shadow.np.show()
+
+    def grab(self, on):
+        props = WindowProperties()
+        props.setCursorHidden(on)
+        props.setMouseMode(WindowProperties.M_confined if on else WindowProperties.M_absolute)
+        self.win.requestProperties(props)
+        self.skip_mouse = 3
+
+    def toggle_fullscreen(self):
+        props = WindowProperties()
+        if not self.fullscreen:
+            self.windowed_size = (self.win.getXSize(), self.win.getYSize())
+            props.setFullscreen(True)
+            props.setSize(self.pipe.getDisplayWidth(), self.pipe.getDisplayHeight())
+        else:
+            props.setFullscreen(False)
+            props.setSize(*self.windowed_size)
+        self.fullscreen = not self.fullscreen
+        self.win.requestProperties(props)
+
+    # ------------------------------------------------------------------------------------------------ game flow
+    def new_game(self):
+        self.scene.clear_entities()
+        from t8_data import DIFF_ORDER
+        self.game = self.Game(self.world, self.audio, DIFF_ORDER[self.diff_i])
+        self.game.player.assist = self.assist
+        if ARGS.wave > 1:
+            self.game.wave = ARGS.wave - 1
+        self.state = "playing"
+        self.grab(True)
+
+    def menu_items(self):
+        from t8_data import DIFF_NAMES, DIFF_ORDER
+        ui = self.ui
+        dn = ui.tr("difficulty") + ":  " + DIFF_NAMES[DIFF_ORDER[self.diff_i]][ui.lang]
+        return [("start", ui.tr("start")), ("diff", dn), ("help", ui.tr("controls")),
+                ("assist", f"{ui.tr('assist')}:  {ui.tr('on') if self.assist else ui.tr('off')}"),
+                ("quality", f"{ui.tr('quality')}:  {QUALITY[self.q_idx]}"),
+                ("lang", ui.tr("language") if self.fonts.fa_ok else "LANGUAGE:  ENGLISH  (pip install arabic-reshaper python-bidi)"),
+                ("full", ui.tr("fullscreen")), ("quit", ui.tr("quit"))]
+
+    def pause_items(self):
+        ui = self.ui
         return [("resume", ui.tr("resume")), ("help", ui.tr("controls")), ("restart", ui.tr("restart")),
                 ("menu", ui.tr("mainmenu")), ("quit", ui.tr("quit"))]
 
-    def activate(iid):
-        nonlocal state, diff_i, q_idx, assist, sel
-        if iid == "start" or iid == "restart":
-            new_game()
+    def activate(self, iid):
+        ui = self.ui
+        if iid in ("start", "restart"):
+            self.new_game()
         elif iid == "diff":
-            diff_i = (diff_i + 1) % 4
+            self.diff_i = (self.diff_i + 1) % 4
         elif iid == "help":
-            state = "help_pause" if state == "paused" else "help"
+            self.state = "help_pause" if self.state == "paused" else "help"
         elif iid == "assist":
-            assist = not assist
-            if game:
-                game.player.assist = assist
+            self.assist = not self.assist
+            if self.game:
+                self.game.player.assist = self.assist
         elif iid == "quality":
-            q_idx = (q_idx + 1) % 4
-            apply_quality()
+            self.q_idx = (self.q_idx + 1) % 3
+            self.apply_quality()
         elif iid == "lang":
-            if fonts.fa_ok:
+            if self.fonts.fa_ok:
                 ui.lang = 1 - ui.lang
         elif iid == "full":
-            toggle_fullscreen()
+            self.toggle_fullscreen()
         elif iid == "resume":
-            state = "playing"
-            grab(True)
+            self.state = "playing"
+            self.grab(True)
         elif iid == "menu":
-            state = "menu"
-            grab(False)
-            sel = 0
+            self.state = "menu"
+            self.scene.clear_entities()
+            self.scene.hide_viewmodel()
+            self.grab(False)
+            self.sel = 0
         elif iid == "quit":
-            return True
-        return False
+            self.userExit()
 
-    def bot(game, inp, t):
+    # ------------------------------------------------------------------------------------------------ input
+    KEYS = ["a", "b", "c", "f", "g", "m", "p", "q", "r", "t", "v", "w", "s", "d", "x", "1", "2", "3", "4", "5", "6", "7",
+            "escape", "enter", "space", "arrow_up", "arrow_down", "arrow_left", "arrow_right", "f11", "[", "]",
+            "backspace", "lcontrol", "tab", "f3", "e"]
+
+    def _bind_input(self):
+        self.buttonThrowers[0].node().setModifierButtons(ModifierButtons())
+        for k in self.KEYS:
+            self.accept(k, self.on_key, [k])
+        self.accept("tab", lambda: setattr(self, "tab_down", True))
+        self.accept("tab-up", lambda: setattr(self, "tab_down", False))
+        self.accept("mouse1", self.on_mouse, [1, True])
+        self.accept("mouse1-up", self.on_mouse, [1, False])
+        self.accept("mouse3", self.on_mouse, [3, True])
+        self.accept("mouse3-up", self.on_mouse, [3, False])
+        self.accept("wheel_up", self.on_wheel, [-1])
+        self.accept("wheel_down", self.on_wheel, [1])
+
+    def on_wheel(self, d):
+        if self.state == "playing" and self.game:
+            self.game.player.cycle_weapon(d)
+
+    def canvas_mouse(self):
+        if not self.mouseWatcherNode.hasMouse():
+            return (-1, -1)
+        m = self.mouseWatcherNode.getMouse()
+        return ((m.getX() + 1) / 2 * self.hud.get_width(), (1 - m.getY()) / 2 * self.hud.get_height())
+
+    def on_mouse(self, btn, down):
+        st = self.state
+        if st in ("menu", "paused") and btn == 1 and down:
+            pos = self.canvas_mouse()
+            for r, iid in self.ui.menu_rects:
+                if r.collidepoint(pos):
+                    self.audio.play("buy", 0.4)
+                    self.activate(iid)
+                    break
+        elif st == "shop" and btn == 1 and down:
+            pos = self.canvas_mouse()
+            for r, iid in self.ui.shop_rects:
+                if r.collidepoint(pos):
+                    if iid == "__close":
+                        self.state = "playing"
+                        self.grab(True)
+                    else:
+                        self.game.buy(iid)
+                    break
+        elif st in ("help", "help_pause") and btn == 1 and down:
+            self.state = "menu" if st == "help" else "paused"
+        elif st == "gameover" and btn == 1 and down and self.game.over_t > 0.8:
+            self.state = "menu"
+            self.scene.clear_entities()
+            self.grab(False)
+        elif st == "playing":
+            if btn == 1:
+                self.fire_held = down
+                if down:
+                    self.game.player.fire_edge = True
+            elif btn == 3:
+                self.ads_held = down
+
+    def on_key(self, k):
+        st = self.state
+        game = self.game
+        if k == "f11":
+            self.toggle_fullscreen()
+            return
+        if k == "f3":
+            self.setFrameRateMeter(not self.frameRateMeter)
+            return
+        if k == "m":
+            self.audio.toggle_mute()
+        if st in ("menu", "paused"):
+            items = self.menu_items() if st == "menu" else self.pause_items()
+            if k in ("arrow_up", "w"):
+                self.sel = (self.sel - 1) % len(items)
+                self.audio.play("ui", 0.5)
+            elif k in ("arrow_down", "s"):
+                self.sel = (self.sel + 1) % len(items)
+                self.audio.play("ui", 0.5)
+            elif k in ("arrow_left", "arrow_right") and items[self.sel][0] in ("diff", "quality", "lang", "assist"):
+                iid = items[self.sel][0]
+                if iid == "diff":
+                    self.diff_i = (self.diff_i + (1 if k == "arrow_right" else -1)) % 4
+                else:
+                    self.activate(iid)
+                self.audio.play("ui", 0.5)
+            elif k in ("enter", "space"):
+                self.audio.play("buy", 0.4)
+                self.activate(items[self.sel][0])
+            elif k == "escape" and st == "paused":
+                self.activate("resume")
+        elif st in ("help", "help_pause"):
+            if k in ("escape", "enter", "space", "backspace"):
+                self.state = "menu" if st == "help" else "paused"
+        elif st == "shop":
+            from t8_data import SHOP
+            n = len(SHOP)
+            if k in ("escape", "b"):
+                self.state = "playing"
+                self.grab(True)
+            elif k == "arrow_up":
+                self.shop_sel = (self.shop_sel - 2) % n
+            elif k == "arrow_down":
+                self.shop_sel = (self.shop_sel + 2) % n
+            elif k == "arrow_left":
+                self.shop_sel = (self.shop_sel - 1) % n
+            elif k == "arrow_right":
+                self.shop_sel = (self.shop_sel + 1) % n
+            elif k in ("enter", "space"):
+                game.buy(SHOP[self.shop_sel][0])
+        elif st == "gameover":
+            if k in ("enter", "escape") and game.over_t > 0.8:
+                self.state = "menu"
+                self.scene.clear_entities()
+                self.grab(False)
+                self.sel = 0
+        elif st == "playing" and game is not None:
+            p = game.player
+            if k in ("escape", "p"):
+                self.state = "paused"
+                self.sel = 0
+                self.grab(False)
+            elif k == "r":
+                p.start_reload()
+            elif k in "1234567":
+                p.switch_weapon(int(k))
+            elif k == "g":
+                game.throw_player_grenade()
+            elif k == "q":
+                game.use_stim()
+            elif k == "t":
+                game.deploy_turret()
+            elif k == "v":
+                game.call_airstrike()
+            elif k == "f":
+                p.set_bullet_time(not p.bt_active)
+            elif k == "x":
+                self.assist = not self.assist
+                p.assist = self.assist
+            elif k == "b":
+                self.state = "shop"
+                self.shop_sel = 0
+                self.grab(False)
+            elif k == "enter":
+                game.skip_intermission()
+            elif k == "space" and p.alive and p.on_ground:
+                p.vz = 9.0
+                p.on_ground = False
+            elif k in ("lcontrol", "c") and p.alive:
+                sp = math.hypot(p.vx, p.vy)
+                if p.sprinting and sp > 6.5 and p.slide_cd <= 0 and p.on_ground:
+                    p.slide_dir = (p.vx / sp, p.vy / sp)
+                    p.slide_t = 0.62
+                    p.slide_cd = 1.4
+            elif k == "[":
+                self.q_idx = max(0, self.q_idx - 1)
+                self.apply_quality()
+            elif k == "]":
+                self.q_idx = min(2, self.q_idx + 1)
+                self.apply_quality()
+
+    # ------------------------------------------------------------------------------------------------ bot (testing)
+    def bot(self, t):
+        game, inp = self.game, self.inp
         p = game.player
         inp.fwd = 1.0 if (int(t * 0.7) % 5) != 4 else 0.0
         inp.right = math.sin(t * 0.9)
         inp.sprint = False
         inp.crouch = (int(t * 0.5) % 7 == 3)
-        tgt = None
-        bd = 1e9
+        tgt, bd = None, 1e9
         for s in game.soldiers:
             if s.alive and s.team == 1:
                 d = math.hypot(s.x - p.x, s.y - p.y)
@@ -247,283 +441,150 @@ def main():
             p.yaw += 0.012
             inp.ads = False
         if p.alive:
-            if int(t * 4) % 40 == 0 and random.random() < 0.3:
-                p.fire_edge = True
-            if random.random() < 0.004:
+            r = random.random
+            if r() < 0.004:
                 game.throw_player_grenade()
-            if random.random() < 0.0012:
+            if r() < 0.0012:
                 game.call_airstrike()
-            if random.random() < 0.002:
+            if r() < 0.002:
                 game.use_stim()
-            if random.random() < 0.0015:
+            if r() < 0.0015:
                 game.deploy_turret()
-            if random.random() < 0.002 and p.on_ground:
+            if r() < 0.002 and p.on_ground:
                 p.vz = 9.0
                 p.on_ground = False
-            if random.random() < 0.003:
+            if r() < 0.003:
                 p.set_bullet_time(not p.bt_active)
             if p.st["mag"] == 0:
                 p.start_reload()
-            if random.random() < 0.004:
+            if r() < 0.004:
                 p.cycle_weapon(1)
         if game.phase == "intermission" and random.random() < 0.02:
-            for iid, price, mx in __import__("t8_data").SHOP:
+            from t8_data import SHOP
+            for iid, price, mx in SHOP:
                 if game.buy(iid):
                     break
 
-    if args.skip_menu or args.bot:
-        new_game()
+    # ------------------------------------------------------------------------------------------------ main loop
+    def read_inputs(self, dt):
+        inp = self.inp
+        down = lambda c: key_down(self, c)
+        mw = self.mouseWatcherNode
+        inp.fwd = (1.0 if (down("w") or mw.isButtonDown(KeyboardButton.up())) else 0.0) - \
+                  (1.0 if (down("s") or mw.isButtonDown(KeyboardButton.down())) else 0.0)
+        inp.right = (1.0 if (down("d") or mw.isButtonDown(KeyboardButton.right())) else 0.0) - \
+                    (1.0 if (down("a") or mw.isButtonDown(KeyboardButton.left())) else 0.0)
+        inp.sprint = mw.isButtonDown(KeyboardButton.lshift()) or mw.isButtonDown(KeyboardButton.rshift())
+        inp.crouch = mw.isButtonDown(KeyboardButton.lcontrol()) or down("c")
+        inp.fire = self.fire_held
+        inp.ads = self.ads_held
+        # mouse look: recentre the pointer every frame and use the delta
+        inp.mdx = inp.mdy = 0.0
+        if self.state == "playing" and self.focus_ok:
+            cx, cy = self.win.getXSize() // 2, self.win.getYSize() // 2
+            md = self.win.getPointer(0)
+            if self.skip_mouse > 0:
+                self.skip_mouse -= 1
+            else:
+                inp.mdx = md.getX() - cx
+                inp.mdy = md.getY() - cy
+            self.win.movePointer(0, cx, cy)
 
-    running = True
-    while running:
-        dt = clock.tick(120 if shot_dir else 60) / 1000.0
-        dt = min(dt, 0.05)
-        t_total += dt
-        frame_no += 1
-        mouse_dx = mouse_dy = 0.0
-        for ev in pygame.event.get():
-            if ev.type == pygame.QUIT:
-                running = False
-            elif ev.type == pygame.VIDEORESIZE:
-                resized()
-            elif ev.type == pygame.MOUSEMOTION:
-                if state == "playing":
-                    mouse_dx += ev.rel[0]
-                    mouse_dy += ev.rel[1]
-            elif ev.type == pygame.KEYDOWN:
-                k = ev.key
-                if k == pygame.K_F11:
-                    toggle_fullscreen()
-                    continue
-                if k == pygame.K_m:
-                    audio.toggle_mute()
-                if state in ("menu", "paused"):
-                    items = menu_items() if state == "menu" else pause_items()
-                    if k in (pygame.K_UP, pygame.K_w):
-                        sel = (sel - 1) % len(items)
-                        audio.play("ui", 0.5)
-                    elif k in (pygame.K_DOWN, pygame.K_s):
-                        sel = (sel + 1) % len(items)
-                        audio.play("ui", 0.5)
-                    elif k in (pygame.K_LEFT, pygame.K_RIGHT) and items[sel][0] in ("diff", "quality", "lang", "assist"):
-                        iid = items[sel][0]
-                        if iid == "diff":
-                            diff_i = (diff_i + (1 if k == pygame.K_RIGHT else -1)) % 4
-                        else:
-                            activate(iid)
-                        audio.play("ui", 0.5)
-                    elif k in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_SPACE):
-                        audio.play("buy", 0.4)
-                        if activate(items[sel][0]):
-                            running = False
-                    elif k == pygame.K_ESCAPE and state == "paused":
-                        activate("resume")
-                    ui.sel = sel
-                elif state in ("help", "help_pause"):
-                    if k in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE, pygame.K_BACKSPACE):
-                        state = "menu" if state == "help" else "paused"
-                elif state == "shop":
-                    from t8_data import SHOP
-                    if k in (pygame.K_ESCAPE, pygame.K_b):
-                        state = "playing"
-                        grab(True)
-                    elif k == pygame.K_UP:
-                        shop_sel = (shop_sel - 2) % len(SHOP)
-                    elif k == pygame.K_DOWN:
-                        shop_sel = (shop_sel + 2) % len(SHOP)
-                    elif k == pygame.K_LEFT:
-                        shop_sel = (shop_sel - 1) % len(SHOP)
-                    elif k == pygame.K_RIGHT:
-                        shop_sel = (shop_sel + 1) % len(SHOP)
-                    elif k in (pygame.K_RETURN, pygame.K_SPACE):
-                        game.buy(SHOP[shop_sel][0])
-                elif state == "gameover":
-                    if k in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_ESCAPE) and game.over_t > 0.8:
-                        state = "menu"
-                        grab(False)
-                        sel = 0
-                elif state == "playing" and game is not None:
-                    p = game.player
-                    if k in (pygame.K_ESCAPE, pygame.K_p):
-                        state = "paused"
-                        sel = 0
-                        ui.sel = 0
-                        grab(False)
-                        frame_hold = screen.copy()
-                    elif k == pygame.K_r:
-                        p.start_reload()
-                    elif pygame.K_1 <= k <= pygame.K_7:
-                        p.switch_weapon(k - pygame.K_0)
-                    elif k == pygame.K_g:
-                        game.throw_player_grenade()
-                    elif k == pygame.K_q:
-                        game.use_stim()
-                    elif k == pygame.K_t:
-                        game.deploy_turret()
-                    elif k == pygame.K_v:
-                        game.call_airstrike()
-                    elif k == pygame.K_f:
-                        p.set_bullet_time(not p.bt_active)
-                    elif k == pygame.K_x:
-                        assist = not assist
-                        p.assist = assist
-                    elif k == pygame.K_b:
-                        state = "shop"
-                        shop_sel = 0
-                        grab(False)
-                        frame_hold = screen.copy()
-                    elif k in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                        game.skip_intermission()
-                    elif k == pygame.K_SPACE and p.alive and p.on_ground:
-                        p.vz = 9.0
-                        p.on_ground = False
-                    elif k in (pygame.K_LCTRL, pygame.K_c) and p.alive:
-                        moving = math.hypot(p.vx, p.vy) > 6.5
-                        if p.sprinting and moving and p.slide_cd <= 0 and p.on_ground:
-                            sp = math.hypot(p.vx, p.vy)
-                            p.slide_dir = (p.vx / sp, p.vy / sp)
-                            p.slide_t = 0.62
-                            p.slide_cd = 1.4
-                    elif k == pygame.K_LEFTBRACKET:
-                        q_idx = max(0, q_idx - 1)
-                        apply_quality()
-                    elif k == pygame.K_RIGHTBRACKET:
-                        q_idx = min(3, q_idx + 1)
-                        apply_quality()
-            elif ev.type == pygame.MOUSEBUTTONDOWN:
-                if state in ("menu", "paused"):
-                    if ev.button == 1:
-                        for r, iid in ui.menu_rects:
-                            if r.collidepoint(ev.pos):
-                                audio.play("buy", 0.4)
-                                if activate(iid):
-                                    running = False
-                                break
-                elif state == "shop":
-                    if ev.button == 1:
-                        for r, iid in ui.shop_rects:
-                            if r.collidepoint(ev.pos):
-                                if iid == "__close":
-                                    state = "playing"
-                                    grab(True)
-                                else:
-                                    game.buy(iid)
-                                break
-                elif state in ("help", "help_pause") and ev.button == 1:
-                    state = "menu" if state == "help" else "paused"
-                elif state == "playing":
-                    if ev.button == 1:
-                        fire_held = True
-                        game.player.fire_edge = True
-                    elif ev.button == 3:
-                        ads_held = True
-                    elif ev.button == 4:
-                        game.player.cycle_weapon(-1)
-                    elif ev.button == 5:
-                        game.player.cycle_weapon(1)
-                elif state == "gameover" and ev.button == 1 and game.over_t > 0.8:
-                    state = "menu"
-                    grab(False)
-            elif ev.type == pygame.MOUSEBUTTONUP:
-                if ev.button == 1:
-                    fire_held = False
-                elif ev.button == 3:
-                    ads_held = False
-            elif ev.type == pygame.MOUSEWHEEL and state == "playing":
-                game.player.cycle_weapon(-1 if ev.y > 0 else 1)
-            elif ev.type == pygame.WINDOWFOCUSLOST and state == "playing":
-                state = "paused"
-                sel = 0
-                grab(False)
-                frame_hold = screen.copy()
+    def setup_camera(self, game, dt):
+        p = game.player
+        sh = game.shake
+        yaw = p.yaw + random.uniform(-1, 1) * sh * 0.025
+        pit = p.pitch + (p.death_pitch if not p.alive else 0.0) + random.uniform(-1, 1) * sh * 0.02
+        if p.ads > 0.5 and p.cur == 3:
+            k = 0.0016 * (0.4 if p.crouch > 0.5 else 1.0)
+            yaw += math.sin(self.t_total * 1.3) * k
+            pit += math.cos(self.t_total * 1.7) * k
+        self.scene.set_camera(p.x, p.y, p.z, yaw, max(-1.3, min(1.3, pit)), p.fov)
 
-        # ------------------------------------------------------------------ simulate + draw
-        if state == "playing" or state == "gameover":
-            keys = pygame.key.get_pressed()
-            inp.fwd = (1.0 if keys[pygame.K_w] or keys[pygame.K_UP] else 0.0) - (1.0 if keys[pygame.K_s] or keys[pygame.K_DOWN] else 0.0)
-            inp.right = (1.0 if keys[pygame.K_d] or keys[pygame.K_RIGHT] else 0.0) - (1.0 if keys[pygame.K_a] or keys[pygame.K_LEFT] else 0.0)
-            inp.sprint = keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]
-            inp.crouch = keys[pygame.K_LCTRL] or keys[pygame.K_c]
-            inp.fire = fire_held
-            inp.ads = ads_held
-            inp.mdx, inp.mdy = mouse_dx, mouse_dy
-            if args.bot:
-                bot(game, inp, t_total)
-            game.update(dt, inp)
-            if game.phase == "gameover" and state == "playing":
-                state = "gameover"
-                grab(False)
-            setup_camera(game, scene, dt)
-            small = draw_scene(game, scene, rend, bank)
-            pygame.transform.scale(small.convert(screen), screen.get_size(), screen)
-            if state == "playing" or game.over_t < 0.1:
-                ui.draw_viewmodel(game, t_total)
-            ui.draw_hud(game, rend, t_total)
-            tab = pygame.key.get_pressed()[pygame.K_TAB]
-            if tab and state == "playing":
-                ui.draw_scoreboard(game)
-            if state == "gameover":
+    def tick(self, task):
+        dt = min(globalClock.getDt(), 0.05)  # noqa: F821  (provided by ShowBase)
+        if ARGS.fixed_dt:
+            dt = ARGS.fixed_dt
+        self.t_total += dt
+        self.frame_no += 1
+        if (self.state == "playing" and not self.focus_ok and not (ARGS.bot or ARGS.shot or ARGS.frames)
+                and self.frame_no > 30):
+            self.state = "paused"          # alt-tab -> pause
+            self.sel = 0
+            self.grab(False)
+        st = self.state
+        ui = self.ui
+        self.hud.fill((0, 0, 0, 0))
+        ui.mouse_pos = self.canvas_mouse()
+        game = self.game
+        if st in ("playing", "gameover") and game is not None:
+            self.read_inputs(dt)
+            if ARGS.bot:
+                self.bot(self.t_total)
+            game.update(dt, self.inp)
+            if game.phase == "gameover" and st == "playing":
+                self.state = st = "gameover"
+                self.grab(False)
+            self.setup_camera(game, dt)
+            self.scene.frame(game, dt, self.t_total)
+            if st == "gameover":
+                self.scene.hide_viewmodel()
                 ui.draw_gameover(game, game.over_t)
-        elif state in ("menu", "help"):
-            bg_t += dt
-            a = bg_t * 0.13
-            menu_cam.x, menu_cam.y, menu_cam.z = 49 * math.cos(a), 49 * math.sin(a), 3.6 + math.sin(a * 2) * 1.2
-            menu_cam.yaw = math.atan2(-menu_cam.y, -menu_cam.x) + math.sin(a * 1.7) * 0.6
-            menu_cam.pitch = -0.06
-            menu_cam.fov = 70
-            rend.render(menu_cam)
-            small = rend.to_surface()
-            pygame.transform.scale(small.convert(screen), screen.get_size(), screen)
-            dark = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-            dark.fill((4, 8, 14, 150))
-            screen.blit(dark, (0, 0))
-            if state == "menu":
-                ui.sel = sel
-                ui.draw_menu(menu_items())
-                rec = game.save if game else __import__("t8_game").load_save()
-                ui.text(f"{ui.tr('best')}: {rec.get('best_wave', 0)}", 20, (200, 215, 225), (screen.get_width() // 2, screen.get_height() - 40 * ui.u), "center")
-                dd = __import__("t8_data").DIFF_DESC[DIFF_ORDER[diff_i]][ui.lang]
-                ui.text(dd, 18, (160, 190, 210), (screen.get_width() // 2, screen.get_height() - 70 * ui.u), "center")
+            else:
+                ui.draw_hud(game, None, self.t_total)
+                ui.draw_world_markers(game, self.scene)
+                if self.tab_down:
+                    ui.draw_scoreboard(game)
+        elif st in ("menu", "help"):
+            self.menu_t += dt
+            a = self.menu_t * 0.13
+            x, y = 49 * math.cos(a), 49 * math.sin(a)
+            self.scene.set_camera(x, y, 3.6 + math.sin(a * 2) * 1.2, math.atan2(-y, -x) + math.sin(a * 1.7) * 0.6, -0.06, 70)
+            self.scene.hide_viewmodel()
+            self.hud.fill((4, 8, 14, 150))
+            if st == "menu":
+                ui.sel = self.sel
+                ui.draw_menu(self.menu_items())
+                from t8_game import load_save
+                from t8_data import DIFF_DESC, DIFF_ORDER
+                rec = game.save if game else load_save()
+                ui.text(f"{ui.tr('best')}: {rec.get('best_wave', 0)}", 20, (200, 215, 225),
+                        (self.hud.get_width() // 2, self.hud.get_height() - 18 * ui.u), "center")
+                ui.text(DIFF_DESC[DIFF_ORDER[self.diff_i]][ui.lang], 18, (160, 190, 210),
+                        (self.hud.get_width() // 2, self.hud.get_height() - 44 * ui.u), "center")
             else:
                 ui.draw_help()
-        elif state in ("paused", "help_pause", "shop"):
-            if frame_hold is not None and frame_hold.get_size() == screen.get_size():
-                screen.blit(frame_hold, (0, 0))
-            dark = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-            dark.fill((0, 0, 0, 140))
-            screen.blit(dark, (0, 0))
-            if state == "paused":
-                ui.sel = sel
-                ui.text(ui.tr("paused"), 54, (255, 196, 40), (screen.get_width() // 2, int(screen.get_height() * 0.16)), "center")
-                ui.draw_menu(pause_items(), title=False)
-            elif state == "help_pause":
+        elif st in ("paused", "help_pause", "shop"):
+            # the world stays frozen behind the menu
+            if game is not None:
+                p = game.player
+                self.scene.frame(game, 0.0, self.t_total)
+            self.hud.fill((0, 0, 0, 140))
+            if st == "paused":
+                ui.sel = self.sel
+                ui.text(ui.tr("paused"), 54, (255, 196, 40), (self.hud.get_width() // 2, int(self.hud.get_height() * 0.16)), "center")
+                ui.draw_menu(self.pause_items(), title=False)
+            elif st == "help_pause":
                 ui.draw_help()
             else:
-                ui.draw_shop(game, shop_sel)
-        pygame.display.flip()
+                ui.draw_shop(game, self.shop_sel)
+        self._upload_hud()
+        if self.shot_dir and self.frame_no % ARGS.shot_every == 0:
+            self.win.saveScreenshot(Filename(os.path.join(self.shot_dir, "frame_%05d.png" % self.frame_no)))
+        if ARGS.frames and self.frame_no >= ARGS.frames:
+            if self.shot_dir:
+                self.win.saveScreenshot(Filename(os.path.join(self.shot_dir, "final.png")))
+                if game:
+                    print("wave", game.wave, "phase", game.phase, "kills", game.player.kills, "hp", int(game.player.hp),
+                          "score", game.player.score, "team", game.team_kills, "lives", game.player.lives)
+            self.userExit()
+        return task.cont
 
-        # auto quality (only if the machine struggles)
-        fps_acc.append(dt)
-        if len(fps_acc) > 150:
-            avg = sum(fps_acc) / len(fps_acc)
-            fps_acc.clear()
-            if avg > 1 / 26 and q_idx > 0 and state == "playing" and not shot_dir:
-                q_idx -= 1
-                apply_quality()
-        if shot_dir and frame_no % args.shot_every == 0:
-            pygame.image.save(screen, os.path.join(shot_dir, f"frame_{frame_no:05d}.png"))
-        if args.frames and frame_no >= args.frames:
-            running = False
-    if shot_dir:
-        pygame.image.save(screen, os.path.join(shot_dir, "final.png"))
-        if game:
-            print("wave", game.wave, "phase", game.phase, "kills", game.player.kills, "hp", int(game.player.hp),
-                  "score", game.player.score, "team", game.team_kills, "lives", game.player.lives)
-    pygame.quit()
+
+def main():
+    app = TacticalApp()
+    app.run()
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        pygame.quit()
+    main()
