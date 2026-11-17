@@ -1,0 +1,15 @@
+<!-- title: JS نمودار: Chart.js آفلاین
+desc: داشبورد با نمودار خطی و دونات که زنده تغییر می‌کند
+cat: jslib
+level: 2 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0;background:#070d0b;color:#d9ffe9;font-family:system-ui;padding:14px}.g{display:grid;grid-template-columns:2fr 1fr;gap:12px}@media(max-width:700px){.g{grid-template-columns:1fr}}.c{background:#0c1814;border:1px solid #17382b;border-radius:12px;padding:10px}</style></head><body>
+<h3>Live dashboard</h3><div class="g"><div class="c"><canvas id="a"></canvas></div><div class="c"><canvas id="b"></canvas></div></div>
+<script src="lib:chart"></script>
+<script>
+const labels = Array.from({ length: 20 }, (_, i) => i), data = labels.map(() => 50 + Math.random() * 30);
+const line = new Chart(document.getElementById('a'), { type: 'line', data: { labels, datasets: [{ label: 'CPU %', data, borderColor: '#35ffa0', backgroundColor: 'rgba(53,255,160,.15)', fill: true, tension: .35 }] }, options: { animation: false, scales: { y: { min: 0, max: 100 } } } });
+new Chart(document.getElementById('b'), { type: 'doughnut', data: { labels: ['Python', 'JS', 'HTML'], datasets: [{ data: [55, 30, 15], backgroundColor: ['#35ffa0', '#00d0ff', '#ffcf5a'] }] } });
+setInterval(() => { data.push(Math.max(5, Math.min(98, data[data.length - 1] + (Math.random() - .5) * 18))); data.shift(); line.update(); }, 500);
+</script></body></html>

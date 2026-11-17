@@ -1,5 +1,6 @@
 // CodePad Hub: یک نقطهٔ ورود مرتب برای همه‌چیز. ویرایشگر کار خودش را می‌کند؛ Studio، Cyber، موزیک، اخبار و نمونه‌ها اینجا هستند.
 import { HUB_SAMPLES } from "./hub-data.js";
+import { viewSecurity, addNote, CVE_RE } from "./hub-security.js";
 
 const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { /* حافظه در دسترس نیست */ } return null; };
 const h = (tag, attrs = {}, ...kids) => {
@@ -75,20 +76,32 @@ async function goEditor() {
     await new Promise((r) => setTimeout(r, 400));
   }
 }
-/** نمونه را به‌عنوان پروژهٔ تازه به ویرایشگر می‌آورد. */
-export async function importSample(s, { run = false } = {}) {
+/** نمونه را به‌عنوان پروژهٔ تازه به ویرایشگر می‌آورد. گزینه‌ها: run، files (پیوست‌ها)، patch (تغییر کد پیش از ورود). */
+export async function importSample(s, { run = false, files = [], patch } = {}) {
   const rt = await import("./runtime.js");
   const name = s.file;
   const lang = s.ext === "html" ? "html" : "python";
-  rt.pt.getState().importProject(s.title.replace(/[^\p{L}\p{N}‌ ._-]/gu, "").slice(0, 60) || name, [{ name, lang, content: s.code }]);
+  const code = typeof patch === "function" ? patch(s.code) : s.code;
+  const id = rt.pt.getState().importProject(s.title.replace(/[^\p{L}\p{N}\u200c ._-]/gu, "").slice(0, 60) || name, [{ name, lang, content: code }]);
+  if (files.length) {
+    try { const r = await rt.Et(id, files.filter((f) => f.name !== name)); if (r?.failed?.length) alert("این فایل‌ها ذخیره نشدند: " + r.failed.join("، ")); } catch (e) { alert("پیوست فایل‌ها ناموفق بود: " + (e?.message || e)); }
+  }
   close();
   await goEditor();
-  if (run) setTimeout(() => window.CodePadProjects?.runProject?.(), 700);
+  rt.pt.setState((st) => ({ projects: st.projects.map((p) => (p.id === id ? { ...p, entryFile: name } : p)) }));
+  if (run) clickRun();
 }
+/** دکمهٔ اجرای ویرایشگر را وقتی آماده شد می‌زند (تا ۵ ثانیه صبر می‌کند). */
+function clickRun(tries = 0) {
+  const btn = document.querySelector("[data-codepad-run]");
+  if (btn && !btn.disabled) { setTimeout(() => btn.click(), 250); return; }
+  if (tries < 25) setTimeout(() => clickRun(tries + 1), 200);
+}
+const sampleById = (id) => HUB_SAMPLES.find((s) => s.id === id);
 
 let root, body, tabs, current = "home", state = { cat: "all", q: "", news: null, newsFilter: "all", newsBusy: false };
 
-const TABS = [["home", "خانه"], ["python", "پایتون"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
+const TABS = [["home", "خانه"], ["python", "پایتون"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["security", "امنیت"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
 const lvl = (n) => "●".repeat(n) + "○".repeat(Math.max(0, 3 - n));
 const day = () => Math.floor(Date.now() / 864e5);
 const openUrl = (url) => { try { if (window.CodePadStudio?.openBrowser) return window.CodePadStudio.openBrowser(url); } catch { /* ادامه */ } window.open(url, "_blank", "noopener"); };
@@ -115,7 +128,7 @@ function viewHome() {
       card("🐍", "پایتون", `${HUB_SAMPLES.filter((s) => s.ext === "py").length} برنامهٔ آماده برای اجرا`, () => show("python")),
       card("🧊", "سه‌بعدی", "مینی‌کرافت، فیزیک، تیراندازی با Python", () => { state.cat = "3d"; show("python"); }),
       card("📰", "اخبار هک", "تیترهای امنیت و آسیب‌پذیری‌های فعال", () => show("news")),
-      card("🛡", "Cyber Lab", "نقشهٔ حمله، ترمینال، nmap (فقط هدف مجاز)", () => { close(); window.CodePadCyber?.open(); }),
+      card("🛡", "امنیت و تست نفوذ", "سایت تمرین محلی، CTF، تحلیل فایل، اشتراک شبکه", () => show("security")),
       card("🎧", "موسیقی", music?.title ? `در حال پخش: ${music.title}` : "فانک، رادیو و پلی‌لیست تمرکز", () => { close(); window.CodePadMusic?.open(); }),
       card("🧰", "Studio", "مرورگر، OpenCV، ZIP، رسانه", () => { close(); window.CodePadStudio?.open("projects"); })),
     h("section", { class: "hb-tip" }, h("b", {}, "💡 نکتهٔ امروز"), h("p", {}, tip)));
@@ -184,7 +197,7 @@ function viewNews() {
       h("button", { type: "button", "aria-pressed": String(state.newsFilter === id), onclick: () => { state.newsFilter = id; paint(); } }, label))),
     n?.errors?.length ? h("p", { class: "hb-warn", role: "status" }, "⚠ برخی منبع‌ها در دسترس نبودند: " + n.errors.join(" · ")) : null,
     !items.length ? h("p", { class: "hb-empty" }, state.newsBusy ? "در حال دریافت خبرها…" : "خبری نیست. اینترنت را بررسی کن و دوباره بزن (خبرهای قبلی آفلاین ذخیره می‌شوند).") : null,
-    h("ul", { class: "hb-news" }, items.map((x) => h("li", {}, h("button", { type: "button", onclick: () => openUrl(x.url) }, h("b", { dir: "auto" }, x.title), h("small", {}, `${x.src} · ${ago(x.time)}${x.meta ? " · " + x.meta : ""}`))))),
+    h("ul", { class: "hb-news" }, items.map((x) => h("li", {}, h("button", { type: "button", onclick: () => openUrl(x.url) }, h("b", { dir: "auto" }, x.title), h("small", {}, `${x.src} · ${ago(x.time)}${x.meta ? " · " + x.meta : ""}`)), h("button", { type: "button", class: "hb-pin", "aria-label": "ذخیره به‌عنوان کارت آسیب‌پذیری", title: "ذخیره در بخش امنیت", onclick: (e) => { addNote(x); e.currentTarget.textContent = "✔"; } }, CVE_RE.test(x.title) ? "📌" : "🗂")))),
     h("p", { class: "hb-lead" }, "عنوان‌ها به زبان اصلی (انگلیسی) هستند. می‌توانی متن را به دستیار AI بدهی تا ترجمه و توضیح دهد."));
 }
 
@@ -193,7 +206,8 @@ function viewTools() {
     h("h3", {}, "امنیت"),
     h("div", { class: "hb-grid" },
       card("🛡", "Cyber Lab", "ترمینال، نقشهٔ حملات زنده، اسکن مجاز", () => { close(); window.CodePadCyber?.open(); }),
-      card("🔐", "آزمایشگاه رمز و هش", "نمونه‌های sec_ در بخش پایتون", () => { state.cat = "security"; show("python"); })),
+      card("🛡", "Cyber Lab", "ترمینال، نقشهٔ حمله، nmap (هدف مجاز)", () => { close(); window.CodePadCyber?.open(); }),
+      card("🔐", "بخش امنیت", "سایت تمرین، CTF، تحلیل فایل، شبکه", () => show("security"))),
     h("h3", {}, "ساخت و رسانه"),
     h("div", { class: "hb-grid" },
       card("🧰", "Studio", "مرورگر، OpenCV، ZIP، ابزار رسانه", () => { close(); window.CodePadStudio?.open("projects"); }),
@@ -205,7 +219,9 @@ function viewTools() {
       card("🟢", "تم هکری", `حالت فعلی: ${["خاموش", "روشن", "Hyper"][window.CodePadCyber?.hackerLevel?.() ?? 1]}`, () => { const c = window.CodePadCyber; c?.setHackerTheme(((c.hackerLevel?.() ?? 1) + 2) % 3); paint(); })));
 }
 
-const VIEWS = { home: viewHome, python: viewPython, "3d": viewLibs, news: viewNews, tools: viewTools };
+let secView = null;
+const viewSec = () => { secView = viewSecurity({ h, importSample, sampleById, openUrl, card, show, close }); return secView.el; };
+const VIEWS = { home: viewHome, python: viewPython, "3d": viewLibs, security: viewSec, news: viewNews, tools: viewTools };
 function paint() {
   if (!root) return;
   body.replaceChildren(VIEWS[current]());

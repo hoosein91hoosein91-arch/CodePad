@@ -18,6 +18,12 @@ const h = (tag, attrs = {}, ...kids) => {
   for (const kid of kids.flat()) if (kid != null) el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
   return el;
 };
+/** موقعیت پخش‌کنندهٔ شناور را داخل صفحه نگه می‌دارد (قابل آزمون بدون DOM). */
+export function clampPillPos(x, y, vw, vh, w = 60, hgt = 44) {
+  const nx = Math.min(Math.max(Number.isFinite(x) ? x : 0, 4), Math.max(4, vw - w - 4));
+  const ny = Math.min(Math.max(Number.isFinite(y) ? y : 0, 4), Math.max(4, vh - hgt - 4));
+  return { x: Math.round(nx), y: Math.round(ny) };
+}
 const fmt = (t) => (Number.isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}` : "LIVE");
 
 /** ایستگاه‌های رادیو از radio-browser.info (جامعه‌محور و رایگان). فقط https، چون برنامه یک زمینهٔ امن است. */
@@ -226,6 +232,7 @@ function build() {
     h("button", { type: "button", "aria-label": "قبلی", class: "mu-opt", onclick: () => next(-1) }, "⏮"),
     els.pillPlay,
     h("button", { type: "button", "aria-label": "بعدی", onclick: () => next(1) }, "⏭"));
+  makePillDraggable(pill);
 
   els.title = h("b", { class: "mu-title" }, "—"); els.sub = h("small", { class: "mu-sub" });
   els.play = h("button", { type: "button", class: "mu-big", onclick: toggle }, "▶");
@@ -252,6 +259,21 @@ function build() {
       h("label", { class: "mu-vol" }, "🔊", vol), els.status),
     els.sourceBar, els.listBox, els.focus);
   document.body.append(pill, panel);
+}
+
+function makePillDraggable(el) {
+  const grip = h("span", { class: "mu-grip", role: "button", "aria-label": "جابه‌جایی پخش‌کننده (دوبار لمس: برگشت به جای اول)", title: "بکش تا جابه‌جا شود", tabindex: "0" }, "⠿");
+  el.prepend(grip);
+  const apply = (x, y) => { const p = clampPillPos(x, y, innerWidth, innerHeight, el.offsetWidth, el.offsetHeight); el.style.left = p.x + "px"; el.style.top = p.y + "px"; el.style.right = "auto"; el.style.bottom = "auto"; return p; };
+  try { const saved = JSON.parse(LS("codepad-music-pos") || "null"); if (saved && Number.isFinite(saved.x)) requestAnimationFrame(() => apply(saved.x, saved.y)); } catch { /* موقعیت ذخیره‌شده خراب است */ }
+  let drag = null;
+  grip.addEventListener("pointerdown", (e) => { const r = el.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; grip.setPointerCapture(e.pointerId); e.preventDefault(); });
+  grip.addEventListener("pointermove", (e) => { if (drag) apply(e.clientX - drag.dx, e.clientY - drag.dy); });
+  const end = () => { if (!drag) return; drag = null; const r = el.getBoundingClientRect(); LS("codepad-music-pos", JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); };
+  grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
+  grip.addEventListener("dblclick", () => { for (const k of ["left", "top", "right", "bottom"]) el.style.removeProperty(k); LS("codepad-music-pos", ""); });
+  grip.addEventListener("keydown", (e) => { const step = e.shiftKey ? 40 : 12, r = el.getBoundingClientRect(), d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key]; if (!d) return; e.preventDefault(); const p = apply(r.left + d[0], r.top + d[1]); LS("codepad-music-pos", JSON.stringify(p)); });
+  addEventListener("resize", () => { if (el.style.left) { const r = el.getBoundingClientRect(); apply(r.left, r.top); } });
 }
 
 export function open() { panel.hidden = false; chooseSource(state.source).catch((e) => setStatus(e.message)); }

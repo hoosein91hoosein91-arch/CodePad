@@ -82,3 +82,42 @@ test("hub is wired: script, styles, entry points; Studio/Cyber no longer sit sid
   assert.match(read("mobile-src/assets/launcher.js"), /CodePadHub\?\.open\(\)[\s\S]{0,80}dock-hub/);
   assert.match(read("mobile-src/assets/hub.css"), /\.cp-workspaces \[data-studio-launch\]/);
 });
+
+import { addNote, loadNotes, updateNote, removeNote, CVE_RE } from "../mobile-src/assets/hub-security.js";
+const mem = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v) }; };
+
+test("CVE cards: saved once per CVE id, editable, removable, and survive a broken store", () => {
+  const st = mem();
+  const item = { title: "CVE-2025-12345 — Acme VPN: auth bypass", url: "https://nvd.nist.gov/vuln/detail/CVE-2025-12345", src: "CISA KEV" };
+  const n = addNote(item, st);
+  assert.equal(n.id, "CVE-2025-12345");
+  addNote(item, st);
+  assert.equal(loadNotes(st).length, 1, "same CVE is not saved twice");
+  addNote({ title: "Some blog post about malware", url: "https://x.example/p" }, st);
+  assert.equal(loadNotes(st).length, 2);
+  assert.ok(updateNote("CVE-2025-12345", "patch on Monday", st));
+  assert.equal(loadNotes(st).find((x) => x.id === "CVE-2025-12345").text, "patch on Monday");
+  removeNote("CVE-2025-12345", st);
+  assert.equal(loadNotes(st).length, 1);
+  assert.deepEqual(loadNotes({ getItem() { throw new Error("x"); } }), []);
+  assert.match("fix for cve-2024-0001 released", CVE_RE);
+});
+
+test("the build copies public/libs so lib:three and the Python 3D viewer work in the shipped app", () => {
+  assert.match(read("scripts/build-mobile.mjs"), /public\/libs/);
+});
+
+test("security tab, practice lab programs and their data are wired", () => {
+  const hub = read("mobile-src/assets/hub.js");
+  assert.match(hub, /\["security", "امنیت"\]/);
+  for (const id of ["sec_lab_site", "sec_lan_share", "sec_lan_dashboard"]) assert.ok(HUB_SAMPLES.some((s) => s.id === id), id);
+  for (const f of ["hub-security.js", "hub-ctf.js", "hub-ctf-data.js", "hub-forensics.js"]) assert.ok(existsSync(new URL("../mobile-src/assets/" + f, import.meta.url)), f);
+});
+
+test("every practice program only touches the network deliberately: lab = loopback, share = private clients only", () => {
+  const lab = HUB_SAMPLES.find((s) => s.id === "sec_lab_site").code, share = HUB_SAMPLES.find((s) => s.id === "sec_lan_share").code;
+  assert.match(lab, /HOST = "127\.0\.0\.1"/);
+  assert.ok(!/Server\(\("0\.0\.0\.0"/.test(lab));
+  assert.match(share, /ONLY_PRIVATE_CLIENTS = True/);
+  assert.ok(!/import subprocess|subprocess\.|os\.system\(|os\.popen\(|os\.exec/.test(lab + share), "no real command execution");
+});

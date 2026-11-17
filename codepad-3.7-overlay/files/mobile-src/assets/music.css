@@ -46,3 +46,7 @@
 #cp-music .mu-tip{margin:0 0 8px;color:#cfe;font-family:var(--font-sans,inherit)}
 #cp-music .mu-track{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border-bottom:1px solid #0a2f20}#cp-music .mu-track div{display:flex;flex-direction:column;direction:ltr;text-align:left}
 @media (max-width:520px){#cp-music{left:8px;right:8px;width:auto}}
+
+#cp-music-pill .mu-grip{display:inline-grid;place-items:center;min-width:30px;height:34px;color:var(--cp-muted,#9fe9c8);cursor:grab;touch-action:none;user-select:none;font-size:16px}
+#cp-music-pill .mu-grip:active{cursor:grabbing}
+#cp-music-pill .mu-grip:focus-visible{outline:2px solid var(--cp-accent,#00ff9c);border-radius:999px}

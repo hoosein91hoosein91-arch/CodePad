@@ -33,17 +33,33 @@
    "base": null,
    "new": "2e4d1784cf691175a978c234e41cfa3bca004860b30d3019cd752011330d4b55"
   },
+  "mobile-src/assets/hub-ctf-data.js": {
+   "base": null,
+   "new": "3035c4e22871f5e1a052be9ad5553c3f7b8b64a0ba5b771c0d7997aa6101c23d"
+  },
+  "mobile-src/assets/hub-ctf.js": {
+   "base": null,
+   "new": "d89870ab63e74ce0ddb553a8a258fe2e89b43e4182c39430f7b76199cb6ae544"
+  },
   "mobile-src/assets/hub-data.js": {
    "base": null,
-   "new": "3646918520371c3781c5779b163072e159564c5a8b15df09e2151fc8ebcc3398"
+   "new": "893471adb01b86688b9db2f44a6bae84c1c712c18eef925099dbc7e14e12dcb4"
+  },
+  "mobile-src/assets/hub-forensics.js": {
+   "base": null,
+   "new": "d6d451a03bd2516363eca5838d88085e919ef736b831e1f8f1ebb8ca41ea4cf6"
+  },
+  "mobile-src/assets/hub-security.js": {
+   "base": null,
+   "new": "f2d8237ed224caafdcac987639f068a42467c210e210f08e8e234dfb30eca96c"
   },
   "mobile-src/assets/hub.css": {
    "base": null,
-   "new": "dca7abe1ef757d8e8a7ee57c6996a804cce580b9960d33ee1ea89d961a72426c"
+   "new": "f51261ea66667820c8239cbf862b42a8519d535e91b2fb6f4f67411be5445cfd"
   },
   "mobile-src/assets/hub.js": {
    "base": null,
-   "new": "6958b599d09b0b7cd395723346688d701f2031da5870cd1e8411da62b2deba76"
+   "new": "ab2a4e8e9748b3eb46102e4bed16b76b9fea28428ba010b1c70cb7414ddc48f8"
   },
   "mobile-src/assets/launcher.js": {
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
@@ -51,11 +67,11 @@
   },
   "mobile-src/assets/music.css": {
    "base": null,
-   "new": "f72e6e66f9f1b2eefaf687bd9217c0ebdfac808b07e9323cacb9691292ea9f1a"
+   "new": "b2d01a0c7d846707cdb7766f8c0e8ca8653dcba8264eef5d6dfbb59f97e81bc4"
   },
   "mobile-src/assets/music.js": {
    "base": null,
-   "new": "58e6d15a241a5175a44697999f844c42612182b22c4148e675ecfc85edfdb2a5"
+   "new": "f0b9c070c8db21054c324eaf46939893263b5c7821fdf782cab4b80d174aab4f"
   },
   "mobile-src/assets/project-zip.js": {
    "base": "d39bd45c49a366aa0152a0ee3c3dd613e123de5dbfaf764f144084a0dc7818c2",
@@ -95,7 +111,7 @@
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
-   "new": "210f8c96d566ef4ab406662ee064edb208fefda7c1e39b45d311e97d2f087d0e"
+   "new": "7feda9c68c60fd16a9379719d434cd9d6ce7ae832bfe7447c366ca1677d1597c"
   },
   "public/background/codepad3d.py": {
    "base": null,
@@ -313,6 +329,10 @@
    "base": "338408499cde41ec970826172330c78d83b147abcee62f1eb2e01d97cebc4303",
    "new": "2fafd5742c58f60b92eb374a535ae23473a7a67b6e0ca3a9d4842cf383825bbd"
   },
+  "scripts/build-mobile.mjs": {
+   "base": "dafd9e6449995d55986b6a85d04571a2b0e781e3ad09807c542e83fcc6aecd00",
+   "new": "ef8894a74055d25768dcb65873b80b1be15c499ee6d94d8d5ef1d18b171d52ee"
+  },
   "scripts/build-windows-desktop.mjs": {
    "base": null,
    "new": "022a50c942111da99c17ec355d0936b5b366e79015c613f295642da54a01abc0"
@@ -329,13 +349,21 @@
    "base": null,
    "new": "786c4aa413d4eace8d6347f8ddae32b8e47d3165afdb6ba82126b93e03cbfcfc"
   },
+  "scripts/hub-ctf.test.mjs": {
+   "base": null,
+   "new": "0630868fe3e4e8b4c3efe169601ac9f77285be70abf2bfa9bdae15ba861fd78a"
+  },
+  "scripts/hub-forensics.test.mjs": {
+   "base": null,
+   "new": "a0453e28331bb3f6720818f2541dff783b4973e1f1117a58891cf16982935093"
+  },
   "scripts/hub.test.mjs": {
    "base": null,
-   "new": "68280e3b0284cd1ab76682e2a7d9bd4c759667e100755d969c8a71f17bbc5e41"
+   "new": "a35debda5a985c1f2f9b5472722a0e8fd16c1e9df64814c62e400a490a760f56"
   },
   "scripts/music.test.mjs": {
    "base": null,
-   "new": "26217a604d1a70dd530422367599e1f104cea4b912d509bf2f1ef90c115f0bf3"
+   "new": "8d68bb39bbac613d6b596e56839e572be36def949854b8fc55ba2e84e8c322fc"
   },
   "scripts/python-host.test.mjs": {
    "base": null,
@@ -348,6 +376,22 @@
   "scripts/run-config.test.mjs": {
    "base": null,
    "new": "05663f5cefd1aa063dda80ff58007beada62244e8142d5c58233c8fbba73963f"
+  },
+  "scripts/security-host.test.mjs": {
+   "base": null,
+   "new": "d399a36b6e794c93a10561436d40b2bafedc2a41c45a288bd9fe650170b00fb9"
+  },
+  "scripts/security-lab.test.mjs": {
+   "base": null,
+   "new": "8d1f3ba1f2ea35e7c09d5bf30445dcdfba7c2b1fc063853dfb187c349960361a"
+  },
+  "scripts/security-netcheck.test.mjs": {
+   "base": null,
+   "new": "507238f7775a30063f246c41c39d31d17d8c8653c7b0264969850122d4a6ab1c"
+  },
+  "scripts/security-share.test.mjs": {
+   "base": null,
+   "new": "aba5e4e680d778b5d1599b02028a90aa3bafe4e11630991e23cd34ac5cc9adea"
   },
   "scripts/zip-folder.py": {
    "base": null,

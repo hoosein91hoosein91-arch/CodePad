@@ -1,0 +1,25 @@
+<!-- title: JS سه‌بعدی: three.js آفلاین
+desc: با <script src="lib:three"> بدون اینترنت؛ مکعب‌های نورانی با کنترل لمسی
+cat: jslib
+level: 2 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#04070d;overflow:hidden}#t{position:fixed;left:12px;top:10px;color:#8cffc0;font:14px system-ui}</style></head>
+<body><div id="t">three.js · بکش تا بچرخد · دو انگشت: زوم</div>
+<script src="lib:three"></script>
+<script>
+const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x04070d, 0.035);
+const cam = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.1, 200); cam.position.set(0, 3, 9);
+const r = new THREE.WebGLRenderer({ antialias: true }); r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(innerWidth, innerHeight); document.body.append(r.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x223344, 0.8));
+const light = new THREE.PointLight(0x35ffa0, 60, 40); light.position.set(0, 4, 2); scene.add(light);
+const cubes = [];
+for (let i = 0; i < 40; i++) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(i / 40, 0.8, 0.55), roughness: 0.4, metalness: 0.3 }));
+  m.position.set((Math.random() - 0.5) * 18, Math.random() * 5, (Math.random() - 0.5) * 18 - 4); scene.add(m); cubes.push(m);
+}
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0x0a1a16 })); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const ctl = new THREE.OrbitControls(cam, r.domElement); ctl.target.set(0, 1.5, -3); ctl.enableDamping = true;
+addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
+(function loop(t) { requestAnimationFrame(loop); cubes.forEach((c, i) => { c.rotation.x += 0.01 + i * 0.0002; c.rotation.y += 0.015; c.position.y += Math.sin(t / 700 + i) * 0.004; }); light.position.x = Math.sin(t / 900) * 8; ctl.update(); r.render(scene, cam); })(0);
+</script></body></html>

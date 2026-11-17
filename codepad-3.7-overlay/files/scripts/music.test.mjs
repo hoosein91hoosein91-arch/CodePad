@@ -41,3 +41,11 @@ test("radio: fails over to the next server and reports a clear error when all fa
   await assert.rejects(fetchStations("phonk", { bases: ["https://a"], fetcher: reply([]) }), /no https stations/);
   assert.ok(RADIO_TAGS.includes("phonk"));
 });
+
+import { clampPillPos } from "../mobile-src/assets/music.js";
+test("floating player stays inside the screen when dragged", () => {
+  assert.deepEqual(clampPillPos(-50, -50, 390, 844, 200, 44), { x: 4, y: 4 });
+  assert.deepEqual(clampPillPos(9999, 9999, 390, 844, 200, 44), { x: 186, y: 796 });
+  assert.deepEqual(clampPillPos(100, 300, 390, 844, 200, 44), { x: 100, y: 300 });
+  assert.deepEqual(clampPillPos(NaN, 10, 390, 844), { x: 4, y: 10 });
+});
