@@ -607,8 +607,8 @@ button{background:#00ff9c;color:#001a0c;border:0;border-radius:14px;padding:12px
 `;
 function mt({ open: e, onOpenChange: t, accent: n, onInstalled: r }) {
   let [i, a] = (0, K.useState)(`برنامهٔ تازه`),
-    [o, s] = (0, K.useState)(`nava`),
-    [c, l] = (0, K.useState)(pt),
+    [o, s] = (0, K.useState)(`html`),
+    [c, l] = (0, K.useState)(ft),
     [u, d] = (0, K.useState)(``),
     [f, p] = (0, K.useState)(``);
   (0, K.useEffect)(() => {
@@ -676,7 +676,7 @@ function mt({ open: e, onOpenChange: t, accent: n, onInstalled: r }) {
             className: `grid grid-cols-2 gap-2`,
             role: `group`,
             "aria-label": `زبان برنامهٔ تازه`,
-            children: [`nava`, `html`].map((e) =>
+            children: [`html`].map((e) =>
               (0, q.jsx)(
                 `button`,
                 {
@@ -4910,8 +4910,8 @@ function In() {
           (0, q.jsxs)(`button`, {
             type: `button`,
             className: `flex w-12 flex-col items-center gap-1 text-white/75`,
-            onClick: () => window.CodePadCyber?.open(),
-            "data-testid": `dock-cyber`,
+            onClick: () => window.CodePadHub?.open(),
+            "data-testid": `dock-hub`,
             children: [
               (0, q.jsx)(`svg`, {
                 viewBox: `0 0 24 24`,
@@ -4921,9 +4921,9 @@ function In() {
                 strokeWidth: 2,
                 strokeLinecap: `round`,
                 strokeLinejoin: `round`,
-                children: (0, q.jsx)(`path`, { d: `M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6l8-3zM9 12l2 2 4-4` }),
+                children: (0, q.jsx)(`path`, { d: `M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z` }),
               }),
-              (0, q.jsx)(`span`, { className: `text-[10px]`, children: `Cyber` }),
+              (0, q.jsx)(`span`, { className: `text-[10px]`, children: `هاب` }),
             ],
           }),
           (0, q.jsxs)(`button`, {

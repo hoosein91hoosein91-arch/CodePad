@@ -3454,7 +3454,6 @@ function runBinary(e, t) {
   }
 }
 var LANG_ORDER = [
-    `nava`,
     `mix`,
     `farsi`,
     `english`,
@@ -3820,10 +3819,10 @@ function fileFrom(e, t) {
   return { id: t, name: n.name, lang: e, content: n.content, stdin: n.stdin };
 }
 var SEED_PROJECT = {
-  id: `proj-nava`,
-  name: `شروع با نوا`,
-  activeFileId: `file-nava`,
-  files: [fileFrom(`nava`, `file-nava`)],
+  id: `proj-python`,
+  name: `شروع با پایتون`,
+  activeFileId: `file-python`,
+  files: [fileFrom(`python`, `file-python`)],
 };
 function uid(e) {
   return `${e}-${Math.random().toString(36).slice(2, 10)}`;
@@ -3849,7 +3848,6 @@ function createFile(e, t) {
   return { id: uid(`file`), name: o, lang: e, content: n.content, stdin: n.stdin };
 }
 var TEMPLATE_CHOICES = [
-    { kind: `nava`, title: `نوا`, detail: `دستورهای کوتاه لاتین، چند دستور در یک خط، سه‌بعدی و هوش مصنوعی` },
     { kind: `mix`, title: `آزمایشگاه کامل`, detail: `فایل ترکیبی، جیب، جیب فارسی و ماشین` },
     { kind: `english`, title: `جیب`, detail: `برنامه، لیست و ماشین ۰ و ۱` },
     { kind: `binary`, title: `ماشین ۰ و ۱`, detail: `دستورهای هشت‌بیتی و لامپ‌ها` },
@@ -5589,7 +5587,7 @@ Tx "روی تصویر بکش تا نگاه کنی؛ با دکمه‌های جه�
       detail: `صفحهٔ وب: اسکن شبیه‌سازی‌شده روی دادهٔ ساختگی با نوار پیشرفت`,
       text: security_portscan_default,
     },
-  ],
+  ].filter((e) => e.group !== `nava`),
   FONT_FACE = `
 @font-face {
   font-family: Vazirmatn;
