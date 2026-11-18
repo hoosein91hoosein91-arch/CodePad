@@ -77,17 +77,25 @@
    "base": null,
    "new": "5f157bd6fc5fc21ed611399b2aa5140c82087900fac47ef6867b205b89cd053d"
   },
+  "mobile-src/assets/hub-reference-data.js": {
+   "base": null,
+   "new": "cc9fed4030555a89f73f04fb8bcbf61f47703956c1204885cfd3da104600bd6d"
+  },
+  "mobile-src/assets/hub-reference.js": {
+   "base": null,
+   "new": "db5eb2e2d6f393a1f3a8a7d391a590580f51e14b3f698e7b0833d3509e8444f1"
+  },
   "mobile-src/assets/hub-security.js": {
    "base": null,
    "new": "332ebe38ccba1a4f08a1398d628cd49a5468a330fb467316f8147cebe0b0aea6"
   },
   "mobile-src/assets/hub.css": {
    "base": null,
-   "new": "270fd03fdec416e00d646b0c6cda2837ee0d7d745db30927b184bb1799061de6"
+   "new": "035c98bd4ca33b53252b804314df69defcaabf48eb9e7ad75fd84500ee87caf3"
   },
   "mobile-src/assets/hub.js": {
    "base": null,
-   "new": "80adac872838770cdcbb5f9a9b9b213e5d047b125c6ad0f4137bbea05452d07b"
+   "new": "b461f3e79af9b7f8eae453a976bf05b4f137780169489e5d52a1d0817f12eec4"
   },
   "mobile-src/assets/launcher.js": {
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
@@ -147,7 +155,7 @@
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
-   "new": "dc9bf946ab18716e861abaf7cf77935c9e6ab3afdfbb78e101657a524560683e"
+   "new": "405c3c3caa848848a95800d73b17c358e6a552191b6abfa08fa6e9ee8884b61e"
   },
   "public/background/codepad3d.py": {
    "base": null,
@@ -412,6 +420,10 @@
   "scripts/hub-input.test.mjs": {
    "base": null,
    "new": "77d6b6f294b6dd6e5ca8577cbbbf4f514fe0f324da5c0c38ab8250b03bb82003"
+  },
+  "scripts/hub-reference.test.mjs": {
+   "base": null,
+   "new": "db96cf134aa3a328d9cb68b77af6002a6e46fa2dd7114a2359ebbfe8f41e6a34"
   },
   "scripts/hub.test.mjs": {
    "base": null,

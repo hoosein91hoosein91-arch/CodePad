@@ -3,6 +3,7 @@ import { HUB_SAMPLES } from "./hub-data.js";
 import { viewSecurity, addNote, CVE_RE } from "./hub-security.js";
 import { viewConfidential } from "./hub-confidential.js";
 import { viewAcademy } from "./hub-academy.js";
+import { viewReference } from "./hub-reference.js";
 
 const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { /* حافظه در دسترس نیست */ } return null; };
 const h = (tag, attrs = {}, ...kids) => {
@@ -105,7 +106,7 @@ const sampleById = (id) => HUB_SAMPLES.find((s) => s.id === id);
 
 let root, body, tabs, current = "home", state = { cat: "all", q: "", news: null, newsFilter: "all", newsBusy: false };
 
-const TABS = [["home", "خانه"], ["python", "پایتون"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["security", "امنیت"], ["academy", "🎓 آکادمی"], ["confidential", "🔒 محرمانه"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
+const TABS = [["home", "خانه"], ["python", "پایتون"], ["reference", "📚 مرجع"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["security", "امنیت"], ["academy", "🎓 آکادمی"], ["confidential", "🔒 محرمانه"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
 const lvl = (n) => "●".repeat(n) + "○".repeat(Math.max(0, 3 - n));
 const day = () => Math.floor(Date.now() / 864e5);
 const openUrl = (url) => { try { if (window.CodePadStudio?.openBrowser) return window.CodePadStudio.openBrowser(url); } catch { /* ادامه */ } window.open(url, "_blank", "noopener"); };
@@ -130,6 +131,7 @@ function viewHome() {
     h("div", { class: "hb-hero" }, h("div", { class: "hb-logo", "aria-hidden": "true" }, "{ }"), h("div", {}, h("h2", {}, "به CodePad خوش آمدی"), h("p", {}, "کدنویسی، بازی سه‌بعدی، تحلیل امنیتی و موزیک؛ همه آفلاین و در یک جا."))),
     h("div", { class: "hb-grid" },
       card("🐍", "پایتون", `${HUB_SAMPLES.filter((s) => s.ext === "py").length} برنامهٔ آماده برای اجرا`, () => show("python")),
+      card("📚", "مرجع پایتون", "سینتکس، کتابخانهٔ استاندارد و خطاهای رایج", () => show("reference")),
       card("🧊", "سه‌بعدی", "مینی‌کرافت، فیزیک، تیراندازی با Python", () => { state.cat = "3d"; show("python"); }),
       card("📰", "اخبار هک", "تیترهای امنیت و آسیب‌پذیری‌های فعال", () => show("news")),
       card("🛡", "امنیت و تست نفوذ", "سایت تمرین محلی، CTF، تحلیل فایل، اشتراک شبکه", () => show("security")),
@@ -240,7 +242,7 @@ function viewTools() {
 
 let secView = null;
 const viewSec = () => { secView = viewSecurity({ h, importSample, sampleById, openUrl, card, show, close }); return secView.el; };
-const VIEWS = { home: viewHome, python: viewPython, "3d": viewLibs, security: viewSec, academy: () => viewAcademy({ h }), confidential: () => viewConfidential({ h }), news: viewNews, tools: viewTools };
+const VIEWS = { home: viewHome, python: viewPython, reference: () => viewReference({ h, importSample }), "3d": viewLibs, security: viewSec, academy: () => viewAcademy({ h }), confidential: () => viewConfidential({ h }), news: viewNews, tools: viewTools };
 function paint() {
   if (!root) return;
   body.replaceChildren(VIEWS[current]());
