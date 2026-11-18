@@ -6,7 +6,7 @@ export function mountLesson(config){
  let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}');}catch{}
  if(!saved||typeof saved!=='object')saved={};
  const done=new Set(Array.isArray(saved.done)?saved.done:[]),answers=Object.assign(Object.create(null),saved.answers||{});let pending=null,lastSave=0,restoreTime=Number(saved.time)||0;
- const app=el('main','lesson-app'),top=el('header','lesson-top'),brand=el('span','lesson-brand','CODEPAD / LEARN');
+ const app=el('main','lesson-app'),top=el('header','lesson-top'),brand=el('span','lesson-brand','CodePad · یادگیری');
  top.append(brand,el('span','lesson-badge','درس تعاملی · آفلاین'));app.append(top);
  const heading=el('section','lesson-heading');heading.append(el('p','lesson-eyebrow',config.subject||'یادگیری با تمرین'),el('h1','',config.title),el('p','lesson-description',config.description||'ویدیو را ببین و در ایستگاه‌های تمرین پاسخ بده.'));
  app.append(heading);const grid=el('div','lesson-grid'),main=el('section','lesson-main'),side=el('aside','lesson-outline');grid.append(main,side);app.append(grid);

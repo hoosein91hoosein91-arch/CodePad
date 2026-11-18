@@ -1,6 +1,7 @@
 /* CodePad UI kit — DOM flavour for the vanilla modules (hub, studio, music, …).
    Same tokens, same classes (ui-*) as the React views. */
 import { PATHS, FILLED, DOTS } from './ui-icons.js';
+import { mountOverlay } from './ui-overlay.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -61,13 +62,11 @@ export function state({ icon: ic = 'info', title, text, error, action, loading }
   return h('div', { class: 'ui-state' + (error ? ' ui-state--error' : ''), role: error ? 'alert' : 'status' }, loading ? h('div', { class: 'ui-spin', 'aria-hidden': 'true' }) : icon(ic, 28), title ? h('strong', {}, title) : null, text ? h('span', {}, text) : null, action || null);
 }
 
-let scrimCount = 0;
 /**
  * modal({title, body, kind:'modal'|'drawer'|'page', onClose, actions})
  * returns {el, close, body}. 'page' = full-screen pane (used by hub/studio).
  */
-export function modal({ title, body, kind = 'modal', onClose, actions, label } = {}) {
-  const prev = document.activeElement;
+export function modal({ title, body, kind = 'modal', onClose, actions, label, canClose } = {}) {
   const scrim = kind === 'page' ? null : h('div', { class: 'ui-scrim', onclick: () => api.close() });
   const closeBtn = h('button', { type: 'button', class: 'ui-btn ui-btn--tool', 'aria-label': 'بستن', onclick: () => api.close() }, icon('x'));
   const head = h('div', { class: 'ui-pane-head' }, h('h2', {}, title), actions || null, closeBtn);
@@ -75,31 +74,24 @@ export function modal({ title, body, kind = 'modal', onClose, actions, label } =
   if (body) bodyEl.append(...[].concat(body));
   const cls = kind === 'drawer' ? 'ui-drawer' : kind === 'page' ? 'ui-page' : 'ui-modal';
   const el = h('div', { class: 'ui-root ' + cls, role: 'dialog', 'aria-modal': 'true', 'aria-label': label || title, tabindex: '-1' }, head, bodyEl);
-  const onKey = (e) => {
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      api.close();
-    }
-  };
+  let closed = false, dispose;
   const api = {
     el,
     body: bodyEl,
     head,
     setTitle: (t) => (head.querySelector('h2').textContent = t),
     close() {
-      document.removeEventListener('keydown', onKey, true);
+      if (closed) return;
+      if (canClose && !canClose()) return;
+      closed = true;
       scrim?.remove();
       el.remove();
-      if (--scrimCount <= 0) document.documentElement.classList.remove('ui-locked');
-      prev && prev.focus && prev.focus();
+      dispose?.();
       onClose && onClose();
     },
   };
-  scrimCount++;
-  document.documentElement.classList.add('ui-locked');
   document.body.append(...(scrim ? [scrim] : []), el);
-  document.addEventListener('keydown', onKey, true);
-  el.focus();
+  dispose = mountOverlay(el, () => api.close(), scrim);
   return api;
 }
 

@@ -19275,18 +19275,12 @@ function Xl(e) {
 }
 function Zl({ error: e }) {
   return (0, R.jsxs)(`main`, {
-    className: `flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50`,
+    className: `ui-root ui-state ui-state--error ui-crash`,
+    role: `alert`,
     children: [
-      (0, R.jsx)(`span`, {
-        className: `text-red-500`,
-        "aria-hidden": `true`,
-        children: (0, R.jsx)(Jl, { className: `size-10`, strokeWidth: 2 }),
-      }),
-      (0, R.jsx)(`h1`, { className: `text-lg font-semibold`, children: `Something went wrong` }),
-      (0, R.jsx)(`p`, {
-        className: `max-w-md text-sm break-words text-zinc-500 dark:text-zinc-400`,
-        children: Xl(e),
-      }),
+      (0, R.jsx)(`h1`, { className: `ui-title`, children: `بازشدن برنامه انجام نشد` }),
+      (0, R.jsx)(`p`, { dir: `auto`, children: Xl(e) }),
+      (0, R.jsx)(`button`, { className: `ui-btn ui-btn--primary`, onClick: () => location.reload(), children: `تلاش دوباره` }),
     ],
   });
 }
@@ -24095,7 +24089,7 @@ function qv() {
     null
   );
 }
-var Jv = `CodePad · Night Terminal`,
+var Jv = `CodePad`,
   Yv = `` + new URL(`styles.css`, import.meta.url).href,
   Xv = ul({
     head: () => ({
@@ -24110,7 +24104,7 @@ var Jv = `CodePad · Night Terminal`,
           name: `description`,
           content: `جیب‌کد: چند زبان برنامه‌نویسی در یک برنامه، با رابط فارسی و قابل نصب روی موبایل.`,
         },
-        { name: `theme-color`, content: `#080e0c` },
+        { name: `theme-color`, content: `#11131c` },
         { name: `mobile-web-app-capable`, content: `yes` },
       ],
       links: [

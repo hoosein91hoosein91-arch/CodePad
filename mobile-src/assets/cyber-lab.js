@@ -1,3 +1,5 @@
+import {mountOverlay} from "./ui-overlay.js";
+let disposeOverlay;
 // Cyber Lab: ترمینال Termux، اسکن شبکهٔ خودت (nmap)، git، نمونه‌کدهای ممیزی امنیتی و یادداشت‌ها.
 // DOM ساده (بدون React) تا مستقل از باندل اصلی بماند. window.CodePadCyber.open() آن را باز می‌کند.
 import { CYBER_SAMPLES, CYBER_CHEATS } from "./cyber-samples.js";
@@ -252,7 +254,7 @@ function build() {
     h("button", { type: "button", class: "ui-btn ui-btn--primary", onclick: () => { store.set(OK_KEY, "1"); start(); } }, "تأیید می‌کنم و ادامه"));
   const aiChip = h("span", { class: "ui-chip" }, "هوش مصنوعی");
   const termuxChip = h("span", { class: "ui-chip" }, "Termux");
-  root = h("section", { id: "ui-cyber", class: "ui-root ui-page", role: "dialog", "aria-modal": "true", "aria-label": "Cyber Lab", hidden: true });
+  root = h("section", { id: "ui-cyber", class: "ui-root ui-page", role: "dialog", "aria-modal": "true", "aria-label": "Cyber Lab", tabindex: "-1", hidden: true });
   tabsEl = makeTabs(TABS, current, (id) => { current = id; renderTabs(); });
   tabsEl.className += " ui-tabbar";
   paneEl = h("div", { class: "ui-pane-body ui-form" });
@@ -290,14 +292,15 @@ export function open() {
   root.__chips.termuxChip.textContent = isWin() ? "PowerShell" : onDesktop() ? "Shell" : "Termux";
   root.__chips.termuxChip.classList.toggle("ui-chip--ok", onDesktop() || !!globalThis.Capacitor?.isNativePlatform?.());
   root.hidden = false;
+  if (!disposeOverlay) disposeOverlay = mountOverlay(root, close);
   start();
 }
 export function close() {
-  if (root) { root.hidden = true; hideMap(); }
+  if (root) { root.hidden = true; hideMap(); disposeOverlay?.(); disposeOverlay = null; }
 }
 
 if (typeof window !== "undefined") {
   window.CodePadCyber = { open, close, setHackerTheme, hackerThemeOn, hackerLevel, validateScanTarget, ATTACK_MAPS };
   setHackerTheme();
-  window.addEventListener("keydown", (e) => e.key === "Escape" && root && !root.hidden && close());
+
 }

@@ -61,6 +61,7 @@ class VisionSession {
     this.root.addEventListener('cancel', event => { event.preventDefault(); this.key({ key: 'Escape', preventDefault() {} }); });
     this.key = event => {
       if(this.outputOnly&&event.key==='Escape'){event.preventDefault();this.setOutputOnly(false);return;}
+      if (event.key === 'Tab' && !this.outputOnly) return;
       if (!this.alive || this.saveInProgress || event.ctrlKey || event.metaKey || event.altKey) return;
       if (event.target?.closest?.('input,textarea,select,[contenteditable="true"]')) return;
       if (['Enter',' '].includes(event.key) && event.target?.closest?.('button,summary')) return;

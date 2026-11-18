@@ -33,9 +33,9 @@ export async function importPreparedProject(plan,name,entry){
  }
 }
 export function openZip(file){return new Promise(async resolve=>{
- const box=modal({title:'بازکردن پروژه از ZIP',kind:'modal',onClose:()=>{if(!settled){settled=true;controller.abort();resolve(false);}}});
- const dialog=box.body;dialog.classList.add('ui-form');dialog.innerHTML='<p data-zip-status role="status">در حال خواندن و بررسی فایل‌ها…</p><div data-zip-preview class="ui-form"></div>';
  const controller=new AbortController();let saving=false,settled=false;
+ const box=modal({title:'بازکردن پروژه از ZIP',kind:'modal',canClose:()=>!saving,onClose:()=>{if(!settled){settled=true;controller.abort();resolve(false);}}});
+ const dialog=box.body;dialog.classList.add('ui-form');dialog.innerHTML='<p data-zip-status role="status">در حال خواندن و بررسی فایل‌ها…</p><div data-zip-preview class="ui-form"></div>';
  const close=value=>{if(saving||settled)return;settled=true;controller.abort();box.close();resolve(value);};
  
  try{

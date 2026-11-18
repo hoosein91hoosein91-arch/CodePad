@@ -3,6 +3,7 @@
    makeKit(React) returns the helpers and the Workbench screen component. */
 
 import { PATHS, FILLED, DOTS } from "./ui-icons.js";
+import { mountOverlay } from './ui-overlay.js';
 
 
 export function applyUiTheme(t) {
@@ -35,31 +36,21 @@ export function makeKit(React) {
   /* Overlay: drawer / modal with scrim, Escape, focus handoff. */
   function Overlay({ kind = 'modal', title, label, onClose, children, actions }) {
     const ref = useRef(null);
+    const scrimRef = useRef(null);
+    const closeRef = useRef(onClose);
+    closeRef.current = onClose;
     useEffect(() => {
-      const prev = document.activeElement;
-      const node = ref.current;
-      node && node.focus();
-      const onKey = (e) => {
-        if (e.key === 'Escape') {
-          e.stopPropagation();
-          onClose();
-        }
-      };
-      document.addEventListener('keydown', onKey, true);
-      return () => {
-        document.removeEventListener('keydown', onKey, true);
-        prev && prev.focus && prev.focus();
-      };
+      return mountOverlay(ref.current, () => closeRef.current(), scrimRef.current);
     }, []);
     return h(
       Fragment,
       null,
-      h('div', { className: 'ui-scrim', onClick: onClose }),
+      h('div', { ref: scrimRef, className: 'ui-scrim', onClick: onClose }),
       h(
         'div',
         {
           ref,
-          className: kind === 'drawer' ? 'ui-drawer' : 'ui-modal',
+          className: 'ui-root ' + (kind === 'drawer' ? 'ui-drawer' : 'ui-modal'),
           role: 'dialog',
           'aria-modal': 'true',
           'aria-label': label || title,
@@ -129,9 +120,13 @@ export function makeKit(React) {
         apply();
       };
       vv.addEventListener('resize', apply);
-      window.addEventListener('focusout', () => setTimeout(reset, 60));
+      const onFocusOut = () => setTimeout(reset, 60);
+      window.addEventListener('focusout', onFocusOut);
       apply();
-      return () => vv.removeEventListener('resize', apply);
+      return () => {
+        vv.removeEventListener('resize', apply);
+        window.removeEventListener('focusout', onFocusOut);
+      };
     }, []);
     return open;
   }
@@ -343,6 +338,7 @@ export function makeKit(React) {
     );
 
     const menuItems = [
+      ['maxi', mode === 'code' ? 'بازگشت از تمام‌صفحهٔ کد' : 'تمام‌صفحهٔ کد', () => setMode(mode === 'code' ? 'split' : 'code')],
       ['open', 'باز کردن فایل یا ZIP پروژه', () => fileIn.current?.click()],
       ['undo', 'بازگردانی', p.onUndo],
       ['redo', 'ازنو', p.onRedo],
@@ -354,7 +350,7 @@ export function makeKit(React) {
     ];
 
     return h(
-      'div',
+      'main',
       { className: 'ui-root ui-app', 'data-kb': kb ? 'open' : undefined, 'data-wide': '', style: { height: 'var(--ui-vh, 100dvh)' } },
       h(
         'header',
@@ -384,8 +380,13 @@ export function makeKit(React) {
         h('button', { type: 'button', className: 'ui-btn ui-btn--tool', style: { minHeight: 44, width: 44 }, 'aria-label': 'فایل تازه', onClick: () => { setAdding('file'); setDrawer(true); } }, h(Icon, { n: 'plus' })),
       ),
       h(
+        'aside',
+        { className: 'ui-sidebar', 'aria-label': 'فایل‌ها و پروژه‌ها' },
+        drawer ? null : filesPanel,
+      ),
+      h(
         'div',
-        { ref: workRef, className: 'ui-work', style: { '--ui-rows': rows } },
+        { ref: workRef, className: 'ui-work', 'data-mode': mode, style: { '--ui-rows': rows } },
         h('section', { className: 'ui-canvas' }, p.editor),
         h(
           'section',
