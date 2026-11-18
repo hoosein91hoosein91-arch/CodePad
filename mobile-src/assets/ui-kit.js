@@ -5,6 +5,13 @@
 import { PATHS, FILLED, DOTS } from "./ui-icons.js";
 
 
+export function applyUiTheme(t) {
+  const r = document.documentElement;
+  r.dataset.palette = t.palette || 'aurora';
+  r.style.setProperty('--ui-code-size', (t.fontSize || 15) + 'px');
+  r.style.setProperty('--ui-ligatures', t.ligatures ? 'normal' : 'none');
+}
+
 export function makeKit(React) {
   const { createElement: h, useState, useEffect, useRef, useCallback, Fragment } = React;
 
@@ -237,10 +244,7 @@ export function makeKit(React) {
       n && (n.scrollTop = n.scrollHeight);
     }, [p.lines, tab]);
     useEffect(() => {
-      const root = document.documentElement;
-      root.dataset.palette = p.theme.palette || 'aurora';
-      root.style.setProperty('--ui-code-size', (p.theme.fontSize || 15) + 'px');
-      root.style.setProperty('--ui-ligatures', p.theme.ligatures ? 'normal' : 'none');
+      applyUiTheme(p.theme);
     }, [p.theme.palette, p.theme.fontSize, p.theme.ligatures]);
 
     const pick = (t) => {
@@ -475,5 +479,52 @@ export function makeKit(React) {
     );
   }
 
-  return { h, Icon, Overlay, Section, Row, State, Appearance, Workbench, useKeyboard };
+  /* ---- form + sheet helpers ---- */
+  function Fld({ label, hint, children, id }) {
+    return h('div', { className: 'ui-field' }, label ? h('label', { htmlFor: id }, label) : null, children, hint ? h('span', { className: 'ui-caption' }, hint) : null);
+  }
+  function Input({ mono, className, ...r }) {
+    return h('input', { ...r, className: 'ui-input' + (mono ? ' ui-ltr' : '') + (className ? ' ' + className : ''), dir: mono ? 'ltr' : r.dir });
+  }
+  function Area({ mono, className, ...r }) {
+    return h('textarea', { spellCheck: false, ...r, className: 'ui-input ui-area' + (mono ? ' ui-ltr' : '') + (className ? ' ' + className : ''), dir: mono ? 'ltr' : r.dir });
+  }
+  function Sel({ mono, className, children, ...r }) {
+    return h('select', { ...r, className: 'ui-input' + (mono ? ' ui-ltr' : '') + (className ? ' ' + className : ''), dir: mono ? 'ltr' : r.dir }, children);
+  }
+  function Btn({ kind, icon, children, className, ...r }) {
+    return h('button', { type: 'button', ...r, className: 'ui-btn' + (kind ? ' ui-btn--' + kind : '') + (className ? ' ' + className : '') }, icon ? h(Icon, { n: icon }) : null, children);
+  }
+  function Sw({ label, hint, checked, onChange, id, disabled }) {
+    return h(
+      'div',
+      { className: 'ui-switch' },
+      h('label', { htmlFor: id }, label, hint ? h('span', { className: 'ui-caption', style: { display: 'block' } }, hint) : null),
+      h('input', { id, type: 'checkbox', checked: !!checked, disabled, onChange: (e) => onChange(e.target.checked), 'aria-label': label }),
+    );
+  }
+  function Note({ tone, children, ...r }) {
+    return h('div', { ...r, className: 'ui-notice' + (tone ? ' ui-notice--' + tone : ''), role: tone === 'err' ? 'alert' : 'status' }, children);
+  }
+  function Sheet({ open = true, onOpenChange, title, children, testId, kind = 'modal' }) {
+    if (!open) return null;
+    return h(Overlay, { kind, title, onClose: () => onOpenChange && onOpenChange(false) }, h('div', { className: 'ui-pane-body', 'data-testid': testId }, children));
+  }
+  function Details({ title, icon, open, onToggle, children, ...r }) {
+    return h(
+      'details',
+      { ...r, className: 'ui-card ui-details', open, onToggle: (e) => onToggle && onToggle(e.currentTarget.open) },
+      h('summary', null, icon ? h(Icon, { n: icon, size: 18 }) : null, title),
+      h('div', { className: 'ui-stack', style: { marginTop: 12 } }, children),
+    );
+  }
+  function AppIcon({ app, size = 56, radius = 16 }) {
+    return h(
+      'span',
+      { className: 'ui-appicon', style: { width: size, height: size, borderRadius: radius, background: app.iconColor || 'var(--ui-surface-2)' } },
+      app.iconImage ? h('img', { src: app.iconImage, alt: '', draggable: false }) : h('span', { style: { fontSize: Math.round(size * 0.46) } }, app.icon),
+    );
+  }
+
+  return { h, Icon, Overlay, Section, Row, State, Appearance, Workbench, useKeyboard, Fld, Input, Area, Sel, Btn, Sw, Note, Sheet, Details, AppIcon };
 }

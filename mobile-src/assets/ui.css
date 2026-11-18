@@ -1057,7 +1057,7 @@
   font-weight: 700;
 }
 .ui-pane-body {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   padding: var(--ui-s4);
@@ -1245,33 +1245,6 @@
   line-height: 1.8;
   letter-spacing: 0;
 }
-.ui-page :where(button, input, textarea, select) {
-  font: inherit;
-  letter-spacing: 0;
-  color: inherit;
-}
-.ui-page :where(button) {
-  cursor: pointer;
-  background: none;
-  border: 0;
-  padding: 0;
-  text-align: inherit;
-}
-.ui-modal :where(button, input, textarea, select),
-.ui-drawer :where(button, input, textarea, select),
-.ui-toast :where(button) {
-  font: inherit;
-  letter-spacing: 0;
-  color: inherit;
-}
-.ui-modal :where(button),
-.ui-drawer :where(button) {
-  cursor: pointer;
-  background: none;
-  border: 0;
-  padding: 0;
-  text-align: inherit;
-}
 .ui-modal,
 .ui-drawer {
   font-family: var(--ui-font);
@@ -1440,4 +1413,158 @@
 }
 .ui-notice--ok {
   box-shadow: inset 3px 0 0 var(--ui-ok);
+}
+
+/* ---------- forms + app tiles ---------- */
+.ui-area {
+  min-height: 96px;
+  padding: var(--ui-s3);
+  line-height: 1.6;
+  resize: vertical;
+  font-size: 14px;
+}
+.ui-details summary {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-s2);
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+}
+.ui-appicon {
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  flex: none;
+  color: var(--ui-text);
+}
+.ui-appicon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ui-apptile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-s2);
+  min-width: 0;
+  padding: var(--ui-s2) var(--ui-s1);
+  border-radius: var(--ui-r-card);
+  color: var(--ui-text);
+}
+.ui-apptile:active {
+  background: var(--ui-surface);
+}
+.ui-apptile > span:last-child {
+  max-width: 100%;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-apptile[data-edit="true"]::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ui-warm);
+}
+.ui-chiprow {
+  display: flex;
+  gap: var(--ui-s2);
+  overflow-x: auto;
+  padding: 0 var(--ui-s4);
+  scrollbar-width: none;
+}
+.ui-chiprow::-webkit-scrollbar {
+  display: none;
+}
+.ui-fab {
+  position: fixed;
+  inset-inline-end: var(--ui-s4);
+  bottom: calc(72px + var(--ui-safe-b));
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-s2);
+  min-height: 52px;
+  padding: 0 var(--ui-s5) 0 var(--ui-s4);
+  border-radius: 999px;
+  background: var(--ui-primary);
+  color: var(--ui-on-primary);
+  font-weight: 700;
+  font-size: 15px;
+}
+.ui-window {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+}
+.ui-wbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-s2);
+  min-height: 52px;
+  padding: 0 var(--ui-s2);
+  background: var(--ui-surface);
+  border-bottom: 1px solid var(--ui-line);
+}
+.ui-code-out {
+  flex: 1 1 0;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  padding: var(--ui-s4);
+  background: var(--ui-canvas);
+  color: var(--ui-code);
+  font-family: var(--ui-mono);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ui-code-out .is-err {
+  color: var(--ui-syn-error);
+}
+.ui-reveal {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  margin-inline: auto;
+  z-index: 3;
+  width: 80px;
+  height: 26px;
+  border-radius: 0 0 14px 14px;
+  background: var(--ui-surface-2);
+  touch-action: none;
+}
+.ui-reveal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--ui-muted);
+}
+.ui-reveal[hidden],
+.ui-wbar[hidden] {
+  display: none;
+}
+.ui-window-out {
+  opacity: 0;
+  transition: opacity 170ms ease;
 }

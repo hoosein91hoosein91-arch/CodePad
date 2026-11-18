@@ -226,7 +226,7 @@ function build() {
   // مینی‌پلیر: فقط وقتی آهنگی انتخاب شده نمایش داده می‌شود و بالای ناوبری می‌نشیند.
   els.pillTitle = h("strong", {}, "—"); els.pillSub = h("span", {}, "");
   els.pillPlay = h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "پخش یا توقف", onclick: toggle }, icon("play"));
-  pill = h("div", { id: "cp-music-pill", class: "ui-root ui-mini", role: "region", "aria-label": "پخش‌کنندهٔ موسیقی", hidden: true },
+  pill = h("div", { class: "ui-root ui-mini", role: "region", "aria-label": "پخش‌کنندهٔ موسیقی", hidden: true },
     h("button", { type: "button", class: "ui-row ui-fill", style: { padding: 0 }, "aria-label": "باز کردن پخش‌کننده", onclick: open }, icon("music"), h("span", { class: "ui-row-main" }, els.pillTitle, els.pillSub)),
     h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "قبلی", onclick: () => next(-1) }, icon("prev")),
     els.pillPlay,
@@ -262,7 +262,7 @@ let dialog;
 export function open() {
   if (dialog) return;
   dialog = modal({ title: "موسیقی", kind: "page", onClose: () => { dialog = null; updateUi(); } });
-  dialog.el.id = "cp-music";
+  dialog.el.id = "ui-music";
   dialog.body.append(els.tabs, els.now, els.sourceBar, els.listBox, els.focus);
   pill.hidden = true;
   chooseSource(state.source).catch((e) => setStatus(e.message));
