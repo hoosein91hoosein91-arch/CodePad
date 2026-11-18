@@ -26,7 +26,7 @@ const fmtSize = (n) => (n < 1024 ? n + " B" : n < 1048576 ? (n / 1024).toFixed(1
 
 export function viewSecurity(c) {
   const { h, importSample, sampleById, openUrl, card, show, close } = c;
-  const root = h("div", { class: "hb-view" });
+  const root = h("div", { class: "hb-view hb-view-cyber" });
   const sec = (title, ...kids) => h("section", { class: "hb-sec" }, h("h3", {}, title), ...kids);
   const note = (t) => h("p", { class: "hb-lead" }, t);
   const row = (...k) => h("div", { class: "hb-row" }, ...k);
@@ -46,8 +46,11 @@ export function viewSecurity(c) {
   const missionBox = sec("🎯 ماموریت: این سایت محلی را هک کن",
     note("هدف این ماموریت فقط سایت تمرینی است که خودِ CodePad روی 127.0.0.1 (همین دستگاه) می‌سازد؛ به اینترنت یا شبکه وصل نیست و هدف دیگری (سایت واقعی/شبکهٔ کسی دیگر) در این ماموریت مجاز نیست."),
     h("div", { class: "hb-card", style: "min-height:0;cursor:default" },
-      h("b", {}, "🧩 ماموریت: ۱۴ آسیب‌پذیری را با کد و حمله پیدا کن و پرچم هرکدام را بگیر"),
+      h("b", {}, "🧩 ماموریت: ۲۲ آسیب‌پذیری را با کد و حمله پیدا کن و پرچم هرکدام را بگیر"),
       h("small", {}, "SQL Injection · XSS · IDOR · پیمایش مسیر · کوکی جعلی · هش ضعیف · Open Redirect · تزریق فرمان (شبیه‌سازی) · SSRF · آپلود ناامن · صفحهٔ دیباگ · CSRF")),
+    h("div", { class: "hb-card", style: "min-height:0;cursor:default" },
+      h("b", {}, "🛒 فروشگاه CP-Coin (مراحل ۱۵–۲۲؛ ارز کاملاً الکی، پول واقعی نیست)"),
+      h("small", {}, "از خیلی‌خیلی‌ساده تا خیلی‌خیلی‌سخت: افشای کیف‌پول · دستکاری قیمت · حدس کد تخفیف با اسکریپت · مسابقهٔ هم‌زمانی (Race Condition) · IDOR روی سفارش · تعداد منفی · جعل امضای کوپن مدیر · زنجیرهٔ کامل حمله")),
     h("ol", { class: "hb-steps" },
       h("li", {}, "«▶ شروع ماموریت» را بزن — سایت تمرین روی http://127.0.0.1:8088/ بالا می‌آید."),
       h("li", {}, "با کد (پایتون/مرورگر/ابزار Cyber Lab) یا مستقیم در مرورگر به هرآسیب‌پذیری حمله کن."),

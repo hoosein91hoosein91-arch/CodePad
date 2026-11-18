@@ -179,26 +179,28 @@ const tools = {
     const input = h("input", { type: "text", dir: "ltr", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: isWin() ? "PS> فرمان PowerShell…" : "$ فرمان " + shellName() + "…", "aria-label": "فرمان " + shellName() });
     const go = () => { const v = input.value.trim(); if (v) { input.value = ""; run(v); } };
     input.addEventListener("keydown", (e) => e.key === "Enter" && go());
-    const chip = (label, cmd) => h("button", { type: "button", onclick: () => run(cmd) }, label);
+    const chip = (label, cmd) => h("button", { type: "button", class: "cy-chipbtn", onclick: () => run(cmd) }, h("span", { class: "cy-chipbtn-i" }, "❯"), label);
     if (isWin()) {
       const toolsHelp = () => { println("نصب ابزارها (در یک PowerShell با دسترسی Administrator؛ دکمهٔ «PowerShell جدا» را بزن):", "cmd"); println("winget install -e --id Python.Python.3.13\nwinget install -e --id Git.Git\nwinget install -e --id Insecure.Nmap", ""); };
       return [
         h("div", { class: "card" }, h("h3", {}, "WINDOWS POWERSHELL"), h("p", {}, "فرمان‌ها در PowerShell ویندوز اجرا می‌شوند و stdout/stderr/exit واقعی برمی‌گردد (غیرتعاملی). برای ترمینال تعاملی دکمهٔ «PowerShell جدا» را بزن."),
           h("div", { class: "row" }, input, h("button", { type: "button", class: "pri", onclick: go }, "اجرا"))),
-        h("div", { class: "row" },
-          h("button", { type: "button", onclick: () => desk().shell.external().catch((e) => println(e.message, "err")) }, "↗ PowerShell جدا"),
-          chip("ابزارها", "Get-Command python,git,nmap,winget -ErrorAction SilentlyContinue | Format-Table Name,Source -AutoSize | Out-String -Width 200"),
-          h("button", { type: "button", onclick: toolsHelp }, "نصب ابزارها"),
-          chip("ipconfig", "ipconfig"), chip("arp -a", "arp -a"),
-          chip("سیستم", "systeminfo | Select-String 'OS Name','OS Version','System Type'")),
+        h("div", { class: "cy-chipgroup" }, h("small", { class: "cy-chiplabel" }, "دستورهای آماده"),
+          h("div", { class: "row cy-chiprow" },
+            h("button", { type: "button", class: "cy-chipbtn alt", onclick: () => desk().shell.external().catch((e) => println(e.message, "err")) }, h("span", { class: "cy-chipbtn-i" }, "↗"), "PowerShell جدا"),
+            chip("ابزارها", "Get-Command python,git,nmap,winget -ErrorAction SilentlyContinue | Format-Table Name,Source -AutoSize | Out-String -Width 200"),
+            h("button", { type: "button", class: "cy-chipbtn alt", onclick: toolsHelp }, h("span", { class: "cy-chipbtn-i" }, "⇩"), "نصب ابزارها"),
+            chip("ipconfig", "ipconfig"), chip("arp -a", "arp -a"),
+            chip("سیستم", "systeminfo | Select-String 'OS Name','OS Version','System Type'"))),
       ];
     }
     return [
       h("div", { class: "card" }, h("h3", {}, onDesktop() ? "SHELL" : "TERMUX SHELL"), h("p", {}, onDesktop() ? "فرمان‌ها در پوستهٔ سیستم اجرا می‌شوند و stdout/stderr/exit برمی‌گردد." : "فرمان‌ها در Termux واقعی اجرا می‌شوند و stdout/stderr/exit برمی‌گردد (بدون PTY تعاملی)."),
         h("div", { class: "row" }, input, h("button", { type: "button", class: "pri", onclick: go }, "اجرا"))),
-      h("div", { class: "row" },
-        chip("نصب ابزارها", "pkg install -y python git nmap curl openssl dnsutils"),
-        chip("ip -4 addr", "ip -4 addr"), chip("uname -a", "uname -a"), chip("nmap --version", "nmap --version")),
+      h("div", { class: "cy-chipgroup" }, h("small", { class: "cy-chiplabel" }, "دستورهای آماده"),
+        h("div", { class: "row cy-chiprow" },
+          chip("نصب ابزارها", "pkg install -y python git nmap curl openssl dnsutils"),
+          chip("ip -4 addr", "ip -4 addr"), chip("uname -a", "uname -a"), chip("nmap --version", "nmap --version"))),
     ];
   },
   scan() {
@@ -304,24 +306,56 @@ function start() {
 }
 
 
-// باران ماتریکسی پشت Cyber Lab (فقط وقتی باز است؛ ۱۵ فریم در ثانیه)
+// باران ماتریکسی پشت Cyber Lab: جریان‌های پیوسته و متراکم با دنبالهٔ محوشونده (نه نقطه‌های پراکنده)
 let rainTimer = 0;
 function startRain() {
   if (!root || rainTimer || matchMedia("(prefers-reduced-motion: reduce)").matches || hackerLevel() === 0) return;
   let canvas = root.querySelector(".cy-rain");
   if (!canvas) { canvas = h("canvas", { class: "cy-rain", "aria-hidden": "true" }); root.prepend(canvas); }
   const ctx = canvas.getContext("2d");
-  const glyphs = "01アイウエオカキクケコ{}[]<>/\\$#%&*=+-".split("");
-  let cols = [], size = 16;
-  const resize = () => { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; cols = Array.from({ length: Math.ceil(canvas.width / size) }, () => Math.random() * canvas.height / size); };
+  const glyphs = "01アイウエオカキクケコサシスセソタチツテト{}[]<>/\\$#%&*=+-".split("");
+  const size = 15;
+  let drops = []; // هر عنصر = {y, speed, len, chars[]} یک رشتهٔ کامل در حال نزول
+  const resize = () => {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = canvas.clientWidth * dpr; canvas.height = canvas.clientHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+    const colCount = Math.ceil(cssW / size);
+    drops = Array.from({ length: colCount }, (_, i) => ({
+      x: i * size,
+      y: -Math.random() * cssH * 0.6, // شروع پراکنده کمی بالاتر از صفحه، نه یک صفحهٔ کامل آن‌طرف‌تر
+      speed: size * (0.3 + Math.random() * 0.55), // پیکسل بر فریم (نه بر ثانیه)
+      len: 10 + Math.floor(Math.random() * 14),
+      chars: Array.from({ length: 24 }, () => glyphs[(Math.random() * glyphs.length) | 0]),
+      flip: Math.random() * 400,
+    }));
+  };
   resize();
+  let frame = 0;
   rainTimer = setInterval(() => {
     if (root.hidden) return;
-    if (canvas.width !== canvas.clientWidth) resize();
-    ctx.fillStyle = "rgba(1,4,3,.16)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.font = size + "px monospace";
-    cols.forEach((y, i) => { ctx.fillStyle = Math.random() > .96 ? "#eafff5" : "#00ff9c"; ctx.fillText(glyphs[(Math.random() * glyphs.length) | 0], i * size, y * size); cols[i] = y * size > canvas.height && Math.random() > .975 ? 0 : y + 1; });
-  }, 66);
+    frame++;
+    const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+    if (canvas.width !== Math.round(cssW * Math.min(devicePixelRatio || 1, 2))) resize();
+    ctx.fillStyle = "rgba(1,6,4,.22)"; ctx.fillRect(0, 0, cssW, cssH);
+    ctx.font = "700 " + size + "px " + (getComputedStyle(root).getPropertyValue("--font-mono") || "monospace");
+    ctx.textBaseline = "top";
+    for (const d of drops) {
+      d.y += d.speed;
+      if (frame % 3 === 0 && Math.random() > 0.85) d.chars[(Math.random() * d.chars.length) | 0] = glyphs[(Math.random() * glyphs.length) | 0];
+      for (let j = 0; j < d.len; j++) {
+        const cy = d.y - j * size;
+        if (cy < -size || cy > cssH) continue;
+        const t = 1 - j / d.len; // ۱ = سر رشته (روشن‌ترین)، ۰ = ته رشته (محوترین)
+        ctx.globalAlpha = j === 0 ? 1 : Math.max(0.04, t * t);
+        ctx.fillStyle = j === 0 ? "#eafff5" : "#00ff9c";
+        ctx.fillText(d.chars[j % d.chars.length], d.x, cy);
+      }
+      ctx.globalAlpha = 1;
+      if (d.y - d.len * size > cssH) { d.y = -Math.random() * 220; d.speed = size * (0.55 + Math.random() * 0.7); }
+    }
+  }, 42);
 }
 function stopRain() { clearInterval(rainTimer); rainTimer = 0; }
 

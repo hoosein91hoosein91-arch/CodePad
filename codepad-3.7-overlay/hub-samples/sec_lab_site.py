@@ -1,5 +1,5 @@
 # title: آزمایشگاه آسیب‌پذیر: سایت تمرین تست نفوذ (محلی)
-# desc: یک سایت عمداً آسیب‌پذیر با ۱۴ مرحله (SQLi، XSS، IDOR…) روی 127.0.0.1؛ به اینترنت وصل نیست
+# desc: یک سایت عمداً آسیب‌پذیر با ۲۲ مرحله (SQLi، XSS، IDOR، فروشگاه ارز الکی با دستکاری قیمت…) روی 127.0.0.1؛ به اینترنت وصل نیست
 # cat: security
 # level: 3
 """
@@ -11,6 +11,7 @@ CodePad Vuln Lab: سایت تمرینِ تست نفوذ روی دستگاه خو
 در دسترس حمله نیست (فایل‌ها و پوستهٔ این سایت شبیه‌سازی‌شده‌اند).
 برای توقف، دکمهٔ Stop را بزن.
 هر مرحله یک پرچم CP{...} دارد؛ پرچم را در صفحهٔ /flags ثبت کن. راهنما و راه‌حل هر مرحله در /hints/N و /walkthrough/N است.
+مراحل ۱۵ تا ۲۲ یک «فروشگاه» با ارز الکی (CP-Coin، پول واقعی نیست) هستند: از دستکاری قیمت تا زنجیرهٔ کامل حمله.
 """
 import base64
 import hashlib
@@ -49,6 +50,15 @@ LEVELS = [
     (12, "upload", "آپلود ناامن", "/upload", "فایل .php آپلود کن؛ بررسی فقط در مرورگر است."),
     (13, "debug", "پیکربندی نادرست: صفحهٔ دیباگ", "/robots.txt", "مسیرهای پنهان را جست‌وجو کن."),
     (14, "csrf", "CSRF: تغییر وضعیت با GET", "/bank", "کاری کن که حساب مهاجم ۵۰۰ واحد پول بگیرد."),
+    # ── فروشگاه CP-Coin (ارز الکی، پول واقعی نیست): خیلی‌خیلی‌ساده ← خیلی‌خیلی‌سخت ──
+    (15, "store-idor-wallet", "فروشگاه ۱ · خیلی‌خیلی‌ساده: افشای موجودی هرکس", "/store", "موجودی کیف‌پول یک کاربر دیگر (نه خودت) را بدون ورود ببین."),
+    (16, "store-price-tamper", "فروشگاه ۲ · ساده: دستکاری قیمت", "/store", "یک کالا را با قیمتی کمتر از قیمت واقعی‌اش در فروشگاه بخر."),
+    (17, "store-coupon-brute", "فروشگاه ۳ · متوسط: حدس کد تخفیف با اسکریپت", "/store", "یک کد تخفیف ۴ رقمی پنهان هست؛ با اسکریپت همهٔ حالت‌ها را امتحان کن."),
+    (18, "store-coupon-race", "فروشگاه ۴ · متوسط‌به‌سخت: مسابقهٔ هم‌زمانی (Race Condition)", "/store", "یک کد تخفیف «فقط یک‌بار مصرف» را با درخواست‌های هم‌زمان بیشتر از یک‌بار مصرف کن."),
+    (19, "store-idor-order", "فروشگاه ۵ · سخت: دستکاری سفارش دیگران (IDOR)", "/store", "سفارش در-انتظار یک کاربر دیگر را بدون پرداخت، «پرداخت‌شده» کن."),
+    (20, "store-negative-qty", "فروشگاه ۶ · سخت: تعداد منفی", "/store", "با تعداد خرید منفی، به‌جای کم‌شدن، موجودی کیف‌پولت را زیاد کن."),
+    (21, "store-coupon-forge", "فروشگاه ۷ · خیلی‌سخت: جعل امضای کوپن مدیر", "/store", "با کلیدی که از جای دیگری لو رفته، یک کد تخفیف ۱۰۰٪ امضاشدهٔ مدیر بساز."),
+    (22, "store-full-chain", "فروشگاه ۸ · خیلی‌خیلی‌سخت: زنجیرهٔ کامل حمله", "/store", "کالای ویژهٔ انحصاری را با ترکیب چند آسیب‌پذیری بالا، با هزینهٔ واقعی ناچیز بخر."),
 ]
 
 
@@ -127,6 +137,32 @@ DB.executemany(
 COMMENTS = [("مدیر", "به دفتر مهمان سایت ما خوش آمدید 👋")]
 BANK = {"guest": 1000, "mallory": 0}
 UPLOADS = {}
+
+# ───────────────────────── فروشگاه CP-Coin (مراحل ۱۵–۲۲؛ ارز کاملاً الکی، پول واقعی نیست) ─────────────────────────
+COINS = {"guest": 50, "mallory": 5, "admin": 1_000_000}
+STORE_PRODUCTS = {
+    1: {"name": "تی‌شرت CodePad", "price": 25, "stock": 50},
+    2: {"name": "ماگ CodePad", "price": 15, "stock": 50},
+    3: {"name": "کول‌تاپ لپ‌تاپ طلاییِ نسخهٔ محدود", "price": 999999, "stock": 1},  # هدف مرحلهٔ ۲۲
+}
+# کد تخفیف پنهان ۴ رقمی (مرحلهٔ ۱۷): هیچ‌جا نشان داده نمی‌شود، باید با اسکریپت حدس زده شود
+STORE_HIDDEN_COUPON = os.environ.get("CP_LAB_TEST_COUPON") or "%04d" % (random.SystemRandom().randrange(10000))
+COUPONS = {
+    "WELCOME10": {"pct": 10, "uses_left": None, "used": 0},
+    STORE_HIDDEN_COUPON: {"pct": 90, "uses_left": None, "used": 0},
+    "VIP-ONE-TIME": {"pct": 50, "uses_left": 1, "used": 0},  # مرحلهٔ ۱۸: یک‌بارمصرف ولی چک/کاهش اتمیک نیست
+}
+COUPON_LOCK = threading.Lock()
+STORE_ORDERS = {1: {"id": 1, "user": "admin", "product_id": 1, "qty": 1, "paid_amount": 25, "status": "pending"}}  # سفارشِ در-انتظارِ مدیر (هدف مرحلهٔ ۱۹)
+STORE_ORDER_SEQ = [2]
+
+
+def store_new_order(user, product_id, qty, paid_amount, status):
+    with LOCK:
+        oid = STORE_ORDER_SEQ[0]
+        STORE_ORDER_SEQ[0] += 1
+    STORE_ORDERS[oid] = {"id": oid, "user": user, "product_id": product_id, "qty": qty, "paid_amount": paid_amount, "status": status}
+    return oid
 # فایل‌های «سرور» شبیه‌سازی‌شده؛ هیچ فایل واقعی دستگاه خوانده نمی‌شود
 VFS = {
     "/srv/lab/public/report.txt": "گزارش فروش ماه: ۱۲۴ سفارش. همه‌چیز عادی است.",
@@ -139,7 +175,14 @@ BACKUP_SQL = "-- backup قدیمی (نباید اینجا می‌بود!)\n" + "
     "INSERT INTO users(username,password) VALUES('%s','%s');" % (u, p)
     for u, p in DB.execute("SELECT username, password FROM users").fetchall()
 )
-DEBUG_INFO = {"app": "CodePad Lab", "debug": True, "secret_key": "dev-key-123", "flag": FLAGS["13"], "python": sys.version.split()[0]}
+STORE_SIGN_KEY = "dev-key-123"  # ضعف عمدی: همان کلیدی که در /debug لو می‌رود، برای امضای کوپن مدیر هم استفاده شده (مرحلهٔ ۲۱)
+DEBUG_INFO = {"app": "CodePad Lab", "debug": True, "secret_key": STORE_SIGN_KEY, "flag": FLAGS["13"], "python": sys.version.split()[0]}
+
+
+def store_sign(code):
+    import hmac as _hmac
+
+    return _hmac.new(STORE_SIGN_KEY.encode(), code.encode(), hashlib.sha256).hexdigest()[:8]
 
 
 # ───────────────────────── کمک‌ها ─────────────────────────
@@ -157,7 +200,7 @@ table{border-collapse:collapse;width:100%}td,th{border:1px solid #0f4a35;padding
 pre{padding:10px;white-space:pre-wrap}.warn{border:1px solid #6a5a1a;color:#ffd23f;padding:8px 12px;border-radius:8px}
 </style>
 """
-NAV = [("/", "خانه"), ("/shop", "فروشگاه"), ("/login", "ورود"), ("/guestbook", "دفتر مهمان"), ("/notes?id=1", "یادداشت‌ها"), ("/tools/ping?host=127.0.0.1", "ابزار"), ("/upload", "آپلود"), ("/bank", "بانک"), ("/flags", "🚩 پرچم‌ها")]
+NAV = [("/", "خانه"), ("/shop", "جست‌وجوی فروشگاه"), ("/login", "ورود"), ("/guestbook", "دفتر مهمان"), ("/notes?id=1", "یادداشت‌ها"), ("/tools/ping?host=127.0.0.1", "ابزار"), ("/upload", "آپلود"), ("/bank", "بانک"), ("/store", "🛒 فروشگاه CP-Coin"), ("/flags", "🚩 پرچم‌ها")]
 
 
 def page(title, body, status=200):
@@ -449,6 +492,173 @@ def route_bank(h, q, cookies):
     return page("بانک", body)
 
 
+def route_store(h, cookies):
+    s = session_user(cookies)
+    me = s.get("user", "guest")
+    bal = COINS.get(me, 0)
+    rows = "".join('<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td></tr>' % (pid, html.escape(p["name"]), p["price"], p["stock"]) for pid, p in sorted(STORE_PRODUCTS.items()))
+    body = (
+        "<h1>🛒 فروشگاه CP-Coin</h1>"
+        '<div class="warn">این فروشگاه یک ارز کاملاً الکیِ داخلی به‌نام <b>CP-Coin</b> دارد؛ پول واقعی نیست و هیچ تراکنش واقعی انجام نمی‌شود. هدف: با کد (نه کلیک‌کردن) آسیب‌پذیری‌های خرید را پیدا کنی.</div>'
+        '<p>شما (<b>%s</b>) اکنون <b>%d</b> CP-Coin دارید. سفارش شمارهٔ <code>1</code> یک سفارشِ در-انتظارِ مدیر است (کالای #1).</p>'
+        "<table><tr><th>#</th><th>کالا</th><th>قیمت (CP-Coin)</th><th>موجودی</th></tr>%s</table>"
+        "<h2>خرید</h2>"
+        '<form method="post" action="/store/buy"><p>شناسهٔ کالا: <input name="product_id" value="1" size="4"> '
+        'تعداد: <input name="qty" value="1" size="4"> قیمت واحد (اگر خالی بماند، قیمت واقعی کاتالوگ است): <input name="price" size="8" placeholder="اختیاری"></p>'
+        '<p>کد تخفیف (اختیاری): <input name="coupon" placeholder="کد یا CODE.SIG"></p><button>خرید</button></form>'
+        "<h2>بررسی/استفادهٔ کد تخفیف</h2>"
+        '<form method="post" action="/store/redeem"><input name="code" placeholder="کد تخفیف"> <button>استفاده</button></form>'
+        "<h2>کیف‌پول یک کاربر</h2>"
+        '<form action="/store/wallet"><input name="user" value="admin"> <button>نمایش موجودی</button></form>'
+        '<p class="muted">کاربران نمونه: guest · mallory · admin</p>'
+    ) % (html.escape(me), bal, rows)
+    return page("فروشگاه", body)
+
+
+def route_store_wallet(h, q):
+    user = q.get("user", ["guest"])[0]
+    bal = COINS.get(user)
+    if bal is None:
+        return page("کیف‌پول", '<h1>کیف‌پول</h1><p class="bad">چنین کاربری نیست.</p>', 404)
+    flag = ""
+    if user != "guest":
+        award(15)
+        flag = '<p class="ok">🚩 %s</p>' % FLAGS["15"]
+    body = "<h1>کیف‌پول: %s</h1><p>موجودی: <b>%d</b> CP-Coin</p>%s<p class=\"muted\">این صفحه بدون ورود، موجودی هر کاربری را نشان می‌دهد؛ هیچ بررسی هویتی ندارد.</p>" % (html.escape(user), bal, flag)
+    return page("کیف‌پول", body)
+
+
+def route_store_buy(h, method, form, cookies):
+    if method != "POST":
+        return page("خرید", "<h1>خرید</h1><p class=\"bad\">با POST بخر.</p>", 405)
+    s = session_user(cookies)
+    me = s.get("user", "guest")
+    try:
+        pid = int(form.get("product_id", "0"))
+    except ValueError:
+        pid = 0
+    try:
+        qty = int(form.get("qty", "1"))
+    except ValueError:
+        qty = 1
+    product = STORE_PRODUCTS.get(pid)
+    if not product:
+        return page("خرید", "<h1>خرید</h1><p class=\"bad\">کالا پیدا نشد.</p>", 404)
+
+    # دستکاری قیمت (مرحلهٔ ۱۶): سرور به‌جای خواندن قیمت از کاتالوگ، فیلد price را که کلاینت فرستاده باور می‌کند
+    client_price = (form.get("price") or "").strip()
+    unit_price = product["price"]
+    tampered = False
+    if client_price:
+        try:
+            unit_price = int(client_price)
+            tampered = True
+        except ValueError:
+            pass
+
+    # کد تخفیف: فقط خوانده می‌شود (مصرف/شمارنده در /store/redeem است)
+    coupon = (form.get("coupon") or "").strip()
+    pct = 0
+    if coupon:
+        if "." in coupon:
+            code, _, sig = coupon.rpartition(".")
+            if sig and code and sig == store_sign(code):
+                pct = 100
+                award(21)
+        elif coupon in COUPONS:
+            pct = COUPONS[coupon]["pct"]
+
+    # تعداد منفی (مرحلهٔ ۲۰): qty منفی یعنی cost منفی یعنی موجودی به‌جای کم‌شدن زیاد می‌شود
+    cost = unit_price * qty
+    if pct:
+        cost = cost * (100 - pct) // 100
+    flag_bits = []
+    if qty < 0:
+        award(20)
+        flag_bits.append('<p class="ok">🚩 %s</p>' % FLAGS["20"])
+    if tampered and qty > 0 and cost < product["price"] * qty:
+        award(16)
+        flag_bits.append('<p class="ok">🚩 %s</p>' % FLAGS["16"])
+    if pct == 100 and "." in coupon:
+        flag_bits.append('<p class="ok">🚩 %s (با کوپن جعلی‌ات خرید کردی)</p>' % FLAGS["21"])
+
+    bal_before = COINS.get(me, 0)
+    COINS[me] = bal_before - cost
+    oid = store_new_order(me, pid, qty, cost, "paid")
+
+    note = "<p>سفارش #%d ثبت شد: %d عدد «%s» به قیمت واحد %d (%s) ← جمع %d CP-Coin. موجودی جدید شما: %d</p>%s" % (
+        oid, qty, html.escape(product["name"]), unit_price, ("کوپن %d%% تخفیف" % pct if pct else "بدون کوپن"), cost, COINS[me], "".join(flag_bits)
+    )
+    if coupon and not pct:
+        note += '<p class="bad">کد تخفیف نامعتبر بود؛ بدون تخفیف حساب شد.</p>'
+    body = "<h1>نتیجهٔ خرید</h1>%s<p><a href=\"/store\">بازگشت به فروشگاه</a> · <a href=\"/store/order/%d/mark-paid\">سفارش #%d</a></p>" % (note, oid, oid)
+    return page("خرید", body)
+
+
+def route_store_redeem(h, method, form):
+    if method != "POST":
+        return page("کد تخفیف", '<h1>کد تخفیف</h1><form method="post"><input name="code" placeholder="کد تخفیف"> <button>استفاده</button></form><p class="muted">بدون محدودیت تعداد تلاش؛ هیچ کدی اینجا نشان داده نمی‌شود.</p>')
+    coupon = (form.get("code") or "").strip()
+    if not coupon:
+        return page("کد تخفیف", '<h1>کد تخفیف</h1><p class="bad">کدی وارد نشد.</p>')
+    if "." in coupon:
+        # کد امضاشدهٔ مدیر (مرحلهٔ ۲۱): CODE.SIG با کلیدی که از /debug لو می‌رود
+        code, _, sig = coupon.rpartition(".")
+        if sig and code and sig == store_sign(code):
+            award(21)
+            return page("کد تخفیف", '<h1>کد تخفیف</h1><p class="ok">کد مدیرِ ۱۰۰٪ تخفیف معتبر است! 🚩 %s</p><p>همین کد را هنگام خرید در فیلد «کد تخفیف» بگذار: <code>%s</code></p>' % (FLAGS["21"], html.escape(coupon)))
+        return page("کد تخفیف", '<h1>کد تخفیف</h1><p class="bad">امضای کد نامعتبر است.</p>')
+    c = COUPONS.get(coupon)
+    if not c:
+        return page("کد تخفیف", '<h1>کد تخفیف</h1><p class="bad">کد نامعتبر است.</p>', 404)
+    # عمداً بدون قفل دور کل عملیات: «بررسی موجودبودن» و «کاهش شمارنده» دو قدم جدا هستند
+    # و بین‌شان یک مکث هست — دقیقاً مسابقهٔ هم‌زمانی کلاسیک (TOCTOU) (مرحلهٔ ۱۸)
+    avail = c["uses_left"] is None or c["uses_left"] > 0
+    if avail:
+        time.sleep(0.05)
+        with COUPON_LOCK:
+            if c["uses_left"] is not None:
+                c["uses_left"] -= 1
+            c["used"] += 1
+    flag = ""
+    if coupon == STORE_HIDDEN_COUPON:
+        award(17)
+        flag += '<p class="ok">🚩 %s</p>' % FLAGS["17"]
+    if coupon == "VIP-ONE-TIME" and c["used"] > 1:
+        award(18)
+        flag += '<p class="ok">🚩 %s (این کد %d بار مصرف شد؛ سهمیه فقط ۱ بود)</p>' % (FLAGS["18"], c["used"])
+    if not avail and not flag:
+        return page("کد تخفیف", '<h1>کد تخفیف</h1><p class="bad">این کد قبلاً تمام شده (uses_left=0).</p>')
+    body = '<h1>کد تخفیف</h1><p>کد <code>%s</code> اعمال شد: <b>%d%%</b> تخفیف.</p>%s<p class="muted">موجودیِ باقی‌ماندهٔ این کد: %s</p>' % (
+        html.escape(coupon), c["pct"], flag, ("نامحدود" if c["uses_left"] is None else c["uses_left"])
+    )
+    return page("کد تخفیف", body)
+
+
+def route_store_order_pay(h, oid, cookies):
+    order = STORE_ORDERS.get(oid)
+    if not order:
+        return 404, "text/plain; charset=utf-8", b"order not found", {}
+    s = session_user(cookies)
+    me = s.get("user", "guest")
+    was_pending = order["status"] != "paid"
+    not_mine = order["user"] != me
+    order["status"] = "paid"  # IDOR (مرحلهٔ ۱۹): هیچ بررسی مالکیتی روی این مسیر نیست
+    flag19 = ""
+    if not_mine and was_pending:
+        award(19)
+        flag19 = '<p class="ok">🚩 %s</p>' % FLAGS["19"]
+    flag22 = ""
+    if any(o["product_id"] == 3 and o["status"] == "paid" and o["paid_amount"] <= 50 for o in STORE_ORDERS.values()):
+        award(22)
+        flag22 = '<p class="ok">🚩 %s</p>' % FLAGS["22"]
+    product = STORE_PRODUCTS.get(order["product_id"], {})
+    body = "<h1>سفارش #%d</h1><p>کاربر: %s · کالا: %s · هزینهٔ پرداختی: %d · وضعیت: <b>%s</b></p>%s%s<p><a href=\"/store\">بازگشت به فروشگاه</a></p>" % (
+        oid, html.escape(order["user"]), html.escape(product.get("name", "?")), order["paid_amount"], order["status"], flag19, flag22
+    )
+    return page("سفارش", body)
+
+
 def route_flags(h, method, form):
     msg = ""
     if method == "POST":
@@ -479,6 +689,14 @@ HINTS = {
     12: ["بررسی پسوند فقط در جاوااسکریپت صفحه است.", "مستقیم به سرور درخواست بفرست.", "curl -X POST /upload -d '{\"name\":\"shell.php\",\"content\":\"x\"}'"],
     13: ["robots.txt را بخوان.", "مسیرهای Disallow جالب‌اند.", "/debug"],
     14: ["انتقال پول با GET انجام می‌شود.", "کافی است یک لینک یا تصویر در سایت دیگری به این آدرس اشاره کند.", "/bank?to=mallory&amount=500  (در واقعیت: <img src=...> در صفحهٔ مهاجم)"],
+    15: ["صفحهٔ کیف‌پول پارامتر user می‌گیرد.", "اصلاً وارد نشو؛ فقط نام یک کاربر دیگر را بده.", "/store/wallet?user=admin"],
+    16: ["فرم خرید یک فیلد price هم دارد که اختیاری است.", "سرور قیمت کلاینت را به‌جای کاتالوگ باور می‌کند.", "curl -X POST http://127.0.0.1:%d/store/buy -d 'product_id=1&qty=1&price=1'" % PORT],
+    17: ["کد تخفیف پنهان یک عدد ۴ رقمی است؛ هیچ‌جا نوشته نشده.", "هیچ محدودیت تلاشی نیست؛ یک حلقه بنویس.", "for i in range(10000): requests.post(url,{'code':'%04d'%i})  روی /store/redeem"],
+    18: ["کد VIP-ONE-TIME فقط یک‌بار مصرف است؛ ولی سرور اول چک می‌کند بعد کم می‌کند.", "اگر چند درخواست دقیقاً هم‌زمان برسند، همه می‌توانند «قبل از کم‌شدن» را ببینند.", "با threading چند درخواست هم‌زمان به /store/redeem با code=VIP-ONE-TIME بفرست؛ باید بیشتر از ۱ بار موفق شود."],
+    19: ["سفارش #۱ متعلق به admin و در-انتظار است.", "مسیر mark-paid هیچ بررسی مالکیتی ندارد.", "curl -X POST http://127.0.0.1:%d/store/order/1/mark-paid" % PORT],
+    20: ["qty لازم نیست مثبت باشد.", "اگر cost منفی شود، موجودی به‌جای کم‌شدن زیاد می‌شود.", "curl -X POST .../store/buy -d 'product_id=2&qty=-10'  (موجودی‌ات زیاد می‌شود)"],
+    21: ["/debug یک secret_key لو می‌دهد؛ همان کلید برای امضای کوپن مدیر هم استفاده شده.", "امضا = hmac_sha256(secret_key, CODE) با ۸ کاراکتر اول هگز.", "python3 -c \"import hmac,hashlib;print('FREE100.'+hmac.new(b'dev-key-123',b'FREE100',hashlib.sha256).hexdigest()[:8])\"  → بفرست به /store/redeem یا در خرید به‌عنوان coupon"],
+    22: ["این یکی ترکیبی است: باید هزینهٔ واقعیِ ثبت‌شدهٔ خرید کالای #۳ (قیمت واقعی ۹۹۹۹۹۹) را به ۵۰ یا کمتر برسانی.", "چند راه داری: کد مدیرِ جعلی (مرحلهٔ ۲۱) برای ۱۰۰٪ تخفیف، یا دستکاری قیمت (مرحلهٔ ۱۶)، یا تعداد منفی (مرحلهٔ ۲۰) روی همین کالا.", "curl -X POST .../store/buy -d 'product_id=3&qty=1&price=1'  یا با کوپن جعلی‌ات؛ بعد پرچم در پاسخ /store/order/<id>/mark-paid ظاهر می‌شود."],
 }
 WALK = {
     1: "در فرم ورود نام کاربری را admin'-- بگذار. پرسوجو می‌شود … WHERE username = 'admin'--' AND ... و بقیه کامنت است. دفاع: پرسوجوی پارامتری (? یا :name).",
@@ -495,6 +713,14 @@ WALK = {
     12: "اعتبارسنجی فقط سمت کلاینت است. دفاع: بررسی نوع/پسوند/محتوا در سرور، ذخیره خارج از webroot، نام تصادفی.",
     13: "robots.txt آدرس /debug را لو می‌دهد. دفاع: دیباگ را در تولید خاموش کن، robots.txt محافظ نیست.",
     14: "GET وضعیت را تغییر می‌دهد و بدون توکن است. دفاع: توکن CSRF، SameSite، فقط POST برای تغییر.",
+    15: "/store/wallet فقط از پارامتر user می‌خواند و هیچ احراز هویتی نمی‌خواهد. دفاع: فقط موجودی کاربر واردشده (session) را نشان بده، هرگز بر اساس پارامتر دلخواه.",
+    16: "فرم خرید فیلد price را هم می‌فرستد و سرور آن را به‌جای قیمت واقعیِ کاتالوگ باور می‌کند. دفاع: قیمت را هرگز از کلاینت نگیر؛ همیشه از پایگاه‌داده/کاتالوگ سرور بخوان.",
+    17: "کد تخفیف فقط ۴ رقم (۱۰هزار حالت) است و نرخ تلاش محدود نشده؛ با یک حلقهٔ ساده در چند ثانیه پیدا می‌شود. دفاع: کدهای طولانی‌تر/تصادفی، محدودیت نرخ (rate limit)، قفل بعد از چند تلاش.",
+    18: "سرور «بررسی موجودبودن» و «کم‌کردن شمارنده» را در دو قدم جدا انجام می‌دهد؛ بین آن دو یک تأخیر کوچک هست. اگر چند درخواست هم‌زمان برسند، همه قدم اول را با uses_left=1 می‌بینند. دفاع: کاهش اتمیک (مثلاً UPDATE ... WHERE uses_left>0 در یک پرسوجو، یا قفل درست دور کل عملیات).",
+    19: "مسیر mark-paid فقط شناسهٔ سفارش را می‌گیرد و هیچ‌وقت چک نمی‌کند سفارش مال کیست. دفاع: همیشه session_user را با owner سفارش مقایسه کن.",
+    20: "cost = قیمت × تعداد است؛ تعداد منفی، cost منفی می‌سازد و از موجودی «کم‌کردنِ منفی» یعنی زیادکردن می‌شود. دفاع: qty باید همیشه عدد صحیح مثبت باشد (اعتبارسنجی سمت سرور).",
+    21: "امضای کوپن مدیر با همان secret_key ساخته می‌شود که در /debug افشا شده (استفادهٔ دوباره از یک کلید حساس در دو سیستم مختلف). هرکس آن کلید را ببیند می‌تواند با hmac.new همان امضا را برای هر کد دلخواه بسازد. دفاع: کلیدهای متفاوت برای هر سیستم، هرگز اطلاعات حساس در پاسخ دیباگ، چرخش کلید در صورت افشا.",
+    22: "این مرحله «اثبات مفهوم» ترکیبی است: باید نشان بدهی کالای ویژه (که قیمت واقعی‌اش ۹۹۹۹۹۹ است) را با هزینهٔ واقعیِ ثبت‌شده در سفارش، ۵۰ یا کمتر بخری — از طریق کد تخفیف جعلی (۲۱)، دستکاری قیمت (۱۶) یا تعداد منفی (۲۰) روی همان کالا. دفاع: هر لایه باید مستقل درست باشد؛ یک باگ در یک لایه کل زنجیره را می‌شکند (دفاع در عمق).",
 }
 
 
@@ -584,6 +810,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 r = (200, "text/html; charset=utf-8", UPLOADS[name].encode(), {}) if name in UPLOADS else (404, "text/plain", b"not found", {})
             elif p == "/bank":
                 r = route_bank(self, q, cookies)
+            elif p == "/store":
+                r = route_store(self, cookies)
+            elif p == "/store/wallet":
+                r = route_store_wallet(self, q)
+            elif p == "/store/buy":
+                r = route_store_buy(self, method, form, cookies)
+            elif p == "/store/redeem":
+                r = route_store_redeem(self, method, form)
+            elif p.startswith("/store/order/") and p.endswith("/mark-paid"):
+                seg = p.split("/")
+                oid = int(seg[3]) if len(seg) > 4 and seg[3].isdigit() else -1
+                r = route_store_order_pay(self, oid, cookies)
             elif p == "/flags":
                 r = route_flags(self, method, form)
             elif p == "/robots.txt":
@@ -631,7 +869,7 @@ def main():
     print(" CodePad Vuln Lab روشن شد  ✔")
     print(" آدرس در مرورگر:  http://127.0.0.1:%d/" % PORT)
     print(" فقط روی همین دستگاه؛ به شبکه و اینترنت وصل نیست.")
-    print(" ۱۴ مرحله، پرچم‌ها را در /flags ثبت کن. توقف: دکمهٔ Stop")
+    print(" ۲۲ مرحله (شامل فروشگاه CP-Coin)، پرچم‌ها را در /flags ثبت کن. توقف: دکمهٔ Stop")
     print("=" * 60)
     try:
         server.serve_forever()

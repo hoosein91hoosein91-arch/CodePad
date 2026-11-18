@@ -23,7 +23,7 @@
   },
   "mobile-src/assets/cyber-lab.js": {
    "base": null,
-   "new": "097ea955c9b21de939d2ecf8e4fa3ae37e839644453602afb8d8ca97fd70ec54"
+   "new": "dd87ff4403b43dd9cdae942f2f2c9a130199313a80c0b2bb415da9cfe498493d"
   },
   "mobile-src/assets/cyber-samples.js": {
    "base": null,
@@ -43,7 +43,19 @@
   },
   "mobile-src/assets/hacker.css": {
    "base": null,
-   "new": "2e4d1784cf691175a978c234e41cfa3bca004860b30d3019cd752011330d4b55"
+   "new": "bfd388de99a6d1d524f99ac4e32a053307afb475853712dc718fad23fece14e3"
+  },
+  "mobile-src/assets/hub-academy-data.js": {
+   "base": null,
+   "new": "74eb0308f75b1296ab11fd031b1517b238d848e91c1338dbeba2d7f7c6dff576"
+  },
+  "mobile-src/assets/hub-academy.css": {
+   "base": null,
+   "new": "caface92e6c9e43144e4f27a9698bce7bbf6fedbc136bd17ef0eafac8ac5d99a"
+  },
+  "mobile-src/assets/hub-academy.js": {
+   "base": null,
+   "new": "d1449b65e87deccab2dde4c0eff57c08e04b42ec5338464b24b32aaae2976cd9"
   },
   "mobile-src/assets/hub-confidential.js": {
    "base": null,
@@ -59,7 +71,7 @@
   },
   "mobile-src/assets/hub-data.js": {
    "base": null,
-   "new": "126613252a9fa04cdb86cfa31e6447c87e5355187c655bdb90b0e30344b3fb9c"
+   "new": "881aad9e7b981ed74ad252da3d7eb430c14338c5b06edbe2c6eeab6a3b5cac1c"
   },
   "mobile-src/assets/hub-forensics.js": {
    "base": null,
@@ -67,15 +79,15 @@
   },
   "mobile-src/assets/hub-security.js": {
    "base": null,
-   "new": "b845815e9b7719f8395c3fc2a2eefc00c26a902f70e45b4aa20cfb190b752d04"
+   "new": "332ebe38ccba1a4f08a1398d628cd49a5468a330fb467316f8147cebe0b0aea6"
   },
   "mobile-src/assets/hub.css": {
    "base": null,
-   "new": "f51261ea66667820c8239cbf862b42a8519d535e91b2fb6f4f67411be5445cfd"
+   "new": "270fd03fdec416e00d646b0c6cda2837ee0d7d745db30927b184bb1799061de6"
   },
   "mobile-src/assets/hub.js": {
    "base": null,
-   "new": "3de4ead9d21946dcd7241d96f15dc8e9dc16464019414b22430671200daf3caa"
+   "new": "80adac872838770cdcbb5f9a9b9b213e5d047b125c6ad0f4137bbea05452d07b"
   },
   "mobile-src/assets/launcher.js": {
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
@@ -131,11 +143,11 @@
   },
   "mobile-src/index.html": {
    "base": "eddf31ab45fbae51a673637b45befd1998ed83b3f06fa9f95a78b70b8644307d",
-   "new": "15cde2a31164f3f0090f640a99e8f4e8b985ff2e2b8b2c8de208e979fafe5bc2"
+   "new": "4e97be614064f76903a48739d3baeb5edabccf930f23642ffe747f04571de1b0"
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
-   "new": "9cb5d3b2493506a604c135f0b66d84c9a6ed5044672f0cd91772e69a9644618e"
+   "new": "dc9bf946ab18716e861abaf7cf77935c9e6ab3afdfbb78e101657a524560683e"
   },
   "public/background/codepad3d.py": {
    "base": null,
@@ -385,6 +397,10 @@
    "base": null,
    "new": "786c4aa413d4eace8d6347f8ddae32b8e47d3165afdb6ba82126b93e03cbfcfc"
   },
+  "scripts/hub-academy.test.mjs": {
+   "base": null,
+   "new": "4254ab22a0ad85ebbafd1d656475132981f2da115275fdebcf4f52902427c425"
+  },
   "scripts/hub-ctf.test.mjs": {
    "base": null,
    "new": "0630868fe3e4e8b4c3efe169601ac9f77285be70abf2bfa9bdae15ba861fd78a"
@@ -423,7 +439,7 @@
   },
   "scripts/security-lab.test.mjs": {
    "base": null,
-   "new": "bbae4c796fad8c61981727491258623a2e2bf6d248131ac2493d9427bb69644b"
+   "new": "31c1755a764b24ea62b77a797c54225584475181cba6896d215f0da00270c59f"
   },
   "scripts/security-netcheck.test.mjs": {
    "base": null,

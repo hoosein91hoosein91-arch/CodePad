@@ -118,3 +118,43 @@ html.cp-hyper ::selection{background:#00ff9c;color:#00160d}
 #cp-cyber .cy-map-bar button.on{background:#22e8ff;color:#001418;border-color:#22e8ff;font-weight:700}
 #cp-cyber .cy-map-status{min-height:1.4em;color:#ffd23f;direction:ltr;text-align:left}
 #cp-cyber .cy-map-bar{direction:ltr}
+
+/* ───────── v3: بازطراحی بصری — سر و ته هم‌رنگ، دکمه‌های آماده متمایز، باران واقعاً چکه می‌کند ───────── */
+#cp-cyber{background-color:#010504}
+#cp-cyber .cy-rain{opacity:.85}
+#cp-cyber .cy-head{padding-block:max(12px,env(safe-area-inset-top)) 12px;background:linear-gradient(180deg,rgba(3,19,13,.97),rgba(1,10,6,.9));border-bottom:1px solid rgba(0,255,156,.4);box-shadow:0 1px 0 rgba(0,255,156,.08),0 8px 24px -14px rgba(0,255,156,.5)}
+#cp-cyber .cy-title{position:relative;padding-inline-start:16px}
+#cp-cyber .cy-title::before{content:"";position:absolute;inset-inline-start:0;top:50%;translate:0 -50%;width:8px;height:8px;border-radius:50%;background:#00ff9c;box-shadow:0 0 10px #00ff9c,0 0 20px rgba(0,255,156,.7);animation:cy-dot 1.8s ease-in-out infinite}
+@keyframes cy-dot{50%{opacity:.35;box-shadow:0 0 4px #00ff9c}}
+#cp-cyber .cy-chip{border-radius:999px;background:rgba(0,255,156,.05);backdrop-filter:blur(2px)}
+#cp-cyber .cy-chip.on{background:rgba(0,255,156,.16)}
+#cp-cyber button{border-radius:9px;transition:box-shadow .15s,border-color .15s,transform .1s}
+#cp-cyber button:active:not(:disabled){transform:scale(.97)}
+#cp-cyber .cy-head button{border-radius:8px}
+#cp-cyber .cy-tabs{gap:8px;background:linear-gradient(180deg,rgba(2,14,9,.92),rgba(1,8,5,.78))}
+#cp-cyber .cy-tabs button{position:relative;border-color:transparent;background:rgba(0,255,156,.04);border-radius:999px;padding-inline:14px}
+#cp-cyber .cy-tabs button[aria-selected=true]{background:linear-gradient(135deg,rgba(0,255,156,.22),rgba(34,232,255,.12));border-color:#00ff9c;box-shadow:0 0 14px rgba(0,255,156,.4),inset 0 0 0 1px rgba(0,255,156,.3)}
+#cp-cyber .card{position:relative;border-radius:12px;background:linear-gradient(170deg,rgba(4,26,17,.92),rgba(2,14,10,.92));box-shadow:0 0 0 1px rgba(0,255,156,.16),0 10px 28px -18px rgba(0,255,156,.35);overflow:hidden}
+#cp-cyber .card::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:3px;background:linear-gradient(#00ff9c,#22e8ff)}
+#cp-cyber .card{padding-inline-start:16px}
+#cp-cyber button.pri{box-shadow:0 0 16px rgba(0,255,156,.55);border-radius:10px}
+#cp-cyber button.pri:hover{box-shadow:0 0 24px rgba(0,255,156,.8)}
+
+/* دکمه‌های «دستورهای آماده»: پیل تیره با آیکون ❯، جدا از دکمه‌های اقدام اصلی */
+#cp-cyber .cy-chipgroup{display:flex;flex-direction:column;gap:6px}
+#cp-cyber .cy-chiplabel{color:#5fcf9f;font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+#cp-cyber .cy-chiprow{gap:6px}
+#cp-cyber .cy-chiprow>*{flex:none}
+#cp-cyber .cy-chipbtn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px 6px 10px;border-radius:999px;background:rgba(0,255,156,.05);border:1px solid rgba(0,255,156,.3);color:#9fffd2;font-size:12px;direction:ltr}
+#cp-cyber .cy-chipbtn:hover:not(:disabled){background:rgba(0,255,156,.14);box-shadow:0 0 12px rgba(0,255,156,.35)}
+#cp-cyber .cy-chipbtn-i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:rgba(0,255,156,.18);color:#00ff9c;font-size:9px;flex:none}
+#cp-cyber .cy-chipbtn.alt{border-color:rgba(34,232,255,.35);color:#bff2ff}
+#cp-cyber .cy-chipbtn.alt .cy-chipbtn-i{background:rgba(34,232,255,.18);color:#22e8ff}
+
+#cp-cyber .cy-out{border-top:1px solid rgba(0,255,156,.3);background:#000;border-radius:12px 12px 0 0;overflow:hidden}
+#cp-cyber .cy-outbar{background:linear-gradient(180deg,rgba(3,19,13,.95),rgba(1,10,6,.85));border-bottom:1px solid rgba(0,255,156,.18)}
+#cp-cyber .cy-outbar button{border-radius:999px}
+#cp-cyber .cy-log{background:radial-gradient(900px 300px at 0% 0%,rgba(0,255,156,.04),transparent 60%)}
+#cp-cyber .cy-map-bar button{border-radius:999px}
+#cp-cyber .cy-map-slot{border-radius:12px}
+@media (prefers-reduced-motion:reduce){#cp-cyber .cy-title::before{animation:none}}
