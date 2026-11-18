@@ -91,6 +91,24 @@ except EOFError as e:
   assert.equal(end.done, true);
 });
 
+test("exported apps (interactive: true) still ask their own user: input() and masked getpass go through the page", async () => {
+  const sys = make();
+  const code = `
+import getpass
+name = input("Name: "); print("hello", name)
+print("secret", getpass.getpass("Token: "))
+`;
+  const { events, done } = collect(sys, job(code, { interactive: true }));
+  const waitFor = async (n) => { for (let i = 0; i < 200; i++) { const reqs = events.filter((e) => e.inputRequest); if (reqs.length >= n) return reqs[n - 1]; await new Promise((r) => setTimeout(r, 25)); } throw new Error("no input request " + n); };
+  const first = await waitFor(1); assert.equal(first.prompt, "Name: ");
+  sys.pythonInput({ channel: "c1", id: 7, requestId: first.requestId, value: "کدپد" });
+  const second = await waitFor(2); assert.match(second.prompt, /^\x01secret\x01Token: /);
+  sys.pythonInput({ channel: "c1", id: 7, requestId: second.requestId, value: "s3" });
+  const end = await done;
+  const out = events.filter((e) => e.stream && e.kind === "out").map((e) => e.text).join("");
+  assert.match(out, /hello کدپد/); assert.match(out, /secret s3/); assert.equal(end.done, true);
+});
+
 test("only one job at a time; Stop kills the process and reports an aborted run", async () => {
   const sys = make();
   const { done } = collect(sys, job("import time\nprint('start', flush=True)\ntime.sleep(60)\n"));

@@ -116,7 +116,7 @@ def run(payload, files_dir, bridge):
                 saved_env.setdefault(key, os.environ.get(key))
                 os.environ[key] = str(value)[:4000]
         importlib.invalidate_caches()
-        install_input(bridge.requestInput, data.get("stdin", ""))
+        install_input(bridge.requestInput, data.get("stdin", ""), bool(data.get("interactive")))
         module = types.ModuleType("__main__")
         module.__file__ = str(entry)
         module.__package__ = None

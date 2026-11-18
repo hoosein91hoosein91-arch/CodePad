@@ -5,6 +5,10 @@
    "base": "6b1e723779b4d7f761bf53b0819bf645511c7a7fd60b44acf663b4af395b88a5",
    "new": "497e9b4d33309b62b4eebdfaaea072061f6fbea38393821f3cc626dbcba4b385"
   },
+  "export-player-src/python-runner.js": {
+   "base": "de7e7d3e998ffbae160d039328776b24b02c8ef6967d02e071419de609c1e891",
+   "new": "7097bf56ab12f6f36e0a124b5ee73e66052663f15386af6f16d193c52e228640"
+  },
   "mobile-src/assets/ai-provider.js": {
    "base": null,
    "new": "5569a87c3caa806d880d63a71d2a478c7bcca8ca156e8e99de1db1d6f314d748"
@@ -131,7 +135,7 @@
   },
   "public/background/interactive-input.js": {
    "base": "8d03865317b24b86618fc3b0de322affedd25d3e92e19ff05fde3b6c9e94dffc",
-   "new": "29238308987dac0dee75f2d5c69e1146ddade13b1ac45e932459a996605dfa45"
+   "new": "9b2154369d4da1111db592f740cd9fc5f70ca1b305217fabf3bc2c090b06122b"
   },
   "public/background/libs-loader.js": {
    "base": null,
@@ -139,7 +143,7 @@
   },
   "public/background/python-worker.js": {
    "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
-   "new": "ad290967c0bd3960c2051d47744e7476feef3307bf773b1b249c52590de56d67"
+   "new": "8ec1e2bce082dcb19b25428db05e09d3dbba00bb5762d4b4d5cbebde352f9077"
   },
   "public/favicon.svg": {
    "base": "c0e71d00c451894886c3a5bd362d1ff714afe0b2627d697406f8111fe428d2a2",
@@ -299,11 +303,11 @@
   },
   "resources/python/codepad_console.py": {
    "base": "cce71f2147c985ffb347f97d8f3a271dea3d0d7732e2371bf9ac29e259673d44",
-   "new": "1fba911b4b5dde090ec78f40bd833f50bd246d008af72b342d73b44cb81e198e"
+   "new": "4753e96d23ef3b191bbc44423df45361f029a608550366bc05e953e8015f10ae"
   },
   "resources/python/codepad_runtime.py": {
    "base": "bc8d515dbd4ae73552c6e6a3592d0f66936fd7f785fbd9aaab73a9e5958f2855",
-   "new": "9b6a883afbebb6cb48083cd875f78b81c388acca3fb13c5bf520a985d25e9351"
+   "new": "abaf4597d13e56711cf1101f89632da6d50091d7bf60e3c6de4a901dca522e60"
   },
   "resources/windows/desktop/README-Desktop.txt": {
    "base": null,
@@ -359,7 +363,7 @@
   },
   "scripts/desktop-system.test.mjs": {
    "base": null,
-   "new": "db13c5cf252df8acdb7c154fe5f5500543c2d144fcc47c23d8a495778593ff67"
+   "new": "f5f950a2d3fa8cd115bb066dcd7b939d0dba98bff88549b5b936ccf0e8dd3054"
   },
   "scripts/device-tools.test.mjs": {
    "base": null,
@@ -387,7 +391,7 @@
   },
   "scripts/python-host.test.mjs": {
    "base": null,
-   "new": "f089c3846c939f511f1660b0f20ff4a6ad5eaae917059855960d2c5041a2141b"
+   "new": "c0e5b529a6d3faf04c7f8389d584b7885f9459a28ec034c04ed4449ae8ca79c4"
   },
   "scripts/python-routing-reachability.test.mjs": {
    "base": null,
@@ -412,6 +416,14 @@
   "scripts/security-share.test.mjs": {
    "base": null,
    "new": "362c4b04969750078c8e9ad091f5e6ed69f6738130eef298343e608a90058337"
+  },
+  "scripts/test-live-input.mjs": {
+   "base": "1e3862d4c7b198ed6b7e94eae697fe882524a50c7d039c47a7051d2504388ab1",
+   "new": "7d6cdabedffc04200617322597bd99b12fc58c7a558f7f9750d526bd398bc0fd"
+  },
+  "scripts/test-native-emulator.mjs": {
+   "base": "4db070bbbfd7dcfc623b1ad8d53d9f5b7c8ac480b475315619be1cccf505b7b4",
+   "new": "11ccafadcdb29005dead608f360eb470ce0abf88c73670a2c6f3ac8418337fce"
   },
   "scripts/zip-folder.py": {
    "base": null,

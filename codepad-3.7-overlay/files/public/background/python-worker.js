@@ -84,7 +84,7 @@ async function install(py, requirements) {
   if (useNumpy) notes.push('NumPy واقعیِ سازگار با Pyodide بارگذاری شد؛ نسخه: ' + py.runPython('__import__("numpy").__version__') + '. پین نسخهٔ دسکتاپ اعمال نمی‌شود.');
   return notes.join('\n');
 }
-async function run({ id, code = '', stdin = '', assets = [], requirements = [], packageCommand, entryFile, runConfig }) {
+async function run({ id, code = '', stdin = '', assets = [], requirements = [], packageCommand, entryFile, runConfig, interactive = false }) {
   activeId = id;
   emit({ progress: 'در حال آماده‌سازی Python…' });
   let py;
@@ -198,7 +198,7 @@ class _CodePadAsyncRun(ast.NodeTransformer):
         return node
 _codepad_tree = ast.fix_missing_locations(_CodePadAsyncRun().visit(_codepad_tree))
 `);
-    await installInteractiveInput(py,input,stdin);
+    await installInteractiveInput(py,input,stdin,!!interactive);
     py.globals.set('_codepad_display_image',json=>self.postMessage({id:activeId,image:JSON.parse(json)}));
     emit({ phase: 'run' });
     let failure = '';

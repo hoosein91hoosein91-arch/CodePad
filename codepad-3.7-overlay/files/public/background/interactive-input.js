@@ -25,7 +25,8 @@ export function interactiveInput(post, getId, flush = () => {}) {
   };
 }
 
-export async function installInteractiveInput(py, input, prefill = '') {
+// interactive=false (CodePad editor): input() is answered only from the prepared-input box. interactive=true (exported standalone apps): the app asks the user.
+export async function installInteractiveInput(py, input, prefill = '', interactive = false) {
   const response = await fetch(new URL('codepad_console.py', import.meta.url));
   if (!response.ok) throw Error('فایل ورودی Python همراه برنامه پیدا نشد.');
   py.FS.writeFile('/tmp/codepad_console.py', await response.text());
@@ -33,6 +34,7 @@ export async function installInteractiveInput(py, input, prefill = '') {
   py.globals.set('_codepad_display_image',json=>self.postMessage({id:undefined,image:JSON.parse(json)}));
   py.globals.set('_codepad_read_input', prompt => input.request(prompt).then(value=>JSON.stringify({value,eof:value===null})));
   py.globals.set('_codepad_prefill', prefill);
+  py.globals.set('_codepad_interactive', !!interactive);
   py.runPython(`
 import sys, json
 if '/tmp' not in sys.path: sys.path.append('/tmp')
@@ -44,6 +46,6 @@ from pyodide.ffi import run_sync
 def _codepad_read_line(prompt):
     answer=json.loads(run_sync(_codepad_read_input(prompt)))
     return None if answer["eof"] else answer["value"]
-install_input(_codepad_read_line, _codepad_prefill)
+install_input(_codepad_read_line, _codepad_prefill, bool(_codepad_interactive))
 `);
 }
