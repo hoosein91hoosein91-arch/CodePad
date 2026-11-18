@@ -1,0 +1,1 @@
+const ping=()=>fetch('./__codepad_ping',{method:'POST',cache:'no-store'}).catch(()=>{});ping();setInterval(ping,15000);

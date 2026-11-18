@@ -13975,7 +13975,7 @@ function Rt() {
 }
 function zt(e, t) {
   return (
-    (e.protocol !== `http:` && e.protocol !== `https:`) || e.origin !== t || !!e.username || !!e.password
+    (e.protocol !== `http:` && e.protocol !== `https:` && e.protocol !== `codepad:`) || e.origin !== t || !!e.username || !!e.password
   );
 }
 function Bt(e) {
@@ -24095,7 +24095,7 @@ function qv() {
     null
   );
 }
-var Jv = `Jibcode`,
+var Jv = `CodePad · Night Terminal`,
   Yv = `` + new URL(`styles.css`, import.meta.url).href,
   Xv = ul({
     head: () => ({
@@ -24110,7 +24110,7 @@ var Jv = `Jibcode`,
           name: `description`,
           content: `جیب‌کد: چند زبان برنامه‌نویسی در یک برنامه، با رابط فارسی و قابل نصب روی موبایل.`,
         },
-        { name: `theme-color`, content: `#101410` },
+        { name: `theme-color`, content: `#080e0c` },
         { name: `mobile-web-app-capable`, content: `yes` },
       ],
       links: [

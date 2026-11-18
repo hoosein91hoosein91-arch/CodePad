@@ -152,15 +152,15 @@
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
-    --color-ink: #101410;
-    --color-panel: #1a211c;
-    --color-panel-2: #243028;
-    --color-paper: #e7f0e4;
-    --color-mist: #8d9b90;
-    --color-lime: #c6f135;
-    --color-lime-ink: #172006;
+    --color-ink: #080e0c;
+    --color-panel: #101a16;
+    --color-panel-2: #18261f;
+    --color-paper: #dfebe4;
+    --color-mist: #99ada1;
+    --color-lime: #58eda5;
+    --color-lime-ink: #071c10;
     --color-coral: #ff6a3d;
-    --color-line: #314038;
+    --color-line: #293e33;
     --radius-lab: 0.75rem;
   }
 }
@@ -1138,7 +1138,7 @@
     border-color: var(--color-lime);
   }
   .border-lime\/30 {
-    border-color: #c6f1354d;
+    border-color: #58eda54d;
   }
   @supports (color: color-mix(in lab, red, red)) {
     .border-lime\/30 {
@@ -1146,7 +1146,7 @@
     }
   }
   .border-lime\/40 {
-    border-color: #c6f13566;
+    border-color: #58eda566;
   }
   @supports (color: color-mix(in lab, red, red)) {
     .border-lime\/40 {
@@ -1304,7 +1304,7 @@
     background-color: var(--color-ink);
   }
   .bg-ink\/80 {
-    background-color: #101410cc;
+    background-color: #080e0ccc;
   }
   @supports (color: color-mix(in lab, red, red)) {
     .bg-ink\/80 {
@@ -1315,7 +1315,7 @@
     background-color: var(--color-lime);
   }
   .bg-lime\/10 {
-    background-color: #c6f1351a;
+    background-color: #58eda51a;
   }
   @supports (color: color-mix(in lab, red, red)) {
     .bg-lime\/10 {
@@ -1332,7 +1332,7 @@
     background-color: var(--color-panel-2);
   }
   .bg-panel\/40 {
-    background-color: #1a211c66;
+    background-color: #101a1666;
   }
   @supports (color: color-mix(in lab, red, red)) {
     .bg-panel\/40 {
@@ -1340,7 +1340,7 @@
     }
   }
   .bg-panel\/60 {
-    background-color: #1a211c99;
+    background-color: #101a1699;
   }
   @supports (color: color-mix(in lab, red, red)) {
     .bg-panel\/60 {
@@ -2122,7 +2122,7 @@
   }
   @media (hover: hover) {
     .hover\:bg-lime\/20:hover {
-      background-color: #c6f13533;
+      background-color: #58eda533;
     }
     @supports (color: color-mix(in lab, red, red)) {
       .hover\:bg-lime\/20:hover {
@@ -2531,7 +2531,7 @@
   color: var(--color-paper);
 }
 .agent-surface {
-  background: #1a211c80;
+  background: #101a1680;
 }
 @supports (color: color-mix(in lab, red, red)) {
   .agent-surface {
@@ -2540,7 +2540,7 @@
 }
 .agent-surface {
   border-radius: 1rem;
-  box-shadow: 0 0 0 1px #8d9b902e;
+  box-shadow: 0 0 0 1px #99ada12e;
 }
 @supports (color: color-mix(in lab, red, red)) {
   .agent-surface {
@@ -2583,7 +2583,7 @@
 }
 .jibos-chrome-reveal:after {
   content: "";
-  background: #e7f0e44d;
+  background: #dfebe44d;
   border-radius: 2px;
   height: 3px;
   position: absolute;
@@ -2601,7 +2601,7 @@
   min-height: calc(48px + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) 8px 0;
   border-bottom: 1px solid var(--color-line);
-  background: #101410e6;
+  background: #080e0ce6;
   align-items: center;
   gap: 8px;
   display: flex;

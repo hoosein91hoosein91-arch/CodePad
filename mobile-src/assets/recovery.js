@@ -2,7 +2,7 @@ import {VERSION} from './version.js';
 import {pt as lab,j as launcher,Mt as assets,kt as loadAssets,x as stop,saveCodePadFile as saveFile,E as importLauncher} from './runtime.js';
 
 const MAX_SNAPSHOTS=20, MAX_BYTES=160*1024*1024;
-const BASE_KEYS=['jibcode-en','jibcode-launcher','jibcode-launcher-preferences','codepad.python.requirements.v1','codepad.apk.signing-key.v1','codepad.apk.versions.v1'];
+const BASE_KEYS=['jibcode-en','jibcode-launcher','jibcode-launcher-preferences','codepad.python.requirements.v1','codepad.apk.signing-key.v1','codepad.apk.versions.v1','codepad.studio.extensions','codepad.studio.app-links','codepad.studio.undo'];
 const allowed=k=>BASE_KEYS.includes(k)||k.startsWith('jibos-app-');
 const request=r=>new Promise((resolve,reject)=>{r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
 const complete=t=>new Promise((resolve,reject)=>{t.oncomplete=resolve;t.onabort=t.onerror=()=>reject(t.error||Error('ذخیره‌سازی انجام نشد.'))});
@@ -72,7 +72,7 @@ const guides=[
  ['pyfiglet','Python خالص','pip install pyfiglet','import pyfiglet\nprint(pyfiglet.figlet_format("CodePad"))','نوشتهٔ بزرگ در کنسول.'],
  ['SymPy','Python خالص','pip install sympy','import sympy as sp\nprint(sp.factor(sp.Symbol("x")**2 - 1))','محاسبات نمادین؛ نصب اولیه ممکن است کمی زمان ببرد.'],
  ['NumPy / pandas / Pillow','بستهٔ مخصوص Pyodide','pip install numpy','import numpy as np\nprint(np.array([1, 2, 3]))','این‌ها به نسخهٔ سازگار با Pyodide نیاز دارند؛ wheel معمول ویندوز یا اندروید قابل نصب نیست.'],
- ['pygame / tkinter','رابط دسکتاپ','', '', 'پنجرهٔ بومی دسکتاپ در Python مرورگری پشتیبانی نمی‌شود. برای بازی گرافیکی از Mix با HTML/Canvas یا Nava استفاده کن.'],
+ ['pygame / tkinter','رابط دسکتاپ','', '', 'پروفایل Python Vision از دوربین، تشخیص دست MediaPipe و نمایش ذرات OpenGL با APIهای همین نمونه پشتیبانی می‌کند؛ نصب pip لازم نیست. این پشتیبانی کامل pygame یا tkinter نیست. برای سایر بازی‌ها از Mix یا Nava استفاده کن.'],
  ['requests / socket / subprocess','وابسته به سیستم','', '', 'نصب موفق، دسترسی به سوکت یا فرمان سیستم ایجاد نمی‌کند. برای HTTP از pyodide.http.pyfetch و برای فرمان‌های گوشی از گزینهٔ Termux استفاده کن.']
 ];
 const el=(tag,text,className)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n};
@@ -102,3 +102,5 @@ function schedule(){clearTimeout(timer);timer=setTimeout(()=>snapshot().catch(()
 lab.subscribe((next,previous)=>{if(next.projects!==previous.projects)schedule()});launcher.subscribe(schedule);assets.subscribe(schedule);
 setTimeout(()=>snapshot('شروع جلسه').catch(()=>{}),6000);setInterval(()=>snapshot().catch(()=>{}),120000);
 addEventListener('pagehide',()=>snapshot('پایان جلسه').catch(()=>{}));
+
+// Camera and 3D samples are available in the dedicated Studio workspace.

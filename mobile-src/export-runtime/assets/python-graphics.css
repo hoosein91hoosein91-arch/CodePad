@@ -1,0 +1,6 @@
+.cp-python-graphics{width:min(1000px,calc(100vw - 24px));height:min(850px,92dvh);max-height:92dvh;padding:0;border:1px solid #293e33;border-radius:16px;background:#101a16;color:#dfebe4;overflow:hidden;font:inherit}
+.cp-python-graphics[open]{display:flex;flex-direction:column}.cp-python-graphics::backdrop{background:#000b}
+.cp-python-graphics header,.cp-python-graphics footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;flex:none}
+.cp-python-graphics header{border-bottom:1px solid #293e33}.cp-python-graphics h2{font-size:16px;font-weight:600;line-height:1.6;margin:4px 0}.cp-python-graphics small{font:10px/1.5 monospace;letter-spacing:.1em;color:#99ada1}
+.cp-python-graphics section{display:grid;place-items:center;overflow:auto;min-height:0;flex:1;padding:16px;background:#080e0c}.cp-python-graphics img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+.cp-python-graphics button{min-height:44px;border:1px solid #293e33;border-radius:8px;padding:8px 16px;font:inherit;background:#18261f;color:#dfebe4;cursor:pointer}.cp-python-graphics [data-save]{background:#58eda5;color:#071c10;border-color:#58eda5}.cp-python-graphics footer{font-size:12px;border-top:1px solid #293e33}

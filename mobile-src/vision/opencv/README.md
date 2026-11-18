@@ -1,0 +1,1 @@
+Official OpenCV.js build downloaded from https://docs.opencv.org/4.x/opencv.js on 2026-10-24. Original SHA256: 63366510248adf3a7eddf3e793dd825404efb7df3749f4d6f8557c7fa4ca8aa0. Only UMD root this changed to globalThis for module Worker use. Embedded WebAssembly, no CDN request at run time. Apache-2.0, see LICENSE.

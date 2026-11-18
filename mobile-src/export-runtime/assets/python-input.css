@@ -1,0 +1,18 @@
+:root{--cp-input-font:Vazirmatn,sans-serif}
+/* Live Python stdin follows the same Night palette and mobile tap targets. */
+.cp-python-input{--cp-bg:#080e0c;--cp-panel:#101a16;--cp-raised:#18261f;--cp-line:#293e33;--cp-fg:#dfebe4;--cp-muted:#99ada1;--cp-accent:#58eda5;--cp-on-accent:#071c10;font-family:var(--cp-input-font);width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px);margin:auto;padding:0;border:1px solid var(--cp-line);border-radius:16px;background:var(--cp-panel);color:var(--cp-fg);font:inherit;box-shadow:0 24px 80px #0006;overflow:auto}
+.cp-python-input::backdrop{background:#0008}
+.cp-python-input form{display:flex;flex-direction:column;gap:16px;padding:24px}
+.cp-python-input header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.cp-python-input small{font:500 10px/1.5 var(--font-mono);letter-spacing:.12em;color:var(--cp-muted)}
+.cp-python-input h2{font-size:16px;line-height:1.8;margin:4px 0 0;font-weight:600}
+.cp-input-state{border:1px solid var(--cp-line);border-radius:6px;padding:4px 8px;font-size:10px;white-space:nowrap;color:var(--cp-accent)}
+.cp-input-prompt{display:block;white-space:pre-wrap;overflow-wrap:anywhere;max-height:24dvh;overflow:auto;font-size:16px;line-height:1.9}
+.cp-python-input input{width:100%;min-height:48px;border:1px solid var(--cp-line);border-radius:8px;background:var(--cp-bg);color:var(--cp-fg);padding:10px 12px;font:inherit;outline:none}
+.cp-python-input input:focus{border-color:var(--cp-accent)}
+.cp-python-input p{font-size:12px;line-height:1.8;color:var(--cp-muted);margin:0}
+.cp-python-input footer{display:flex;gap:8px;align-items:center}
+.cp-python-input button{min-height:44px;border:1px solid var(--cp-line);border-radius:8px;background:var(--cp-raised);color:var(--cp-fg);padding:8px 12px;font:inherit;font-size:12px}
+.cp-python-input [data-send]{margin-inline-start:auto;background:var(--cp-accent);color:var(--cp-on-accent);border-color:var(--cp-accent);font-weight:600}
+
+@media(max-width:480px){.cp-python-input form{padding:16px}.cp-python-input header{gap:8px}.cp-python-input h2{font-size:14px}}

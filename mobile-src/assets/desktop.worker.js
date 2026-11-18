@@ -1,3 +1,4 @@
+import {exportPlan} from './export-plan.js';
 (function () {
   var e = Uint8Array,
     t = Uint16Array,
@@ -777,17 +778,9 @@
       let i = de(new Uint8Array(await r.arrayBuffer()));
       if (i[`Start.exe`]?.[0] !== 77 || i[`Start.exe`]?.[1] !== 90 || !i[`app/index.html`])
         throw Error(`قالب ویندوز معتبر نیست.`);
-      ((i[`app/runtime.json`] = Q(
-        JSON.stringify({
-          format: t.format,
-          name: t.name,
-          entryFile: t.entryFile,
-          files: t.files,
-          assets: t.assets,
-          requirements: t.requirements,
-        }),
-      )),
-        (i[`app/desktop.json`] = Q(JSON.stringify({ id: n, name: t.name, version: `2.10.0` }))),
+      const response=await fetch(`${self.location.origin}/export-overrides.json`);if(response.ok){const overlay=await response.json();for(const [name,path]of Object.entries(overlay.files||{})){const r=await fetch(new URL(path,self.location.origin+'/'));if(!r.ok)throw Error('فایل قالب پیدا نشد: '+name);i['app/'+name]=new Uint8Array(await r.arrayBuffer());}}
+      Object.assign(i,exportPlan(t));
+      (        (i[`app/desktop.json`] = Q(JSON.stringify({ id: n, name: t.name, version: `2.10.0` }))),
         (i[`README.txt`] = Q(
           `CodePad · ${t.name}\r\n\r\nWindows 10/11 · 64-bit\r\n\r\n۱. کل فایل ZIP را استخراج کن.\r\n۲. Start.exe را باز کن. پوشهٔ app باید کنار آن بماند.\r\n\r\nبرنامه از Edge یا Chrome برای نمایش استفاده می‌کند؛ اگر پیدا نشوند مرورگر پیش‌فرض باز می‌شود. پایتون و کدپد لازم نیست نصب باشند.\r\nموتورهای زبان و پیوست‌ها همراه خروجی‌اند. کتابخانه‌های اضافهٔ Python یا منابع آنلاین پروژه ممکن است اینترنت بخواهند.\r\nاین بسته نسخهٔ قابل حمل است؛ نصب‌کننده ندارد. کد در موتورهای فعلی کدپد اجرا می‌شود.\r\n\r\nExtract the entire ZIP, then double-click Start.exe. Keep the app folder beside it.\r\nUses Edge/Chrome or your default browser; no Python or CodePad installation is required.\r\nUses CodePad's existing browser runtimes. Extra packages/online resources may require internet.\r\nThis is a portable app, not an installer. The launcher is unsigned.\r\nIf startup fails, see CodePad-error.txt beside Start.exe.\r\n`,
         )),

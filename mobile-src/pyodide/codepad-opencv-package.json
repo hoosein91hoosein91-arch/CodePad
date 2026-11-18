@@ -1,0 +1,6 @@
+{
+  "version": "4.11.0.86",
+  "file": "opencv_python-4.11.0.86-cp314-cp314-pyemscripten_2026_0_wasm32.whl",
+  "sha256": "469a8ba6758ec4e0bce12436da977a1db3a953e320927c3f55ca6233a5d20acf",
+  "source": "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/opencv_python-4.11.0.86-cp314-cp314-pyemscripten_2026_0_wasm32.whl"
+}

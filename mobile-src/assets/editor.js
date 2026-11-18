@@ -21601,12 +21601,22 @@ function Iw({ item: e, onInsert: t, onDelete: r }) {
   );
 }
 const codepadStreamRows = new Map();
-window.addEventListener("codepad-runtime-stream", e => {
-  const s=x.getState(), d=e.detail;
-  if(!d.text)return;
+const codepadPendingStreams=new Map();let codepadStreamTimer;
+function flushCodepadStreams(){
+ clearTimeout(codepadStreamTimer);codepadStreamTimer=null;
+ for(const d of codepadPendingStreams.values()){
+  const s=x.getState();
   const key=String(d.id)+":"+d.kind, rowId=codepadStreamRows.get(key);
-  if(rowId && s.lines.some(row=>row.id===rowId)) x.setState({lines:s.lines.map(row=>row.id===rowId?{...row,text:d.snapshot??row.text+d.text}:row)});
-  else {if(codepadStreamRows.size>64)codepadStreamRows.clear();const row=b(d.kind==="err"?"err":"out",d.snapshot??d.text);codepadStreamRows.set(key,row.id);s.pushLines([row]);}
+  if(rowId && s.lines.some(row=>row.id===rowId)) x.setState({lines:s.lines.map(row=>row.id===rowId?{...row,text:(d.snapshot??row.text+d.text).slice(-120000)}:row)});
+  else {if(codepadStreamRows.size>64)codepadStreamRows.clear();const row=b(d.kind==="err"?"err":"out",(d.snapshot??d.text).slice(-120000));codepadStreamRows.set(key,row.id);s.pushLines([row]);}
+ }
+ codepadPendingStreams.clear();
+}
+window.addEventListener("codepad-runtime-stream-flush",flushCodepadStreams);
+window.addEventListener("codepad-runtime-stream", e => {
+ const d=e.detail;if(!d.text)return;const key=String(d.id)+':'+d.kind,previous=codepadPendingStreams.get(key);
+ codepadPendingStreams.set(key,{...d,text:((previous?.text||'')+d.text).slice(-120000),snapshot:d.snapshot??(previous?.snapshot!=null?(previous.snapshot+d.text).slice(-120000):undefined)});
+ codepadStreamTimer ||= setTimeout(flushCodepadStreams,40);
 });
 window.addEventListener("codepad-runtime-restored", (e) => {
   const s = x.getState();
@@ -21823,8 +21833,9 @@ function Lw() {
     A = (0, w.useCallback)(async () => {
       let e = ++Lt.current,
         t = x.getState(),
-        n = Ze(Ce(t)),
+        n = Ce(t).files.find(f=>f.name===Ce(t).entryFile) ?? Ze(Ce(t)),
         r = t.activeProjectId;
+      if(Ce(t).entryFile&&!Ce(t).files.some(f=>f.name===Ce(t).entryFile)){t.pushLines([b('err','فایل شروع پروژه پیدا نشد؛ آن را از Studio انتخاب کن.')]);return;}
       (t.setRunning(!0),
         t.setPanel(
           n.lang === `nava` || n.lang === `css` || n.lang === `html` || n.lang === `binary` ? `stage` : `out`,
@@ -21982,7 +21993,7 @@ function Lw() {
       }
       let s =
         n.lang === `python`
-          ? await rt(n.content, n.stdin, r)
+          ? await rt(n.content, n.stdin, r, n.name)
           : n.lang === `javascript`
             ? await Qe(n.content)
             : await De(n.content, n.stdin);
@@ -21992,8 +22003,9 @@ function Lw() {
         for (let e of s.stdout.replace(/\s+$/, ``).split(`
 `))
           c.push(b(`out`, e));
-      if (s.stderr)
-        for (let e of s.stderr.replace(/\s+$/, ``).split(`
+      const visibleError=typeof s.displayStderr==='string'?s.displayStderr:s.stderr;
+      if (visibleError)
+        for (let e of visibleError.replace(/\s+$/, ``).split(`
 `))
           c.push(b(`err`, e));
       (!s.streamed && !s.stdout.trim() && !s.stderr.trim() && c.push(b(`sys`, `خروجی‌ای نبود.`)),
@@ -22033,11 +22045,24 @@ function Lw() {
     }
   }
   return (0, $.jsxs)(`main`, {
-    className: `flex h-dvh flex-col overflow-hidden bg-ink pt-[env(safe-area-inset-top)] text-paper`,
+    className: `cp-workbench flex h-dvh flex-col overflow-hidden bg-ink pt-[env(safe-area-inset-top)] text-paper`,
     children: [
       (0, $.jsx)(`div`, { className: `h-0.5 shrink-0 bg-lime` }),
+      (0, $.jsxs)(`div`, {
+        className: `cp-appbar`,
+        children: [
+          (0, $.jsxs)(`div`, {className:`cp-brand`, children:[
+            (0, $.jsx)(`img`,{src:new URL('../favicon.svg',import.meta.url).href,alt:'',width:36,height:36}),
+            (0, $.jsxs)(`div`,{children:[(0,$.jsx)(`strong`,{children:'CODEPAD'}),(0,$.jsx)(`small`,{children:'CODE + RUNTIME / 3.6'})]})
+          ]}),
+          (0, $.jsxs)(`nav`,{className:`cp-workspaces`, 'aria-label':'فضای کار', children:[
+            (0,$.jsx)(`button`,{type:'button','aria-current':'page',children:'ویرایشگر'}),
+            (0,$.jsx)(`button`,{type:'button','data-studio-launch':'','aria-label':'بازکردن کارگاه CodePad Studio',onClick:()=>import('./studio.js').then(m=>m.open('projects')),children:'Studio / ابزارها'})
+          ]})
+        ]
+      }),
       (0, $.jsxs)(`header`, {
-        className: `flex h-12 shrink-0 items-center gap-0.5 border-b border-line bg-panel pe-1.5 ps-1`,
+        className: `cp-toolbar flex h-12 shrink-0 items-center gap-0.5 border-b border-line bg-panel pe-1.5 ps-1`,
         children: [
           (0, $.jsxs)(f, {
             open: ct,
@@ -22373,7 +22398,7 @@ function Lw() {
           (0, $.jsx)(`button`, {
             type: `button`,
             className: Ow,
-            "aria-label": `باز کردن فایل`,
+            "aria-label": `باز کردن فایل یا ZIP پروژه`,
             onClick: () => O.current?.click(),
             children: (0, $.jsx)(mt, { className: `size-5` }),
           }),
@@ -22402,18 +22427,19 @@ function Lw() {
           (0, $.jsxs)(`button`, {
             type: `button`,
             className: `inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-4 text-sm font-semibold outline-none focus-visible:outline-2 focus-visible:outline-lime ${u ? `bg-coral text-ink` : `bg-lime text-lime-ink`}`,
+            "data-codepad-run": true,
             onClick: () => {
               u ? an() : (jt(!0), A());
             },
             children: [
               u ? (0, $.jsx)(ge, { className: `size-4` }) : (0, $.jsx)(Le, { className: `size-4` }),
-              u ? `توقف` : `اجرا`,
+              u ? `توقف` : S.entryFile ? `اجرای پروژه` : `اجرا`,
             ],
           }),
         ],
       }),
       (0, $.jsxs)(`div`, {
-        className: `flex min-w-0 shrink-0 items-center overflow-x-auto border-b border-line bg-panel/60 px-1`,
+        className: `cp-file-tabs flex min-w-0 shrink-0 items-center overflow-x-auto border-b border-line bg-panel/60 px-1`,
         children: [
           S.files.map((e) => {
             let t = e.id === C.id;
@@ -22546,7 +22572,7 @@ function Lw() {
                     children: [
                       (0, $.jsx)(`span`, {
                         className: `mt-1 font-mono text-xs text-lime`,
-                        children: `ورودی`,
+                        children: C.lang === `python` ? `جواب‌های آماده (هر خط یک جواب)` : `ورودی`,
                       }),
                       (0, $.jsx)(`textarea`, {
                         value: C.stdin,
@@ -22574,7 +22600,8 @@ function Lw() {
                     ? (0, $.jsx)(`iframe`, {
                         ref: Rt,
                         title: `پیش‌نمایش صفحه`,
-                        sandbox: `allow-scripts allow-modals allow-forms`,
+                        sandbox: `allow-scripts allow-modals allow-forms allow-pointer-lock`,
+                        allow: `autoplay; fullscreen`,
                         className: `min-h-0 w-full flex-1 border-0 bg-white`,
                         srcDoc: C.lang === `html` ? Ht : Ut?.doc,
                       })
@@ -22725,7 +22752,7 @@ function Lw() {
                                         )
                                         .map((e) => b(`err`, e))
                                     : []),
-                                  b(`sys`, `${e.message} کد خروج: ${e.exitCode ?? `نامشخص`}`),
+                                  b(`sys`, `${e.message || `اجرای Termux پایان یافت.`} کد خروج: ${e.exitCode ?? `نامشخص`}`),
                                 ]),
                               )
                               .catch((e) => We([b(`err`, e instanceof Error ? e.message : String(e))]));

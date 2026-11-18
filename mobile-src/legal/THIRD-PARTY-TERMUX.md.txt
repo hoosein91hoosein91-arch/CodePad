@@ -1,0 +1,11 @@
+# Termux source and licensing
+
+CodePad 3.4 includes an unmodified checkout of https://github.com/termux/termux-app at commit 8629e632fcb95da272221be327db653fb24befe9 under vendor/termux-app. Archive provenance is recorded in vendor/termux-origin.json.
+
+The integrated native terminal compiles the terminal-emulator and terminal-view Java sources and terminal-emulator/src/main/jni/termux.c. It runs Android's /system/bin/sh as CodePad's app UID. It is not a distribution of the Termux Linux bootstrap or its package repository. The existing external Termux connection remains available for pkg/apt and Linux packages.
+
+Upstream LICENSE.md declares GPL-3.0-only with the exceptions listed there. Keep that file and all file-level copyright notices. The GPL-3.0 text is supplied as COPYING. This combined CodePad release is distributed under GPL-3.0-only, subject to the existing independent third-party licenses retained with their components. All CodePad changes, Android templates, native build scripts, and included upstream sources accompany the APK in the version-matched source ZIP. No private signing key is needed to build the sources; a builder may use their own key.
+
+Termux code is maintained by the Termux project and its contributors. CodePad is an independent integration and is not an official Termux release. Source under vendor/termux-app is unchanged. resources/android/CodePadTerminalActivity.java.in and scripts/build-termux-jni.py are CodePad integration files.
+
+The supplied JNI objects target Android API 24, arm64-v8a and x86_64 with 16 KiB load alignment, built with Android NDK r27c. BUILD.json records input and output hashes. Rebuild them with scripts/build-termux-jni.py and --ndk-root pointing to r27c.

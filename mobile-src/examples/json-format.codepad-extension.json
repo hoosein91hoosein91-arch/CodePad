@@ -1,0 +1,16 @@
+{
+  "id": "codepad.json-format",
+  "name": "مرتب‌سازی JSON",
+  "version": "1.0.0",
+  "permissions": [
+    "project.read",
+    "project.write"
+  ],
+  "commands": [
+    {
+      "id": "format-json",
+      "title": "مرتب‌کردن فایل JSON فعال",
+      "script": "const p=await api.call('project'); const f=await api.call('read_file',{name:p.activeFile}); const text=JSON.stringify(JSON.parse(f.content),null,2)+'\\n'; await api.call('write_file',{name:f.name,content:text,expectedHash:f.hash}); return 'JSON مرتب و ذخیره شد.';"
+    }
+  ]
+}

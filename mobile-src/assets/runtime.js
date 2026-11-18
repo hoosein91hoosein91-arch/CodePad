@@ -1,4 +1,7 @@
 import * as codepadAI from "./ai-provider.js";
+import { readRunConfig } from "./run-config.js";
+import {mediaBlobURL,revokeMediaURL,sandboxMediaDocument} from './sandbox-media.js';
+import {safeProjectPath} from '../background/project-files.js';
 function navaPhysics(objects) {
     const bodies = new Map();
     let gravity = [0, -9.81, 0], enabled = true, accumulator = 0;
@@ -3451,7 +3454,6 @@ function runBinary(e, t) {
   }
 }
 var LANG_ORDER = [
-    `nava`,
     `mix`,
     `farsi`,
     `english`,
@@ -3817,10 +3819,10 @@ function fileFrom(e, t) {
   return { id: t, name: n.name, lang: e, content: n.content, stdin: n.stdin };
 }
 var SEED_PROJECT = {
-  id: `proj-nava`,
-  name: `شروع با نوا`,
-  activeFileId: `file-nava`,
-  files: [fileFrom(`nava`, `file-nava`)],
+  id: `proj-python`,
+  name: `شروع با پایتون`,
+  activeFileId: `file-python`,
+  files: [fileFrom(`python`, `file-python`)],
 };
 function uid(e) {
   return `${e}-${Math.random().toString(36).slice(2, 10)}`;
@@ -3846,7 +3848,6 @@ function createFile(e, t) {
   return { id: uid(`file`), name: o, lang: e, content: n.content, stdin: n.stdin };
 }
 var TEMPLATE_CHOICES = [
-    { kind: `nava`, title: `نوا`, detail: `دستورهای کوتاه لاتین، چند دستور در یک خط، سه‌بعدی و هوش مصنوعی` },
     { kind: `mix`, title: `آزمایشگاه کامل`, detail: `فایل ترکیبی، جیب، جیب فارسی و ماشین` },
     { kind: `english`, title: `جیب`, detail: `برنامه، لیست و ماشین ۰ و ۱` },
     { kind: `binary`, title: `ماشین ۰ و ۱`, detail: `دستورهای هشت‌بیتی و لامپ‌ها` },
@@ -3931,9 +3932,9 @@ function mimeFor(e, t) {
   return t || (MIME[e.split(`.`).pop()?.toLowerCase() ?? ``] ?? `application/octet-stream`);
 }
 function cleanAssetName(e) {
-  let t = e.split(/[\\/]/).pop()?.trim() ?? ``;
-  return !t || t === `.` || t === `..` ? `file` : t;
+  return safeProjectPath(e);
 }
+
 function mentioned(e, t) {
   return t.filter((t) => t && e.includes(t));
 }
@@ -3996,6 +3997,7 @@ async function loadAssets() {
 function assetsOf(e) {
   return useAssets.getState().items.filter((t) => t.projectId === e);
 }
+function forgetAssetURL(key){const old=urlCache.get(key);if(old?.url?.startsWith("blob:"))revokeMediaURL(old.url);urlCache.delete(key);}
 async function addAssets(e, t) {
   let n = [],
     r = [],
@@ -4016,7 +4018,7 @@ async function addAssets(e, t) {
         blob: o,
       };
       (await wrap((await db()).transaction(STORE, `readwrite`).objectStore(STORE).put(i)),
-        urlCache.delete(i.key),
+        forgetAssetURL(i.key),
         (useAssets.getState().items.some((n) => n.projectId === e && n.name === t) ? r : n).push(t),
         useAssets.setState((n) => ({
           items: [...n.items.filter((n) => n.projectId !== e || n.name !== t), metaOf(i)],
@@ -4033,7 +4035,7 @@ async function removeAsset(e, t) {
   } catch {
     return;
   }
-  (urlCache.delete(keyOf(e, t)),
+  (forgetAssetURL(keyOf(e, t)),
     useAssets.setState((n) => ({ items: n.items.filter((n) => n.projectId !== e || n.name !== t) })));
 }
 async function removeProjectAssets(e) {
@@ -4063,6 +4065,7 @@ function dataUrlOf(e, t) {
   });
 }
 async function assetUrlsFor(e, t) {
+  const sourceText=t;
   let n = new Map(),
     r = assetsOf(e);
   for (let i of mentioned(
@@ -4079,8 +4082,8 @@ async function assetUrlsFor(e, t) {
     }
     let u = await readAssetBlob(e, i);
     if (!u) continue;
-    let f = await dataUrlOf(u, t.type);
-    (f.length < 8e6 && urlCache.set(o, { stamp: t.stamp, url: f }), n.set(i, f));
+    let f = /^(video|audio)\//.test(t.type)&&!(/\basset(?:Bytes|Text)\s*\(/.test(sourceText)) ? mediaBlobURL(u) : await dataUrlOf(u, t.type);
+    ((f.startsWith("blob:") || f.length < 8e6) && urlCache.set(o, { stamp: t.stamp, url: f }), n.set(i, f));
   }
   return n;
 }
@@ -4109,7 +4112,8 @@ function buildHtmlDoc(e, t, n, r) {
     finish(r ? rewriteRefs(l, r) : l, n)
   );
 }
-function finish(e, t) {
+function finish(e,t){return sandboxMediaDocument(finishRaw(e,t));}
+function finishRaw(e, t) {
   let n = /\basset(Text|Bytes)\s*\(/.test(e) ? PAGE_HELPERS : ``,
     r = (t === null ? `` : `<meta http-equiv="Content-Security-Policy" content="${CSP}">${bridge(t)}`) + n;
   return t === null && !n && /<html\b/i.test(e)
@@ -4259,6 +4263,7 @@ async function readOpened(e) {
     r = [];
   for (let i of e) {
     let e = i.name.split(`.`).pop()?.toLowerCase() ?? ``;
+    if(e === `zip`){await (await import("./project-import.js")).openZip(i);continue;}
     if (e === `jibpack` || (!MEDIA_EXT.has(e) && isPackText(await i.slice(0, 200).text()))) {
       let e = parsePack(await i.text());
       if (e) {
@@ -5582,7 +5587,7 @@ Tx "روی تصویر بکش تا نگاه کنی؛ با دکمه‌های جه�
       detail: `صفحهٔ وب: اسکن شبیه‌سازی‌شده روی دادهٔ ساختگی با نوار پیشرفت`,
       text: security_portscan_default,
     },
-  ],
+  ].filter((e) => e.group !== `nava`),
   FONT_FACE = `
 @font-face {
   font-family: Vazirmatn;
@@ -5820,20 +5825,11 @@ var toThenable = (e) => (t) => {
   },
   persist = persistImpl,
   WELCOME = [
-    { id: `w1`, stream: `sys`, text: `Nava Studio: Pg, Scene, Mat, Frame — short Latin commands.` },
-    {
-      id: `w2`,
-      stream: `sys`,
-      text: `Run the scene. Use | to pack commands, drag to orbit and pinch to zoom.`,
-    },
-    {
-      id: `w3`,
-      stream: `sys`,
-      text: `برای یادگیری دستورهای نوا، نمونهٔ شروع.nava را ببین یا فایل راهنمای NAVA-GUIDE.md را باز کن.`,
-    },
-    { id: `w4`, stream: `sys`, text: `جیب‌کد: چند زبان در یک برنامه. فایل ترکیبی را باز کن و اجرا بزن.` },
-    { id: `w5`, stream: `sys`, text: `با «@@ پایتون» و «@@ جاوااسکریپت» هر بلوک را به زبان خودش بنویس.` },
-    { id: `w6`, stream: `sys`, text: `پایتون و جاوااسکریپت با متغیر مشترک shared به هم داده می‌دهند.` },
+    { id:'w1', stream:'sys', text:'CodePad // Night Terminal' },
+    { id:'w2', stream:'sys', text:'کد بنویس، پروژه اجرا کن، خروجی APK بساز.' },
+    { id:'w3', stream:'sys', text:'از Studio پروژهٔ ZIP، ترمینال و کتابخانه‌ها را باز کن.' },
+    { id:'w4', stream:'sys', text:'نمونه‌های دوربین و سه‌بعدی در Studio ← استودیوی دوربین هستند.' },
+    { id:'w5', stream:'sys', text:'Python · JavaScript · HTML · NAVA' },
   ];
 function isFile(e) {
   if (!e || typeof e != `object`) return !1;
@@ -5872,6 +5868,18 @@ function isProject(e) {
 function patchProject(e, t, n) {
   return e.map((e) => (e.id === t ? n(e) : e));
 }
+let savedProjectsRef, savedActiveProject;
+const projectStorage = {
+  getItem(name) { return JSON.parse(typeof window === 'undefined' ? null : localStorage.getItem(name)); },
+  setItem(name,value) {
+    if(typeof window === 'undefined')return;
+    const state=value.state;
+    if(state.projects===savedProjectsRef&&state.activeProjectId===savedActiveProject)return;
+    localStorage.setItem(name,JSON.stringify(value));
+    savedProjectsRef=state.projects;savedActiveProject=state.activeProjectId;
+  },
+  removeItem(name) {savedProjectsRef=undefined;savedActiveProject=undefined;if(typeof window!=='undefined')localStorage.removeItem(name);}
+};
 var memoryStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} },
   useLab = create()(
     persist(
@@ -6009,7 +6017,7 @@ var memoryStorage = { getItem: () => null, setItem: () => {}, removeItem: () => 
         name: `jibcode-en`,
         version: 1,
         skipHydration: !0,
-        storage: createJSONStorage(() => (typeof window > `u` ? memoryStorage : localStorage)),
+        storage: projectStorage,
         partialize: (e) => ({ projects: e.projects, activeProjectId: e.activeProjectId }),
         merge: (e, t) => {
           let n = e;
@@ -29702,7 +29710,7 @@ var assetKey = (e) => `launcher-${e}`,
     ),
   ),
   iconOf = (e) => e.match(/\p{Extended_Pictographic}/u)?.[0] ?? e.trim()[0] ?? `?`;
-async function install(e, t, n, r, i) {
+async function install(e, t, n, r, i, settings) {
   let o = useLauncher
       .getState()
       .apps.find((t) => (i ? t.sourceProjectId === i || (!t.sourceProjectId && t.name === e) : t.name === e)),
@@ -29710,6 +29718,7 @@ async function install(e, t, n, r, i) {
       id: o?.id ?? Math.random().toString(36).slice(2) + Date.now().toString(36),
       entryFile: r,
       sourceProjectId: i,
+      exportSettings:settings??o?.exportSettings??{},
       name: e,
       icon: o?.icon ?? iconOf(e),
       iconImage: o?.iconImage,
@@ -29731,7 +29740,7 @@ function installPack(e) {
 }
 async function installProject(e) {
   let t = { ...e, files: e.files.map((e) => ({ ...e })) },
-    n = t.files.find((e) => e.id === t.activeFileId);
+    n = t.files.find((e) => e.name === t.entryFile) ?? t.files.find((e) => e.id === t.activeFileId);
   if (!n) throw Error(`فایل فعال پروژه پیدا نشد.`);
   await loadAssets();
   let r = [];
@@ -29745,6 +29754,7 @@ async function installProject(e) {
     r,
     n.name,
     t.id,
+    t.exportSettings||{},
   );
 }
 async function uninstall(e) {
@@ -29861,7 +29871,7 @@ var pythonWorker = null,
   pythonPending = new Map(),
   seq = 0,
   sentToPython = new Map();
-async function preparePyAssets(e) {
+async function preparePyAssets(e, entryFile) {
   let t = e ? assetsOf(e) : [],
     n = new Set(t.map((e) => e.name));
   for (let e of [...sentToPython.keys()]) n.has(e) || sentToPython.delete(e);
@@ -29882,18 +29892,20 @@ async function preparePyAssets(e) {
     useLauncher.getState().apps.find((t) => assetKey(t.id) === e)?.files ??
     [];
   for (let e of o) {
-    if (!/^[\w\u0600-\u06ff.-]+\.py$/.test(e.name)) continue;
+    safeProjectPath(e.name);
     let t = `source:${e.content}`,
       n = new TextEncoder().encode(e.content).buffer,
       o = r.findIndex((t) => t.name === e.name);
     (o >= 0 && r.splice(o, 1), r.push({ name: e.name, stamp: t, buf: n }), i.push(n));
   }
-  return { assets: r, transfer: i };
+  return { assets: r, transfer: i, entryFile, projectKey:e };
 }
 function isPythonWarm() {
   return pythonWarm;
 }
 function settle(e, t, n) {
+  window.dispatchEvent(new Event('codepad-python-input-close'));
+  window.dispatchEvent(new Event('codepad-runtime-stream-flush'));
   let r = e.get(t);
   r && (window.clearTimeout(r.timer), e.delete(t), r.resolve(n));
 }
@@ -29904,6 +29916,14 @@ function bindWorker(e, t, n) {
       return;
     }
     let r = t.get(e.data.id);
+    if(e.data.image){window.dispatchEvent(new CustomEvent('codepad-python-image',{detail:e.data.image}));return;}
+    if(e.data.inputRequest){
+      if(!r)return;
+      window.clearTimeout(r.timer);
+      window.dispatchEvent(new Event('codepad-runtime-stream-flush'));
+      window.dispatchEvent(new CustomEvent('codepad-python-input',{detail:{...e.data,respond:(value,eof)=>e.target.postMessage({inputReply:true,id:e.data.id,requestId:e.data.requestId,value,eof})}}));
+      return;
+    }
     if (e.data.progress) {
       r?.progress?.(e.data.progress);
       return;
@@ -29921,6 +29941,7 @@ function bindWorker(e, t, n) {
         stdout: e.data.stdout ?? ``,
         stderr: e.data.stderr ?? ``,
         streamed: !!e.data.streamed,
+        displayStderr:e.data.displayStderr,
         aborted: !1,
       }));
   }),
@@ -29945,8 +29966,11 @@ function python() {
 function abortMap(e) {
   for (let [t] of e) settle(e, t, { stdout: ``, stderr: ``, aborted: !0 });
 }
+window.addEventListener('codepad-stop-python',()=>{stopRuntimes();useLab.getState().setRunning(false);});
 function stopRuntimes() {
-  ((pythonWarmRequested = !1), window.CodePadBackground?.stop());
+  pythonWarmRequested = !1;
+  window.dispatchEvent(new Event('codepad-python-input-close'));
+  window.CodePadBackground?.stop();
   (pythonEpoch++,
     pythonWorker?.terminate(),
     (pythonWorker = null),
@@ -29989,14 +30013,14 @@ function pythonRequest(e, t, n, r, i) {
       pythonPending.set(l, p),
       p.arm(18e4),
       o.postMessage(
-        { id: l, code: e, stdin: t, assets: n?.assets, requirements: savedRequirements(), packageCommand: r },
+        { id: l, code: e, stdin: t, assets: n?.assets, requirements: savedRequirements(), packageCommand: r, entryFile:n?.entryFile, projectKey:n?.projectKey, runConfig: readRunConfig(n?.projectKey) },
         n?.transfer ?? [],
       ));
     for (let e of n?.assets ?? []) e.buf && sentToPython.set(e.name, e.stamp);
   });
 }
-async function runPythonRaw(e, t, n) {
-  return enqueuePython(async () => pythonRequest(e, t, await preparePyAssets(n)));
+async function runPythonRaw(e, t, n, entryFile) {
+  return enqueuePython(async () => pythonRequest(e, t, await preparePyAssets(n, entryFile)));
 }
 async function runPythonPackageCommand(e, t) {
   let n;
@@ -30294,12 +30318,12 @@ async function interactive(e, t) {
   }
   return { stdout: ``, stderr: `Too many inputs asked in one run.`, aborted: !1 };
 }
-var runPython = (e, t, n) => interactive((t) => runPythonRaw(e, t, n), t),
+var runPython = (e, t, n, entryFile) => runPythonRaw(e, t, n, entryFile),
   runFarsi = (e, t) => interactive((t) => runFarsiRaw(e, t), t),
   THEME_DEFAULTS = {
-    text: `#e7f0e4`,
-    bg: `#101410`,
-    accent: `#c6f135`,
+    text: `#dfebe4`,
+    bg: `#080e0c`,
+    accent: `#58eda5`,
     image: ``,
     dim: 80,
     fontSize: 15,
@@ -30319,6 +30343,13 @@ var runPython = (e, t, n) => interactive((t) => runPythonRaw(e, t, n), t),
       name: `jibcode-theme`,
       skipHydration: !0,
       storage: createJSONStorage(() => safeStorage),
+      merge: (saved,current) => {
+        const value={...current,...saved};
+        if(value.text==='#e7f0e4')value.text='#dfebe4';
+        if(value.bg==='#101410')value.bg='#080e0c';
+        if(value.accent==='#c6f135')value.accent='#58eda5';
+        return value;
+      },
     }),
   );
 function applyTheme(e) {
@@ -30342,7 +30373,7 @@ async function openTorBrowser(e) {
 async function openExternalBrowser(e) {
   let t = safeHttpUrl(e);
   if (!Capacitor.isNativePlatform()) {
-    if (!window.open(t, `_blank`, `noopener,noreferrer`)) throw Error(`مرورگر بیرونی باز نشد.`);
+    const opened=window.open(t, `_blank`);if(!opened)throw Error(`مرورگر بیرونی باز نشد.`);try{opened.opener=null;}catch{}
     return { opened: !0 };
   }
   return TermuxBridge.openExternal({ url: t });
@@ -30417,16 +30448,17 @@ async function collectApkProject(e, t, n, r, i) {
     files: e.files.map((e) => ({ ...e })),
     assets: [],
     requirements: r ? savedRequirements() : [],
+    exportSettings:e.exportSettings||{},
   };
   await loadAssets();
   let l = assetsOf(e.assetId);
-  if (l.reduce((e, t) => e + t.size, 0) > 4e7)
-    throw Error(`برای خروجی روی گوشی، مجموع پیوست‌ها باید کمتر از ۴۰ مگابایت باشد.`);
+  if (l.reduce((e, t) => e + t.size, 0) > 128*1024*1024)
+    throw Error(`برای خروجی روی گوشی، مجموع پیوست‌ها باید کمتر از ۱۲۸ مگابایت باشد.`);
   for (let t of l) {
     i.throwIfAborted();
     let n = await readAssetBlob(e.assetId, t.name);
     if (!n) throw Error(`پیوست پیدا نشد: ${t.name}`);
-    o.assets.push({ name: t.name, type: t.type, b64: bytesBase64(new Uint8Array(await n.arrayBuffer())) });
+    o.assets.push({ name: t.name, type: t.type, buf: await n.arrayBuffer() });
   }
   return o;
 }
@@ -30462,7 +30494,7 @@ function buildProjectApk(e, t, n) {
         packageId: n.packageId,
         versionCode: n.versionCode,
         versionName: n.versionName,
-      }));
+      }, e.assets.filter(a=>a.buf).map(a=>a.buf)));
   });
 }
 async function saveProjectApk(e, t, n) {
@@ -30474,6 +30506,7 @@ async function saveProjectApk(e, t, n) {
   );
 }
 async function saveExportFile(e, t, n, r = new AbortController().signal) {
+  window.CodePadConfidential?.guard(`خروجی‌گرفتن (${e})`);
   if (Capacitor.isNativePlatform()) {
     if (!Capacitor.isPluginAvailable(`ApkExport`))
       throw Error(`پل ذخیرهٔ خروجی در این نصب موجود نیست. نسخهٔ کامل CodePad را نصب کن.`);
@@ -30536,7 +30569,7 @@ function buildProjectDesktop(e, t, n) {
       (r.onerror = (e) => {
         (l(), o(Error(e.message || `موتور خروجی PC متوقف شد.`)));
       }),
-      r.postMessage({ project: e, id: t }));
+      r.postMessage({ project: e, id: t },e.assets.filter(a=>a.buf).map(a=>a.buf)));
   });
 }
 async function saveProjectDesktop(e, t, n) {
@@ -30555,7 +30588,7 @@ function launcherEntry(e) {
   );
 }
 function projectApkTarget(e) {
-  let t = e.files.find((t) => t.id === e.activeFileId);
+  let t = e.files.find((t) => t.name === e.entryFile) ?? e.files.find((t) => t.id === e.activeFileId);
   if (!t) throw Error(`فایل فعال پروژه پیدا نشد.`);
   return {
     name: e.name,
@@ -30563,6 +30596,7 @@ function projectApkTarget(e) {
     files: e.files.map((e) => ({ name: e.name, content: e.content })),
     assetId: e.id,
     stableId: e.id,
+    exportSettings:e.exportSettings||{},
   };
 }
 function installedApkTarget(e) {
@@ -30574,6 +30608,7 @@ function installedApkTarget(e) {
     files: e.files.map((e) => ({ ...e })),
     assetId: `launcher-${e.id}`,
     stableId: e.id,
+    exportSettings:e.exportSettings||{},
   };
 }
 function packageForTarget(e) {
@@ -30692,7 +30727,7 @@ function ApkExportSheet({ target: e, onClose: t, accent: n = `#c6f135` }) {
           E(
             i
               ? r === `android`
-                ? `APK برای ذخیره فرستاده شد. فایل را از محل انتخاب‌شده باز و نصب کن.`
+                ? `APK آماده و برای ذخیره فرستاده شد. برای ارتقای نسخهٔ قبلی، همان شناسه و کلید امضا و شمارهٔ نسخهٔ بالاتر لازم است.`
                 : `خروجی PC برای ذخیره فرستاده شد. در ویندوز ZIP را استخراج کن و Start.exe را باز کن.`
               : `ذخیره لغو شد. فایل آماده است؛ می‌توانی دوباره ذخیره کنی.`,
           ));
@@ -31206,6 +31241,12 @@ if (typeof window < `u`) {
     };
   (useLab.subscribe(check), check(useLab.getState()));
 }
+if (typeof window < `u`)
+  window.CodePadAI = {
+    ready: () => codepadAI.aiReady(loadGemini()),
+    ask: (prompt, opts) => askGemini(loadGemini(), String(prompt).slice(0, 12e3), opts),
+    label: () => codepadAI.aiLabel(loadGemini()),
+  };
 export {
   saveExportFile as saveCodePadFile,
   NAVA_KEYWORDS as $,

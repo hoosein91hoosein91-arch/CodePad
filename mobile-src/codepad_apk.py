@@ -11,6 +11,7 @@ import json
 import re
 import struct
 import zipfile
+from export_bundle import prepare_bundle, safe_name
 
 
 def u32(data, offset):
@@ -91,7 +92,7 @@ class Signer:
         return seq(oid("1.2.840.113549.1.7.2"), der(0xa0, signed_data))
 
 
-def patch_manifest(data, package, name, version_code, version_name):
+def patch_manifest(data, package, name, version_code, version_name, camera=False, preserve_permissions=False):
     """Patch values, preserving compiled Android resource names/IDs and native classes."""
     chunks, strings, position = [], [], 8
     pool_index, pool_header, pool_flags = None, None, None
@@ -173,6 +174,28 @@ def patch_manifest(data, package, name, version_code, version_name):
                 struct.pack_into("<I", chunk, p + 8, index)
                 chunk[p + 15] = 3
                 struct.pack_into("<I", chunk, p + 16, index)
+    if camera:
+        present, prototype, ending = False, None, None
+        for kind, chunk in chunks:
+            if kind == 0x102 and strings[u32(chunk, 20)] == "uses-permission":
+                attr_start, attr_size, count = struct.unpack_from("<HHH", chunk, 24)
+                for i in range(count):
+                    p = 16 + attr_start + i * attr_size
+                    if strings[u32(chunk, p + 4)] == "name" and chunk[p + 15] == 3:
+                        present |= strings[u32(chunk, p + 16)] == "android.permission.CAMERA"
+                        if count == 1:
+                            prototype = (bytearray(chunk), p)
+            elif kind == 0x103 and strings[u32(chunk, 20)] == "uses-permission":
+                ending = bytearray(chunk)
+        if not present:
+            if prototype is None or ending is None:
+                raise ValueError("No permission template for camera export")
+            start, p = prototype
+            index = add("android.permission.CAMERA")
+            struct.pack_into("<I", start, p + 8, index)
+            struct.pack_into("<I", start, p + 16, index)
+            position = next(i for i, (kind, chunk) in enumerate(chunks) if kind == 0x102 and strings[u32(chunk, 20)] == "application")
+            chunks[position:position] = [(0x102, start), (0x103, ending)]
     def length8(number):
         return bytes([number]) if number < 128 else bytes([0x80 | (number >> 8), number & 255])
     def length16(number):
@@ -192,6 +215,10 @@ def patch_manifest(data, package, name, version_code, version_name):
     struct.pack_into("<I", header, 4, start + len(raw))
     struct.pack_into("<IIIII", header, 8, len(strings), 0, pool_flags & ~1, start, 0)
     chunks[pool_index] = (1, header + struct.pack("<" + "I" * len(offsets), *offsets) + raw)
+    if preserve_permissions:
+        result = bytearray(data[:8]) + b"".join(chunk for _, chunk in chunks)
+        struct.pack_into("<I", result, 4, len(result))
+        return bytes(result)
     # Standalone apps do not use the editor's optional external Termux bridge.
     filtered, omit = [], False
     for kind, chunk in chunks:
@@ -199,7 +226,7 @@ def patch_manifest(data, package, name, version_code, version_name):
             attr_start, attr_size, count = struct.unpack_from("<HHH", chunk, 24)
             for i in range(count):
                 p = 16 + attr_start + i * attr_size
-                if strings[u32(chunk, p + 4)] == "name" and chunk[p + 15] == 3 and strings[u32(chunk, p + 16)] == "com.termux.permission.RUN_COMMAND":
+                if strings[u32(chunk, p + 4)] == "name" and chunk[p + 15] == 3 and strings[u32(chunk, p + 16)] in {"com.termux.permission.RUN_COMMAND","android.permission.QUERY_ALL_PACKAGES","android.permission.REQUEST_INSTALL_PACKAGES"}:
                     omit = True
         if omit:
             if kind == 0x103:
@@ -211,7 +238,7 @@ def patch_manifest(data, package, name, version_code, version_name):
     return bytes(result)
 
 
-def validated_project(project):
+def validated_project(project, binary_assets=None):
     if not isinstance(project, dict) or project.get("format") != "codepad-app-1":
         raise ValueError("Invalid CodePad project format")
     name, files, entry = project.get("name"), project.get("files"), project.get("entryFile")
@@ -225,6 +252,7 @@ def validated_project(project):
             raise ValueError("Invalid source file")
         if not f["name"] or len(f["name"]) > 150 or any(c in f["name"] for c in "\0\r\n") or f["name"] in seen:
             raise ValueError("Invalid or duplicate source file name")
+        safe_name(f["name"])
         seen.add(f["name"])
         clean_files.append({"name": f["name"], "content": f["content"]})
     if entry not in seen:
@@ -236,21 +264,23 @@ def validated_project(project):
         raise ValueError("Too many attachments")
     clean_assets, asset_seen, total = [], set(), 0
     for a in assets:
-        if not isinstance(a, dict) or not all(isinstance(a.get(k), str) for k in ("name", "type", "b64")):
+        if not isinstance(a, dict) or not all(isinstance(a.get(k), str) for k in ("name", "type")) or not (isinstance(a.get("b64"),str) or a.get("binary") is True):
             raise ValueError("Invalid attachment")
         if a["name"] in asset_seen or not a["name"] or "\0" in a["name"]:
             raise ValueError("Invalid or duplicate attachment name")
-        blob = base64.b64decode(a["b64"], validate=True)
+        safe_name(a["name"])
+        blob = (binary_assets or {}).get(a["name"]) if a.get("binary") else base64.b64decode(a["b64"], validate=True)
+        if blob is None:raise ValueError("Attachment binary data is missing")
         total += len(blob)
-        if total > 40_000_000:
-            raise ValueError("Attachments exceed 40 MB for on-device APK export")
+        if total > 128*1024*1024:
+            raise ValueError("Attachments exceed 128 MB for on-device APK export")
         asset_seen.add(a["name"])
-        clean_assets.append({k: a[k] for k in ("name", "type", "b64")})
+        clean_assets.append({k: a[k] for k in (("name", "type", "binary") if a.get("binary") else ("name", "type", "b64"))})
     requirements = project.get("requirements", [])
     if not isinstance(requirements, list) or len(requirements) > 100 or not all(isinstance(r, str) and len(r) <= 2048 for r in requirements):
         raise ValueError("Invalid package requirements")
     return {"format": "codepad-app-1", "name": name.strip(), "entryFile": entry, "files": clean_files,
-            "assets": clean_assets, "requirements": requirements}
+            "assets": clean_assets, "requirements": requirements,"exportSettings":project.get("exportSettings",{})}
 
 
 def jar_line(key, value):
@@ -281,6 +311,10 @@ def aligned_zip(entries):
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6, allowZip64=False) as z:
         for name, data, compression in entries:
+            # Android 11+ must memory-map the resource table; native libraries
+            # must also be mappable when extractNativeLibs=false.
+            if name == 'resources.arsc' or (name.startswith('lib/') and name.endswith('.so')):
+                compression = zipfile.ZIP_STORED
             info = zipfile.ZipInfo(name, (2025, 1, 1, 0, 0, 0))
             info.compress_type = compression
             info.external_attr = 0o644 << 16
@@ -315,21 +349,23 @@ def sign_v2(apk, signer):
     return apk[:cd] + block + apk[cd:eocd] + end
 
 
-def build_apk(template, project, key, package, version_code=1, version_name="1.0", progress=None):
+def build_apk(template, project, key, package, version_code=1, version_name="1.0", progress=None, binary_assets=None, web_overrides=None):
     """Return signed APK bytes. template is the official CodePad runtime template."""
     if not re.fullmatch(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*){2,}", package) or len(package) > 150:
         raise ValueError("Package ID must contain at least 3 lowercase segments, e.g. com.codepad.myapp")
-    if package in {"com.hoosein.codepad", "com.hoosein.codepad.continuous", "com.hoosein.codepad.stable"}:
+    if package in {"com.hoosein.codepad", "com.hoosein.codepad.continuous", "com.hoosein.codepad.stable", "com.hoosein.codepad.vision212"}:
         raise ValueError("The exported app must not replace CodePad")
     if isinstance(version_code, bool) or not isinstance(version_code, int) or not 1 <= version_code <= 2_100_000_000:
         raise ValueError("Invalid Android version code")
     if not isinstance(version_name, str) or not 1 <= len(version_name) <= 30:
         raise ValueError("Invalid version name")
-    project = validated_project(project)
+    project = validated_project(project,binary_assets)
+    runtime,launch,project_files=prepare_bundle(project,binary_assets)
     report = progress or (lambda _message: None)
     report("Preparing project and signing identity")
     signer = Signer(key)
     entries = []
+    overlays=web_overrides or {};used_overlays=set()
     with zipfile.ZipFile(io.BytesIO(template)) as source:
         if "assets/public/runtime.json" not in source.namelist() or "classes.dex" not in source.namelist():
             raise ValueError("This is not a CodePad standalone runtime template")
@@ -337,9 +373,14 @@ def build_apk(template, project, key, package, version_code=1, version_name="1.0
             name = info.filename
             if name.endswith("/") or re.match(r"^META-INF/(?:MANIFEST\.MF|[^/]+\.(?:SF|RSA|DSA|EC))$", name, re.I):
                 continue
-            data = source.read(name)
+            if name.startswith('assets/public/project/') or name in {'assets/public/runtime.json','assets/public/launch.json'}:continue
+            if not launch['nativePython'] and (name.startswith('assets/chaquopy/') or name.startswith('lib/')):continue
+            if launch['fast'] and name.startswith('assets/public/') and name not in {'assets/public/index.html','assets/public/boot.js','assets/public/boot.css'}:continue
+            relative=name.removeprefix("assets/public/") if name.startswith("assets/public/") else None
+            data=overlays[relative] if relative in overlays else source.read(name)
+            if relative in overlays:used_overlays.add(relative)
             if name == "AndroidManifest.xml":
-                data = patch_manifest(data, package, project["name"], version_code, version_name)
+                data = patch_manifest(data, package, project["name"], version_code, version_name, camera=any(re.search(r"(?:^|\n)\s*(?:import|from)\s+(?:cv2|mediapipe)\b", f["content"]) for f in project["files"]))
             elif name == "assets/public/runtime.json":
                 data = json.dumps(project, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
             elif name == "assets/capacitor.config.json":
@@ -347,6 +388,10 @@ def build_apk(template, project, key, package, version_code=1, version_name="1.0
                 config.update(appId=package, appName=project["name"])
                 data = json.dumps(config).encode("utf-8")
             entries.append((name, data, info.compress_type))
+    for name,data in overlays.items():
+        safe_name(name)
+        if name not in used_overlays and (not launch["fast"] or name in {"index.html","boot.js","boot.css"}):entries.append(("assets/public/"+name,data,zipfile.ZIP_DEFLATED))
+    entries.extend(("assets/public/"+name,data,zipfile.ZIP_STORED if not name.endswith((".html",".js",".css",".json",".txt",".py")) else zipfile.ZIP_DEFLATED) for name,data in project_files.items())
     report("Packaging runtime and attachments")
     entries.extend(v1_entries(entries, signer))
     unsigned = aligned_zip(entries)
@@ -355,8 +400,16 @@ def build_apk(template, project, key, package, version_code=1, version_name="1.0
     with zipfile.ZipFile(io.BytesIO(apk)) as check:
         if check.testzip() is not None:
             raise ValueError("APK archive verification failed")
-        if json.loads(check.read("assets/public/runtime.json")) != project:
+        if json.loads(check.read("assets/public/runtime.json")) != runtime:
             raise ValueError("APK project verification failed")
+        for info in check.infolist():
+            if info.filename == 'resources.arsc' or (info.filename.startswith('lib/') and info.filename.endswith('.so')):
+                if info.compress_type != zipfile.ZIP_STORED:
+                    raise ValueError('Android requires uncompressed resources and native libraries')
+                local = info.header_offset
+                offset = local + 30 + struct.unpack_from('<H', apk, local+26)[0] + struct.unpack_from('<H', apk, local+28)[0]
+                if offset % (16384 if info.filename.endswith('.so') else 4):
+                    raise ValueError('APK resource or library alignment failed')
     report("APK ready")
     return apk
 
