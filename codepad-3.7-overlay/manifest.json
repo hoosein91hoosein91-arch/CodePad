@@ -47,7 +47,7 @@
   },
   "mobile-src/assets/hub-academy-data.js": {
    "base": null,
-   "new": "3f41d6d645052f2368d9f067d2a9f6b89ddf017165416f85455af3ea7ff331a8"
+   "new": "dc5b4e971ca52fb6a554e20db30f386b6aa0b55ace92b0624a262d17429afcb9"
   },
   "mobile-src/assets/hub-academy.css": {
    "base": null,
@@ -415,7 +415,7 @@
   },
   "scripts/hub-academy.test.mjs": {
    "base": null,
-   "new": "da2e9be98e68073bbfe8597941c58e3a708a326175015c0f2d6234f9b23aabf4"
+   "new": "3614009dc12c6f7ee1e0687dc79d5a251e89b1f277852a136a623dd4b9fc73ba"
   },
   "scripts/hub-ctf.test.mjs": {
    "base": null,

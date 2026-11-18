@@ -14,6 +14,8 @@ test("every chapter has a runnable solution that actually passes its own tests",
     xss: "function escapeHtml(str) { return str.replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c])); }",
     jwt: "function decodeJwtPayload(token) { const p = token.split('.')[1]; return JSON.parse(atob(p.replace(/-/g,'+').replace(/_/g,'/'))); }",
     network: "function isPrivateIp(ip) { const p = ip.split('.').map(Number); if (p.length!==4||p.some(n=>Number.isNaN(n)||n<0||n>255)) return false; return p[0]===10||p[0]===127||(p[0]===192&&p[1]===168)||(p[0]===172&&p[1]>=16&&p[1]<=31)||(p[0]===169&&p[1]===254); }",
+    race: "function claimSeat(pool, seatId) { return pool.delete(seatId); }",
+    hmac: "function timingSafeEqual(a, b) { if (a.length !== b.length) return false; let diff = 0; for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i); return diff === 0; }",
   };
   assert.deepEqual(Object.keys(solutions).sort(), CHAPTERS.map((c) => c.id).sort(), "every chapter needs a reference solution in this test");
   for (const c of CHAPTERS) {
