@@ -1,0 +1,188 @@
+@import "tailwindcss";
+@import "@fontsource/vazirmatn/400.css";
+@import "@fontsource/vazirmatn/600.css";
+@import "@fontsource/vazirmatn/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+@theme {
+  --color-ink: #101410;
+  --color-panel: #1a211c;
+  --color-panel-2: #243028;
+  --color-paper: #e7f0e4;
+  --color-mist: #8d9b90;
+  --color-lime: #c6f135;
+  --color-lime-ink: #172006;
+  --color-coral: #ff6a3d;
+  --color-line: #314038;
+  --font-sans: "Vazirmatn", "Tahoma", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius-lab: 0.75rem;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body {
+    height: 100%;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+  }
+
+  body {
+    overflow: hidden;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background: var(--color-lime);
+    color: var(--color-lime-ink);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.jibos-chrome-reveal {
+  position: absolute;
+  z-index: 11;
+  inset-block-start: env(safe-area-inset-top, 0px);
+  inset-inline-start: calc(50% - 24px);
+  width: 48px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+}
+.jibos-chrome-reveal::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-paper) 30%, transparent);
+}
+.jibos-app-toolbar {
+  position: absolute;
+  z-index: 12;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: calc(48px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 8px 0;
+  border-bottom: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-ink) 90%, transparent);
+  color: var(--color-paper);
+  backdrop-filter: blur(16px);
+}
+.jibos-app-toolbar[hidden], .jibos-chrome-reveal[hidden] { display: none; }
+.jibos-chrome-reveal:focus-visible { outline: 2px solid var(--color-lime); outline-offset: -4px; }
+
+/* ── JibOS launcher: «ترمینال نئون» ───────────────────────────── */
+.jibos-grid {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--launcher-accent) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--launcher-accent) 9%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 45%, #000 80%, transparent 100%);
+}
+.jibos-scan {
+  background: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.18) 3px, rgba(0, 0, 0, 0) 4px);
+  mix-blend-mode: multiply;
+}
+.jibos-glow {
+  text-shadow:
+    0 0 8px color-mix(in srgb, var(--launcher-accent) 70%, transparent),
+    0 0 28px color-mix(in srgb, var(--launcher-accent) 35%, transparent);
+}
+.jibos-caret::after {
+  content: "▋";
+  margin-inline-start: 0.2em;
+  color: var(--launcher-accent);
+  animation: jibos-blink 1s steps(1) infinite;
+}
+@keyframes jibos-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.jibos-window {
+  animation: jibos-open 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: 50% 70%;
+}
+.jibos-window-out {
+  animation: jibos-close 0.17s ease-in forwards;
+}
+@keyframes jibos-open {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+@keyframes jibos-close {
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+.jibos-pop {
+  animation: jibos-pop 0.25s ease-out;
+}
+@keyframes jibos-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.jibos-wiggle {
+  animation: jibos-wiggle 0.32s ease-in-out infinite alternate;
+}
+@keyframes jibos-wiggle {
+  from {
+    transform: rotate(-2.5deg);
+  }
+  to {
+    transform: rotate(2.5deg);
+  }
+}
+.jibos-sheet {
+  animation: jibos-sheet 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes jibos-sheet {
+  from {
+    transform: translateY(24px);
+    opacity: 0.4;
+  }
+}

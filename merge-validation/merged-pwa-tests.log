@@ -1,0 +1,464 @@
+TAP version 13
+# Subtest: injects before </head>
+ok 1 - injects before </head>
+  ---
+  duration_ms: 2.738405
+  type: 'test'
+  ...
+# Subtest: injects the extensions script without a project id
+ok 2 - injects the extensions script without a project id
+  ---
+  duration_ms: 0.518613
+  type: 'test'
+  ...
+# Subtest: injects project id on the script and meta when provided
+ok 3 - injects project id on the script and meta when provided
+  ---
+  duration_ms: 1.837945
+  type: 'test'
+  ...
+# Subtest: does not duplicate grok:app_id
+ok 4 - does not duplicate grok:app_id
+  ---
+  duration_ms: 2.760373
+  type: 'test'
+  ...
+# Subtest: omits x:creator tags without both creator values
+ok 5 - omits x:creator tags without both creator values
+  ---
+  duration_ms: 3.308264
+  type: 'test'
+  ...
+# Subtest: injects x:creator tags when both creator values are set
+ok 6 - injects x:creator tags when both creator values are set
+  ---
+  duration_ms: 1.686732
+  type: 'test'
+  ...
+# Subtest: escapes x:creator values
+ok 7 - escapes x:creator values
+  ---
+  duration_ms: 0.212271
+  type: 'test'
+  ...
+# Subtest: does not duplicate x:creator tags
+ok 8 - does not duplicate x:creator tags
+  ---
+  duration_ms: 0.362029
+  type: 'test'
+  ...
+# Subtest: platform chrome overwrites share-card metas and always sets og:title
+not ok 9 - platform chrome overwrites share-card metas and always sets og:title
+  ---
+  duration_ms: 2.641387
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:105:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /property="og:title" content="Hello World"/. Input:
+    
+    '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><title>Hello World</title><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><title>Hello World</title><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:110:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: does not duplicate twitter:card or og:title
+ok 10 - does not duplicate twitter:card or og:title
+  ---
+  duration_ms: 0.481499
+  type: 'test'
+  ...
+# Subtest: a baked site.image is treated as a custom card
+ok 11 - a baked site.image is treated as a custom card
+  ---
+  duration_ms: 2.850289
+  type: 'test'
+  ...
+# Subtest: baked identity does not need a workspace filesystem
+ok 12 - baked identity does not need a workspace filesystem
+  ---
+  duration_ms: 0.520093
+  type: 'test'
+  ...
+# Subtest: a public card file wins over a baked site without card=custom
+ok 13 - a public card file wins over a baked site without card=custom
+  ---
+  duration_ms: 0.501038
+  type: 'test'
+  ...
+# Subtest: public/og.png wins when jpg is absent
+ok 14 - public/og.png wins when jpg is absent
+  ---
+  duration_ms: 1.902154
+  type: 'test'
+  ...
+# Subtest: resolveOgCardAsset: disk file, then bake, then empty (placeholder)
+ok 15 - resolveOgCardAsset: disk file, then bake, then empty (placeholder)
+  ---
+  duration_ms: 1.792545
+  type: 'test'
+  ...
+# Subtest: snapshotOgIdentity stamps card=custom from a public card file
+ok 16 - snapshotOgIdentity stamps card=custom from a public card file
+  ---
+  duration_ms: 0.535611
+  type: 'test'
+  ...
+# Subtest: snapshotOgIdentity stamps banner from public/x-banner.jpg
+ok 17 - snapshotOgIdentity stamps banner from public/x-banner.jpg
+  ---
+  duration_ms: 0.439429
+  type: 'test'
+  ...
+# Subtest: emits x:game:image for a public host when site.banner is set
+ok 18 - emits x:game:image for a public host when site.banner is set
+  ---
+  duration_ms: 0.313762
+  type: 'test'
+  ...
+# Subtest: does not emit x:game:image without a public host or banner
+ok 19 - does not emit x:game:image without a public host or banner
+  ---
+  duration_ms: 0.238148
+  type: 'test'
+  ...
+# Subtest: site title Grok App is a real name, not a sentinel
+ok 20 - site title Grok App is a real name, not a sentinel
+  ---
+  duration_ms: 0.123087
+  type: 'test'
+  ...
+# Subtest: published grok.me slug is still a title fallback
+not ok 21 - published grok.me slug is still a title fallback
+  ---
+  duration_ms: 3.197988
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:246:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /property="og:title" content="Wild Race"/. Input:
+    
+    '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><meta property="og:image" content="https://wild-race.grok.me/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><meta property="og:image" content="https://wild-race.grok.me/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:250:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: rejects Vercel system hosts as og:image origins
+ok 22 - rejects Vercel system hosts as og:image origins
+  ---
+  duration_ms: 0.159238
+  type: 'test'
+  ...
+# Subtest: published VITE_PUBLIC_HOSTNAME wins over request Host for og:image
+ok 23 - published VITE_PUBLIC_HOSTNAME wins over request Host for og:image
+  ---
+  duration_ms: 0.4669
+  type: 'test'
+  ...
+# Subtest: vercel Host without a public hostname emits no og:image
+ok 24 - vercel Host without a public hostname emits no og:image
+  ---
+  duration_ms: 0.191378
+  type: 'test'
+  ...
+# Subtest: emits og:image for a public host and prefers a custom card
+not ok 25 - emits og:image for a public host and prefers a custom card
+  ---
+  duration_ms: 0.3063
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:305:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /property="og:image" content="https:\/\/og\.grok\.me\/v1\/card\.png\?host=wild-race\.grok\.me&amp;title=Wild%20Race"/. Input:
+    
+    '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="Wild Race"><meta property="og:image" content="https://wild-race.grok.me/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="Wild Race"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="Wild Race"><meta property="og:image" content="https://wild-race.grok.me/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="Wild Race"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:311:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: placeholder og:image appends site.color when it is 6-digit hex
+not ok 26 - placeholder og:image appends site.color when it is 6-digit hex
+  ---
+  duration_ms: 0.263135
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:326:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /property="og:image" content="https:\/\/og\.grok\.me\/v1\/card\.png\?host=wild-race\.grok\.me&amp;title=Wild%20Race&amp;color=FF4D2E"/. Input:
+    
+    '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="Wild Race"><meta property="og:image" content="https://wild-race.grok.me/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="Wild Race"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="Wild Race"><meta property="og:image" content="https://wild-race.grok.me/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="Wild Race"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:331:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: document title entities are not double-escaped on og:title
+not ok 27 - document title entities are not double-escaped on og:title
+  ---
+  duration_ms: 0.292972
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:349:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /property="og:title" content="Cats &amp; Dogs"/. Input:
+    
+    '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><title>Cats &amp; Dogs</title><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><title>Cats &amp; Dogs</title><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:353:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: site.json title wins over the host slug
+ok 28 - site.json title wins over the host slug
+  ---
+  duration_ms: 0.125629
+  type: 'test'
+  ...
+# Subtest: injects into documents with no head element
+not ok 29 - injects into documents with no head element
+  ---
+  duration_ms: 0.382466
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:365:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /property="og:title" content="Solo"/. Input:
+    
+    '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head><body>hi</body></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head><body>hi</body></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:368:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: streaming injector matches </HEAD> case-insensitively
+not ok 30 - streaming injector matches </HEAD> case-insensitively
+  ---
+  duration_ms: 0.515862
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:372:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /property="og:title" content="x"/. Input:
+    
+    '<html><HEAD><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><title>x</title><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head><body>hello</body></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><HEAD><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><title>x</title><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head><body>hello</body></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:379:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: omits the extensions script when the deployer disables it
+ok 31 - omits the extensions script when the deployer disables it
+  ---
+  duration_ms: 1.313933
+  type: 'test'
+  ...
+# Subtest: keeps the extensions script on commercial when the deployer enables it
+ok 32 - keeps the extensions script on commercial when the deployer enables it
+  ---
+  duration_ms: 4.057076
+  type: 'test'
+  ...
+# Subtest: does not duplicate the extensions script
+ok 33 - does not duplicate the extensions script
+  ---
+  duration_ms: 0.750401
+  type: 'test'
+  ...
+# Subtest: is idempotent
+ok 34 - is idempotent
+  ---
+  duration_ms: 0.259334
+  type: 'test'
+  ...
+# Subtest: uses the app name in the injected title tag
+not ok 35 - uses the app name in the injected title tag
+  ---
+  duration_ms: 0.277697
+  type: 'test'
+  location: '/workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:432:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /apple-mobile-web-app-title" content="Wild Race"/. Input:
+    
+    '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: '<html><head><meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="جیب‌کد"><link rel="manifest" href="/__grok/manifest.webmanifest"><link rel="apple-touch-icon" href="/__grok/icon-180.png"><meta name="apple-mobile-web-app-title" content="جیب‌کد"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="theme-color" content="#000000"><script src="https://grok.com/grok-app-builder/extensions.js" defer></script></head></html>'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/scratch/b82b4fc524ea/work/merged/CodePad-main/scripts/grok-pwa-plugin.test.mjs:434:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1382:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+    Test.postRun (node:internal/test_runner/test:1522:19)
+    Test.run (node:internal/test_runner/test:1447:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: streaming injector handles </head> split across chunks
+ok 36 - streaming injector handles </head> split across chunks
+  ---
+  duration_ms: 0.566089
+  type: 'test'
+  ...
+# Subtest: streaming injector passes post-head chunks through untouched
+ok 37 - streaming injector passes post-head chunks through untouched
+  ---
+  duration_ms: 0.879142
+  type: 'test'
+  ...
+# Subtest: streaming injector falls back when no </head> is seen
+ok 38 - streaming injector falls back when no </head> is seen
+  ---
+  duration_ms: 1.417195
+  type: 'test'
+  ...
+# Subtest: detects install query
+ok 39 - detects install query
+  ---
+  duration_ms: 0.580138
+  type: 'test'
+  ...
+# Subtest: filters non-document paths
+ok 40 - filters non-document paths
+  ---
+  duration_ms: 0.350274
+  type: 'test'
+  ...
+# Subtest: strips install params from the app link
+ok 41 - strips install params from the app link
+  ---
+  duration_ms: 0.135392
+  type: 'test'
+  ...
+# Subtest: names the install page from host slug
+ok 42 - names the install page from host slug
+  ---
+  duration_ms: 0.082355
+  type: 'test'
+  ...
+# Subtest: rejects hosts that are not plain slugs
+ok 43 - rejects hosts that are not plain slugs
+  ---
+  duration_ms: 0.047648
+  type: 'test'
+  ...
+# Subtest: renders install page markup
+ok 44 - renders install page markup
+  ---
+  duration_ms: 0.288718
+  type: 'test'
+  ...
+# Subtest: escapes host-derived values in the install page
+ok 45 - escapes host-derived values in the install page
+  ---
+  duration_ms: 0.12301
+  type: 'test'
+  ...
+# Subtest: renders the manifest with the per-app name
+ok 46 - renders the manifest with the per-app name
+  ---
+  duration_ms: 2.230377
+  type: 'test'
+  ...
+# Subtest: vite config keeps the nitro serverDir wiring
+ok 47 - vite config keeps the nitro serverDir wiring
+  ---
+  duration_ms: 0.224375
+  type: 'test'
+  ...
+# Subtest: nitro middleware and its bundled assets exist
+ok 48 - nitro middleware and its bundled assets exist
+  ---
+  duration_ms: 1.847183
+  type: 'test'
+  ...
+# Subtest: vite plugin bakes og identity as a virtual module
+ok 49 - vite plugin bakes og identity as a virtual module
+  ---
+  duration_ms: 0.307377
+  type: 'test'
+  ...
+1..49
+# tests 49
+# suites 0
+# pass 41
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 298.470549

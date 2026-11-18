@@ -1,0 +1,41 @@
+@@@ jibpack 1 نوا: کارهای من
+@@@ file main.nava
+// Nava sample
+Ap "کارهای من"
+Fg #67f5a5
+Arr V1
+Num V2 = N0
+Store V1, V2
+
+Hd "📝 کارهای امروز"
+In V3 "یک کار تازه بنویس…"
+Row
+  Bt "➕ افزودن": Do V4
+  Bt "✓ اولی انجام شد": Do V5
+End
+Out "{Len(V1)} کار مانده · {V2} کار انجام شده"
+Out "🎉 همه را انجام دادی!" If Len(V1) = N0 And V2 > N0
+List V1 With Del
+Bt "پاک کردن همه": Clear V1; V2 = N0
+
+Act V4
+  If V3 = ""
+    Msg "اول چیزی بنویس ✍️"
+    Return
+  End
+  If Has(V1, V3)
+    Msg "این کار را قبلاً نوشته‌ای"
+  Else
+    Push V3 Into V1
+    Tone N660, N80
+  End
+  V3 = ""
+End
+
+Act V5
+  If Len(V1) > N0
+    Del First From V1
+    V2 += N1
+    Melody N523, N659, N784
+  End
+End

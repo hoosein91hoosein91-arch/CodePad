@@ -1,0 +1,101 @@
+package __APP_ID__;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.provider.Settings;
+import com.getcapacitor.JSArray;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.ActivityCallback;
+import androidx.activity.result.ActivityResult;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.zip.ZipFile;
+
+/** Device operations are exposed only to the local editor, never the browser. */
+@CapacitorPlugin(name="CodePadSystem")
+public class CodePadSystemPlugin extends Plugin {
+    @PluginMethod public void openTerminal(PluginCall call) {
+        getActivity().runOnUiThread(()->{try{getActivity().startActivity(new Intent(getContext(),CodePadTerminalActivity.class));call.resolve();}catch(Exception e){call.reject("ترمینال داخلی باز نشد.",e);}});
+    }
+    @PluginMethod public void pickInstall(PluginCall call) {
+        if(android.os.Build.VERSION.SDK_INT>=26&&!getContext().getPackageManager().canRequestPackageInstalls()) {
+            getActivity().startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+getContext().getPackageName())));
+            call.reject("اجازهٔ نصب از این منبع را فعال کن و دوباره «نصب APK» را بزن.");return;
+        }
+        Intent picker=new Intent(Intent.ACTION_OPEN_DOCUMENT);picker.addCategory(Intent.CATEGORY_OPENABLE);picker.setType("application/vnd.android.package-archive");
+        getActivity().runOnUiThread(()->{try{startActivityForResult(call,picker,"apkChosen");}catch(Exception e){call.reject("انتخاب فایل باز نشد.",e);}});
+    }
+    @ActivityCallback private void apkChosen(PluginCall call,ActivityResult result) {
+        if(call==null)return;Uri uri=result.getData()==null?null:result.getData().getData();
+        if(result.getResultCode()!=Activity.RESULT_OK||uri==null){JSObject r=new JSObject();r.put("opened",false);call.resolve(r);return;}
+        try {Intent installer=new Intent(Intent.ACTION_VIEW);installer.setDataAndType(uri,"application/vnd.android.package-archive");installer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);getActivity().startActivity(installer);JSObject r=new JSObject();r.put("opened",true);r.put("note","نصب و سازگاری امضا توسط نصب‌کنندهٔ Android بررسی می‌شود.");call.resolve(r);}catch(Exception e){call.reject("نصب‌کنندهٔ Android باز نشد.",e);}
+    }
+    @PluginMethod public void openBrowser(PluginCall call) {
+        String url=call.getString("url", "https://duckduckgo.com/");
+        Uri uri=Uri.parse(url);
+        if(!"https".equalsIgnoreCase(uri.getScheme())&&!"http".equalsIgnoreCase(uri.getScheme())) {call.reject("فقط HTTP و HTTPS پذیرفته می‌شوند.");return;}
+        if(uri.getHost()==null||uri.getUserInfo()!=null){call.reject("نشانی نامعتبر است.");return;}
+        getActivity().runOnUiThread(()->{try {
+            getActivity().startActivity(new Intent(getActivity(),CodePadBrowserActivity.class).putExtra("url",url));
+            JSObject result=new JSObject();result.put("opened",true);call.resolve(result);
+        }catch(Exception e){call.reject("مرورگر باز نشد.",e);}});
+    }
+    /** Shares a text report through Android's own share sheet (messengers, mail, notes...). Text only; no file URIs are exposed. */
+    @PluginMethod public void shareText(PluginCall call) {
+        String text=call.getString("text","");String subject=call.getString("subject","");
+        if(text==null||text.isEmpty()){call.reject("متنی برای اشتراک نیست.");return;}
+        if(text.length()>200000)text=text.substring(0,200000);
+        final String body=text;final String title=subject==null?"":subject;
+        getActivity().runOnUiThread(()->{try {
+            Intent send=new Intent(Intent.ACTION_SEND);send.setType("text/plain");send.putExtra(Intent.EXTRA_TEXT,body);
+            if(!title.isEmpty())send.putExtra(Intent.EXTRA_SUBJECT,title);
+            getActivity().startActivity(Intent.createChooser(send,title.isEmpty()?"CodePad":title));
+            JSObject result=new JSObject();result.put("shared",true);call.resolve(result);
+        }catch(Exception e){call.reject("برگهٔ اشتراک باز نشد.",e);}});
+    }
+    @PluginMethod public void listApps(PluginCall call) {
+        new Thread(()->{try {
+            PackageManager pm=getContext().getPackageManager();
+            ArrayList<ApplicationInfo> apps=new ArrayList<>(pm.getInstalledApplications(0));
+            Collections.sort(apps,(a,b)->pm.getApplicationLabel(a).toString().compareToIgnoreCase(pm.getApplicationLabel(b).toString()));
+            JSArray values=new JSArray();
+            for(ApplicationInfo app:apps){
+                boolean system=(app.flags&ApplicationInfo.FLAG_SYSTEM)!=0;
+                if(system&&!call.getBoolean("includeSystem",false))continue;
+                JSObject item=new JSObject();item.put("packageName",app.packageName);item.put("name",pm.getApplicationLabel(app).toString());item.put("system",system);item.put("launchable",pm.getLaunchIntentForPackage(app.packageName)!=null);values.put(item);
+            }
+            JSObject result=new JSObject();result.put("apps",values);call.resolve(result);
+        }catch(Exception e){call.reject("فهرست برنامه‌ها خوانده نشد.",e);}},"CodePad-apps").start();
+    }
+    @PluginMethod public void appDetails(PluginCall call) {
+        new Thread(()->{try {
+            String name=call.getString("packageName","");PackageManager pm=getContext().getPackageManager();
+            PackageInfo info=pm.getPackageInfo(name,PackageManager.GET_PERMISSIONS);ApplicationInfo app=info.applicationInfo;
+            JSObject result=new JSObject();result.put("packageName",name);result.put("name",pm.getApplicationLabel(app).toString());result.put("versionName",info.versionName);result.put("versionCode",android.os.Build.VERSION.SDK_INT>=28?info.getLongVersionCode():info.versionCode);
+            JSArray hints=new JSArray(),permissions=new JSArray();
+            if(info.requestedPermissions!=null)for(String permission:info.requestedPermissions)permissions.put(permission);
+            boolean flutter=false,react=false,web=false,unity=false;
+            ArrayList<String> apks=new ArrayList<>();apks.add(app.sourceDir);if(app.splitSourceDirs!=null)Collections.addAll(apks,app.splitSourceDirs);
+            for(String apk:apks)try(ZipFile z=new ZipFile(apk)){
+                java.util.Enumeration<? extends java.util.zip.ZipEntry> entries=z.entries();
+                while(entries.hasMoreElements()){String n=entries.nextElement().getName();flutter|=n.contains("libflutter.so")||n.startsWith("assets/flutter_assets/");react|=n.contains("libreactnative")||n.endsWith("index.android.bundle");web|=n.equals("assets/capacitor.config.json")||n.startsWith("assets/www/");unity|=n.contains("libunity.so");}
+            }
+            if(flutter)hints.put("Flutter / Dart (نشانهٔ بسته)");if(react)hints.put("React Native / JavaScript (نشانهٔ بسته)");if(web)hints.put("Web / Capacitor / Cordova (نشانهٔ بسته)");if(unity)hints.put("Unity (نشانهٔ بسته)");
+            result.put("technologyHints",hints);result.put("permissions",permissions);result.put("sourceAvailable",false);result.put("note","زبان دقیق و سورس از APK قابل بازیابی قطعی نیست. برای ویرایش، پروژهٔ سورس را متصل کن.");call.resolve(result);
+        }catch(Exception e){call.reject("اطلاعات برنامه در دسترس نیست.",e);}},"CodePad-app-detail").start();
+    }
+    @PluginMethod public void openApp(PluginCall call) {
+        try {Intent i=getContext().getPackageManager().getLaunchIntentForPackage(call.getString("packageName",""));if(i==null)throw new IllegalArgumentException();getActivity().startActivity(i);call.resolve();}catch(Exception e){call.reject("این برنامه صفحهٔ قابل اجرا ندارد.");}
+    }
+    @PluginMethod public void appSettings(PluginCall call) {
+        try {String name=call.getString("packageName",getContext().getPackageName());getActivity().startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+name)));call.resolve();}catch(Exception e){call.reject("تنظیمات باز نشد.");}
+    }
+}

@@ -1,0 +1,87 @@
+/* CodePad Hub: یک پنل مرتب به‌جای دکمه‌های پراکندهٔ Studio/Cyber. */
+.cp-hub-entry{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 16px;font:700 13px var(--font-mono,ui-monospace,monospace);letter-spacing:.08em;color:var(--cp-on-accent,#00160d);background:var(--cp-accent,#00ff9c);border:0;border-radius:8px;box-shadow:0 0 14px rgba(0,255,156,.35)}
+/* دکمه‌های قدیمی Studio و Cyber فقط برای خوانندهٔ صفحه/آزمون می‌مانند؛ دسترسی کاربر از طریق هاب است */
+.cp-workspaces [data-studio-launch],.cp-workspaces .cp-cyber-entry{position:absolute!important;inset-inline-end:0;top:0;width:2px!important;min-width:0!important;height:2px!important;min-height:0!important;overflow:hidden;padding:0!important;margin:0!important;border:0!important;opacity:0;z-index:5;font-size:1px}
+.cp-workspaces{position:relative}
+.cp-workspaces .cp-cyber-entry{inset-inline-end:6px!important}
+#cp-hub{position:fixed;inset:0;z-index:2147483450;display:flex;flex-direction:column;direction:rtl;background:#020807;color:#d6fff0;font:14px/1.7 Vazirmatn,ui-sans-serif,system-ui,sans-serif;background-image:radial-gradient(900px 420px at 80% -10%,rgba(0,255,156,.12),transparent 60%),radial-gradient(700px 380px at 0% 110%,rgba(25,230,255,.09),transparent 60%)}
+#cp-hub[hidden]{display:none}
+#cp-hub *{box-sizing:border-box}
+#cp-hub .hb-head{display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 14px 8px}
+#cp-hub .hb-name{flex:1;direction:ltr;text-align:left;font:700 15px var(--font-mono,ui-monospace,monospace);letter-spacing:.2em;color:#00ff9c;text-shadow:0 0 12px rgba(0,255,156,.55)}
+#cp-hub .hb-name small{display:block;font-weight:400;letter-spacing:.06em;font-size:10px;color:#6fb59a}
+#cp-hub .hb-x{width:44px;height:44px;border:1px solid #0f4a35;border-radius:10px;background:#04100c;color:#c8ffe6;font-size:16px}
+#cp-hub .hb-tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 10px;border-bottom:1px solid #0f4a35;scrollbar-width:none}
+#cp-hub .hb-tabs::-webkit-scrollbar{display:none}
+#cp-hub .hb-tabs button{flex:none;min-height:42px;padding:6px 16px;border:1px solid #0f4a35;border-radius:999px;background:#04100c;color:#9ad8c0;font:600 13px inherit}
+#cp-hub .hb-tabs button[aria-selected=true]{background:#00ff9c;color:#00160d;border-color:#00ff9c;box-shadow:0 0 14px rgba(0,255,156,.4)}
+#cp-hub .hb-body{flex:1;overflow:auto;padding:14px 14px max(24px,env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+#cp-hub .hb-view{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+#cp-hub h2{margin:0;font-size:20px;color:#00ff9c}
+#cp-hub h3{margin:10px 0 0;font-size:14px;color:#19e6ff;letter-spacing:.04em}
+#cp-hub p{margin:0}
+#cp-hub code{padding:1px 6px;border-radius:4px;background:#082019;color:#00ff9c;font:12px var(--font-mono,monospace)}
+#cp-hub .hb-hero{display:flex;gap:14px;align-items:center;padding:16px;border:1px solid #0f4a35;border-radius:14px;background:linear-gradient(135deg,rgba(0,255,156,.12),rgba(25,230,255,.06))}
+#cp-hub .hb-logo{flex:none;display:grid;place-items:center;width:64px;height:64px;border-radius:16px;background:#00ff9c;color:#00160d;font:800 26px var(--font-mono,monospace);box-shadow:0 0 26px rgba(0,255,156,.5)}
+#cp-hub .hb-hero p,#cp-hub .hb-lead{color:#8fcdb5;font-size:13px}
+#cp-hub .hb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+#cp-hub .hb-card{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:start;min-height:112px;padding:14px;border:1px solid #0f4a35;border-radius:14px;background:#04100c;color:#d6fff0;transition:transform .12s,border-color .12s,box-shadow .12s}
+#cp-hub .hb-card:hover,#cp-hub .hb-card:focus-visible{border-color:#00ff9c;box-shadow:0 0 18px rgba(0,255,156,.25);transform:translateY(-2px)}
+#cp-hub .hb-card:active{transform:scale(.98)}
+#cp-hub .hb-ico{font-size:26px;line-height:1}
+#cp-hub .hb-card b{font-size:14px;color:#eafff5}
+#cp-hub .hb-card small{font-size:11.5px;color:#7fb8a1;line-height:1.5}
+#cp-hub .hb-tip{padding:12px 14px;border:1px dashed #1f7a58;border-radius:12px;background:rgba(0,255,156,.04)}
+#cp-hub .hb-tip b{color:#ffd23f}
+#cp-hub .hb-bar{display:flex;gap:8px;align-items:center}
+#cp-hub .hb-bar input{flex:1;min-width:0;min-height:44px;padding:8px 12px;border:1px solid #0f4a35;border-radius:10px;background:#04100c;color:#d6fff0;font:inherit}
+#cp-hub .hb-count{color:#6fb59a;font-size:12px;white-space:nowrap}
+#cp-hub .hb-chips{display:flex;gap:6px;flex-wrap:wrap}
+#cp-hub .hb-chips button{min-height:36px;padding:4px 12px;border:1px solid #0f4a35;border-radius:999px;background:#04100c;color:#9ad8c0;font:12.5px inherit}
+#cp-hub .hb-chips button[aria-pressed=true]{background:rgba(0,255,156,.16);border-color:#00ff9c;color:#00ff9c}
+#cp-hub .hb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+#cp-hub .hb-sample{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #0f4a35;border-radius:12px;background:#04100c}
+#cp-hub .hb-st{display:flex;justify-content:space-between;gap:8px}
+#cp-hub .hb-st b{color:#eafff5;font-size:14px}
+#cp-hub .hb-lvl{direction:ltr;color:#19e6ff;font-size:10px;letter-spacing:2px;white-space:nowrap}
+#cp-hub .hb-sample p{color:#8fcdb5;font-size:12.5px;flex:1}
+#cp-hub .hb-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#cp-hub .hb-file{margin-inline-start:auto;direction:ltr;font:10.5px var(--font-mono,monospace);color:#4f8d77}
+#cp-hub .hb-btn{min-height:40px;padding:6px 12px;border:1px solid #1f7a58;border-radius:10px;background:#082019;color:#c8ffe6;font:600 12.5px inherit}
+#cp-hub .hb-btn.pri{background:#00ff9c;color:#00160d;border-color:#00ff9c}
+#cp-hub .hb-btn:disabled{opacity:.5}
+#cp-hub .hb-empty,#cp-hub .hb-warn{padding:12px;border-radius:10px;background:#04100c;color:#9ad8c0}
+#cp-hub .hb-warn{border:1px solid #6a5a1a;color:#ffd23f;font-size:12px}
+#cp-hub .hb-news{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#cp-hub .hb-news button{width:100%;display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:start;padding:11px 13px;border:1px solid #0f4a35;border-inline-start:3px solid #00ff9c;border-radius:10px;background:#04100c;color:#d6fff0;min-height:56px}
+#cp-hub .hb-news b{font-size:13.5px;line-height:1.55}
+#cp-hub .hb-news small{color:#6fb59a;font-size:11px}
+@media (max-width:560px){#cp-hub .hb-hero{flex-direction:column;align-items:flex-start}#cp-hub .hb-list{grid-template-columns:1fr}#cp-hub .hb-grid{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){#cp-hub .hb-card{transition:none}}
+
+#cp-hub .hb-sec{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #0f4a35;border-radius:14px;background:rgba(4,16,12,.7)}
+#cp-hub .hb-sec h3{margin:0;color:#00ff9c;font-size:15px}
+#cp-hub .hb-steps{margin:0;padding-inline-start:22px;color:#c8ffe6;font-size:13px}
+#cp-hub .hb-check{display:flex;gap:8px;align-items:center;font-size:13px;color:#9ad8c0}
+#cp-hub .hb-pre{margin:0;padding:10px;max-height:240px;overflow:auto;border:1px solid #0f4a35;border-radius:8px;background:#020807;color:#9ef7cf;font:12px/1.6 var(--font-mono,ui-monospace,monospace);white-space:pre-wrap;word-break:break-all}
+#cp-hub .hb-find{margin:0;padding-inline-start:20px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+#cp-hub .hb-hint{margin:0;padding:8px 10px;border-radius:8px;background:rgba(255,210,63,.08);border:1px solid #6a5a1a;color:#ffd23f;font-size:12.5px}
+#cp-hub .hb-card.done{border-color:#00ff9c;background:rgba(0,255,156,.07)}
+#cp-hub input[type=text],#cp-hub textarea,#cp-hub input[type=file]{width:100%;min-height:44px;padding:8px 12px;border:1px solid #0f4a35;border-radius:10px;background:#04100c;color:#d6fff0;font:inherit}
+#cp-hub textarea{resize:vertical}
+#cp-hub details{border:1px solid #0f4a35;border-radius:8px;padding:6px 10px}
+#cp-hub summary{cursor:pointer;color:#19e6ff;min-height:32px}
+#cp-hub .hb-news li{position:relative}
+#cp-hub .hb-news .hb-pin{position:absolute;inset-block-start:6px;inset-inline-end:6px;width:44px;min-height:44px!important;padding:0!important;border:0!important;background:transparent!important;font-size:18px}
+#cp-hub .hb-news li button:first-child{padding-inline-end:52px}
+
+/* بخش امنیت/سایبر هاب: هویت بصری هم‌خانواده با آکادمی و ترمینال Cyber Lab (کارت‌های لبه‌دار، حس عملیاتی) */
+#cp-hub .hb-view-cyber .hb-sec{position:relative;border-radius:16px;background:linear-gradient(170deg,rgba(4,26,17,.88),rgba(2,14,10,.88));box-shadow:0 0 0 1px rgba(0,255,156,.16),0 10px 28px -18px rgba(0,255,156,.3);overflow:hidden;padding-inline-start:18px}
+#cp-hub .hb-view-cyber .hb-sec::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:3px;background:linear-gradient(#00ff9c,#22e8ff)}
+#cp-hub .hb-view-cyber .hb-sec h3{display:flex;align-items:center;gap:6px;letter-spacing:.04em}
+#cp-hub .hb-view-cyber .hb-sec h3::before{content:"❯";color:#22e8ff;font-size:12px}
+#cp-hub .hb-view-cyber .hb-card{border-radius:12px}
+#cp-hub .hb-view-cyber .hb-card[style*="cursor:default"]{border-color:rgba(0,255,156,.3);background:rgba(2,18,12,.78)}
+#cp-hub .hb-view-cyber .hb-btn{border-radius:10px}
+#cp-hub .hb-view-cyber .hb-btn.pri{box-shadow:0 0 14px rgba(0,255,156,.5)}
+#cp-hub .hb-view-cyber .hb-pre{border-radius:10px;background:#010a07}

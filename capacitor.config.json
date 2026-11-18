@@ -1,0 +1,13 @@
+{
+  "appId": "com.hoosein.codepad.stable",
+  "appName": "CodePad",
+  "webDir": "dist/client",
+  "backgroundColor": "#101410",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "adjustMarginsForEdgeToEdge": "disable",
+    "allowMixedContent": true
+  }
+}

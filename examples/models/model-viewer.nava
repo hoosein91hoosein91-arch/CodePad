@@ -1,0 +1,6 @@
+Pg "Crystal" | G9 | Bg "#070b14" | Scene N360,N480
+Model Gem "crystal.glb"
+Camera N6,N18,N0 | Orbit Tr
+Frame
+  Rotate Gem N0,N30 * Dt,N0
+End

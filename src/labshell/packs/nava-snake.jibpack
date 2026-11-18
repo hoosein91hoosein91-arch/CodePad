@@ -1,0 +1,59 @@
+@@@ jibpack 1 نوا: مار
+@@@ file main.nava
+// Nava sample
+Ap "مار نوا"
+Fg #67f5a5
+Bg #050b08
+Canvas N320, N320
+Arr V1 = [[N8, N8], [N7, N8], [N6, N8]]
+Var V2 = [N1, N0]
+Var V3 = [N12, N8]
+Num V4 = N0
+Num V5 = N0
+Store V5
+
+Hd "🐍 مار نوا"
+Out "امتیاز {V4} · رکورد {V5}"
+Row
+  Bt "➡️": Do V6 [N1, N0]
+  Bt "⬇️": Do V6 [N0, N1]
+  Bt "⬆️": Do V6 [N0, -N1]
+  Bt "⬅️": Do V6 [-N1, N0]
+End
+
+Act V6 With V7
+  If V7[N1] != -V2[N1] Or V7[N2] != -V2[N2]: V2 = V7
+End
+
+Key
+  If K = "بالا": Do V6 [N0, -N1]
+  If K = "پایین": Do V6 [N0, N1]
+  If K = "چپ": Do V6 [-N1, N0]
+  If K = "راست": Do V6 [N1, N0]
+End
+
+Every N0d14 Sec
+  Var V8 = [V1[N1][N1] + V2[N1], V1[N1][N2] + V2[N2]]
+  If V8[N1] < N1 Or V8[N1] > N16 Or V8[N2] < N1 Or V8[N2] > N16 Or Has(V1, V8)
+    Tone N120, N400
+    Msg "باختی! امتیاز: {V4}"
+    V1 = [[N8, N8], [N7, N8], [N6, N8]]
+    V2 = [N1, N0]
+    V4 = N0
+    Return
+  End
+  Push V8 Into First V1
+  If V8 = V3
+    V4 += N1
+    V5 = Max(V5, V4)
+    V3 = [Rand(N1, N16), Rand(N1, N16)]
+    Tone N988, N60
+  Else
+    Del Last From V1
+  End
+  ClearCanvas "#07110e"
+  Circle V3[N1] * N20 - N10, V3[N2] * N20 - N10, N8, "#ff5577"
+  Each V9 Pos V1
+    Rect V9[N1] * N20 - N19, V9[N2] * N20 - N19, N18, N18, "#67f5a5"
+  End
+End

@@ -1,0 +1,58 @@
+package __APP_ID__;
+
+import android.Manifest;
+import android.content.Intent;
+import android.os.Build;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.PermissionState;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
+import java.lang.ref.WeakReference;
+
+@CapacitorPlugin(name = "CodePadRuntime", permissions = {
+    @Permission(alias = "notifications", strings = { Manifest.permission.POST_NOTIFICATIONS })
+})
+public class CodePadRuntimePlugin extends Plugin {
+    private static WeakReference<CodePadRuntimePlugin> current = new WeakReference<>(null);
+    @Override public void load() { current = new WeakReference<>(this); }
+    static void publish(String channel, JSObject data) {
+        CodePadRuntimePlugin plugin = current.get();
+        if (plugin == null) return;
+        JSObject result = new JSObject(); result.put("channel", channel); result.put("data", data);
+        plugin.notifyListeners("runtimeEvent", result);
+    }
+    @PluginMethod public void start(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 33 && getPermissionState("notifications") != PermissionState.GRANTED) {
+            requestPermissionForAlias("notifications", call, "notificationReady"); return;
+        }
+        startRuntime(call);
+    }
+    @PermissionCallback private void notificationReady(PluginCall call) { startRuntime(call); }
+    private void startRuntime(PluginCall call) {
+        String channel = call.getString("channel", ""), payload = call.getString("payload", "");
+        if (channel.isEmpty() || payload.isEmpty()) { call.reject("فایل اجرایی انتخاب نشده است."); return; }
+        try {
+            if (!CodePadRuntimeService.reserve(channel, payload)) {
+                call.reject("یک برنامهٔ Python هنوز در حال اجراست؛ ابتدا آن را متوقف کن."); return;
+            }
+            Intent intent = new Intent(getContext(), CodePadRuntimeService.class);
+            intent.setAction(CodePadRuntimeService.START);
+            // Source and attachments stay in process memory, not in a Binder parcel.
+            if (Build.VERSION.SDK_INT >= 26) getContext().startForegroundService(intent);
+            else getContext().startService(intent);
+            call.resolve();
+        } catch (Exception error) { CodePadRuntimeService.clearReservation(); call.reject("اجرای پس‌زمینه شروع نشد: " + error.getClass().getSimpleName()); }
+    }
+    @PluginMethod public void stop(PluginCall call) {
+        CodePadRuntimeService service = CodePadRuntimeService.instance;
+        String channel = call.getString("channel", "");
+        if (service != null && (channel.isEmpty() || channel.equals(service.channel))) service.stopByUser();
+        else CodePadRuntimeService.cancelReservation(channel);
+        call.resolve();
+    }
+    @PluginMethod public void status(PluginCall call) { call.resolve(CodePadRuntimeService.status()); }
+}

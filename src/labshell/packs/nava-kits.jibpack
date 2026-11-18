@@ -1,0 +1,26 @@
+@@@ jibpack 1 نوا: ابزارهای آماده (مخفف)
+@@@ file main.nava
+// Nava sample
+Pg "جعبه‌ابزار من"
+Fg #67f5a5
+Tx "ماشین‌حساب، تایمر و شمارنده — هر کدام یک خط"
+Cal Mb
+Tm N60
+Cnt
+// Nava sample
+Num V1 = N0
+Out "امتیاز: {V1}"
+Bt "یک امتیاز" (ru240rn64yN24D08): V1 += N1
+Bt "پیام" (ru240rn64yGi65G72): Speak "آفرین! 🎉"
+// Nava sample
+Df "جایزه"
+Bt "جایزه ۱۰تایی"
+  If V1 >= N5
+    V1 += N10
+    Msg "جایزه گرفتی!"
+  Else
+    Msg "اول ۵ امتیاز بگیر"
+  End
+End
+End
+Us "جایزه"

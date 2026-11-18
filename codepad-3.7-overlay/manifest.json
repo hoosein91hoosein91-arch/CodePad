@@ -1,0 +1,465 @@
+{
+ "base": "CodePad-3.7.0-source.zip",
+ "files": {
+  "capacitor.config.json": {
+   "base": "6b1e723779b4d7f761bf53b0819bf645511c7a7fd60b44acf663b4af395b88a5",
+   "new": "497e9b4d33309b62b4eebdfaaea072061f6fbea38393821f3cc626dbcba4b385"
+  },
+  "export-player-src/python-runner.js": {
+   "base": "de7e7d3e998ffbae160d039328776b24b02c8ef6967d02e071419de609c1e891",
+   "new": "7097bf56ab12f6f36e0a124b5ee73e66052663f15386af6f16d193c52e228640"
+  },
+  "mobile-src/assets/ai-provider.js": {
+   "base": null,
+   "new": "84a22740c8d410c5deb8b4fc36528c7190cf85007a0446e88b261baf20aac11c"
+  },
+  "mobile-src/assets/confidential.css": {
+   "base": null,
+   "new": "810c35ba1fd88966b911caf30eba03b967e94581fa58baeeab93046a4a1b1979"
+  },
+  "mobile-src/assets/confidential.js": {
+   "base": null,
+   "new": "1dca1af5f9e00ab968a8b785b253d1fd085d87e8da4a0f79bc583f9b8335e2c2"
+  },
+  "mobile-src/assets/cyber-lab.js": {
+   "base": null,
+   "new": "dd87ff4403b43dd9cdae942f2f2c9a130199313a80c0b2bb415da9cfe498493d"
+  },
+  "mobile-src/assets/cyber-samples.js": {
+   "base": null,
+   "new": "660c8b38f4d427d22ba6d004e4adc9e8cd304b3754a99dfb2a02ad019a318b44"
+  },
+  "mobile-src/assets/device-tools.js": {
+   "base": null,
+   "new": "127927fe7faf6a767cee7da087dec7c32619e230f9a1704b3429456e2b5bea39"
+  },
+  "mobile-src/assets/editor.js": {
+   "base": "cde83abd5ce89a935f59ec42617bb1629ecb3e1f8a72728e60987257b6f1915d",
+   "new": "3087eb90681d69ff35451976b098ef60166000c288179683bcd594e7ca77d578"
+  },
+  "mobile-src/assets/focus-playlist.js": {
+   "base": null,
+   "new": "94ac1eb90803b214a8968ef352cb21fed2dba21e45ad516a26f521db30e90f6b"
+  },
+  "mobile-src/assets/hacker.css": {
+   "base": null,
+   "new": "bfd388de99a6d1d524f99ac4e32a053307afb475853712dc718fad23fece14e3"
+  },
+  "mobile-src/assets/hub-academy-data.js": {
+   "base": null,
+   "new": "74eb0308f75b1296ab11fd031b1517b238d848e91c1338dbeba2d7f7c6dff576"
+  },
+  "mobile-src/assets/hub-academy.css": {
+   "base": null,
+   "new": "caface92e6c9e43144e4f27a9698bce7bbf6fedbc136bd17ef0eafac8ac5d99a"
+  },
+  "mobile-src/assets/hub-academy.js": {
+   "base": null,
+   "new": "d1449b65e87deccab2dde4c0eff57c08e04b42ec5338464b24b32aaae2976cd9"
+  },
+  "mobile-src/assets/hub-confidential.js": {
+   "base": null,
+   "new": "11eeb19b02cf497b469af64df61bbcdb55cfe108396bb507c90af0f50f9b4757"
+  },
+  "mobile-src/assets/hub-ctf-data.js": {
+   "base": null,
+   "new": "3035c4e22871f5e1a052be9ad5553c3f7b8b64a0ba5b771c0d7997aa6101c23d"
+  },
+  "mobile-src/assets/hub-ctf.js": {
+   "base": null,
+   "new": "d89870ab63e74ce0ddb553a8a258fe2e89b43e4182c39430f7b76199cb6ae544"
+  },
+  "mobile-src/assets/hub-data.js": {
+   "base": null,
+   "new": "881aad9e7b981ed74ad252da3d7eb430c14338c5b06edbe2c6eeab6a3b5cac1c"
+  },
+  "mobile-src/assets/hub-forensics.js": {
+   "base": null,
+   "new": "5f157bd6fc5fc21ed611399b2aa5140c82087900fac47ef6867b205b89cd053d"
+  },
+  "mobile-src/assets/hub-security.js": {
+   "base": null,
+   "new": "332ebe38ccba1a4f08a1398d628cd49a5468a330fb467316f8147cebe0b0aea6"
+  },
+  "mobile-src/assets/hub.css": {
+   "base": null,
+   "new": "270fd03fdec416e00d646b0c6cda2837ee0d7d745db30927b184bb1799061de6"
+  },
+  "mobile-src/assets/hub.js": {
+   "base": null,
+   "new": "80adac872838770cdcbb5f9a9b9b213e5d047b125c6ad0f4137bbea05452d07b"
+  },
+  "mobile-src/assets/launcher.js": {
+   "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
+   "new": "0c47b553b956ee6d454b0224b19a6dbcbcb3a94c71beca2116eb029616c990d9"
+  },
+  "mobile-src/assets/music.css": {
+   "base": null,
+   "new": "b2d01a0c7d846707cdb7766f8c0e8ca8653dcba8264eef5d6dfbb59f97e81bc4"
+  },
+  "mobile-src/assets/music.js": {
+   "base": null,
+   "new": "7367ba72b9b11ad2d057b25199e1f3a2e0b8c2543ecce63a65aec2c2823afea4"
+  },
+  "mobile-src/assets/project-zip.js": {
+   "base": "d39bd45c49a366aa0152a0ee3c3dd613e123de5dbfaf764f144084a0dc7818c2",
+   "new": "ee7fe8a5c484db7ef11aa5009b54c288c14ace328f940f20503e5ff319423995"
+  },
+  "mobile-src/assets/python-3d.js": {
+   "base": null,
+   "new": "b60c2cf1669d57d6d0238e6ea091d82326f1ad37308f05d6e3666782b7260dff"
+  },
+  "mobile-src/assets/python-engine.js": {
+   "base": "9edc05a8d6b6853158cfd786305fd6b9a79bc17ce4f5f7b1190cbeb9d93033f6",
+   "new": "bfbf98b1814a0ceae750b6f58a279b8237f8fe721bb1ffd9807ed42f57d48f9a"
+  },
+  "mobile-src/assets/python-graphics.js": {
+   "base": "4778c7ad035b37c2ca00ac23e1c39f13a96dbe0191a4caedb2ecbd0cfcfec685",
+   "new": "acd6d27d3cadb8156e6f1c2d5d0e431fc3a7028375d0fe4f02e7ad6c2730842c"
+  },
+  "mobile-src/assets/python-input.js": {
+   "base": "d09882459c0078bf70154f4562a9b3a9208a63b616a7bde7029e8822c9382864",
+   "new": "fbf7274f95f0d5d45730171b2507351b9c3bb8e019989d2900de117f916f0551"
+  },
+  "mobile-src/assets/report-export.js": {
+   "base": null,
+   "new": "46f4b5f911ac0dc0374a9bd20c4afb97cdb3be92451bc2d46e077911b6a2836b"
+  },
+  "mobile-src/assets/run-config.js": {
+   "base": null,
+   "new": "0ed9656771536141953c5841a27b57fb128e78d2c855b4010f57407e37f49746"
+  },
+  "mobile-src/assets/runtime.js": {
+   "base": "ff4218a9802a6804384fb45414c2cdbe2bd6632af1f8fffdd09a7a4a524aa2c8",
+   "new": "482cd0efeb3834465ba1f448d1a11d0022fd6e7fb127275c89515e12b5c1cbb4"
+  },
+  "mobile-src/assets/studio-core.js": {
+   "base": "a439c1b911dc64bb50a2cac1ee5bd60a1e0faef66210e29b1738dd422f5769f9",
+   "new": "7352f664522b21caf7f5f5f62c606c50ab4151de47adfe3d3b0962346b612fdc"
+  },
+  "mobile-src/assets/studio.js": {
+   "base": "7aa11c842338e4db85b1d6787b25a9b24bdf9ffeda24a4fd5716541ade6f5d8f",
+   "new": "52c640a1ddcbd7b27aa6d5427de9793d12fde25d904af94abb46c702c985e630"
+  },
+  "mobile-src/index.html": {
+   "base": "eddf31ab45fbae51a673637b45befd1998ed83b3f06fa9f95a78b70b8644307d",
+   "new": "4e97be614064f76903a48739d3baeb5edabccf930f23642ffe747f04571de1b0"
+  },
+  "package.json": {
+   "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
+   "new": "dc9bf946ab18716e861abaf7cf77935c9e6ab3afdfbb78e101657a524560683e"
+  },
+  "public/background/codepad3d.py": {
+   "base": null,
+   "new": "63276e962f49ea47df0374282cf8887307033bf428b2b05c684273b851b0a294"
+  },
+  "public/background/desktop-worker.js": {
+   "base": null,
+   "new": "baf8e35ba44e13313de39ea422c8cabcd0029b5d9f142ab7d952948015051f1c"
+  },
+  "public/background/interactive-input.js": {
+   "base": "8d03865317b24b86618fc3b0de322affedd25d3e92e19ff05fde3b6c9e94dffc",
+   "new": "9b2154369d4da1111db592f740cd9fc5f70ca1b305217fabf3bc2c090b06122b"
+  },
+  "public/background/libs-loader.js": {
+   "base": null,
+   "new": "0d1d495cfd8c846c70daadc0caaa4ecd95e729821b938cd2f537a4bb47fd0542"
+  },
+  "public/background/python-worker.js": {
+   "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
+   "new": "8ec1e2bce082dcb19b25428db05e09d3dbba00bb5762d4b4d5cbebde352f9077"
+  },
+  "public/favicon.svg": {
+   "base": "c0e71d00c451894886c3a5bd362d1ff714afe0b2627d697406f8111fe428d2a2",
+   "new": "d3605d911f95ae13b22faf03d4a4eabc177cfba8efb6d05e24c4059f46f5e990"
+  },
+  "public/icon-192.png": {
+   "base": "0da6ccc3c0362e7268603b49b93c0f89e339e6b35cf29737f65240403f829f2d",
+   "new": "54973fe45464ccb287c50f893e3ae0aeb77be51b141b03f9fd32d9e863c24119"
+  },
+  "public/icon-512.png": {
+   "base": "a4c8353f44cfd990b2d08123c91611d19183e11134dfdf95425d6ec3380234f6",
+   "new": "5191171e5e71a7d6b36b882d32ef15715fa732cb294c08d05eb80d4b7f5e17d0"
+  },
+  "public/libs/CHARTJS-LICENSE.txt": {
+   "base": null,
+   "new": "41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce"
+  },
+  "public/libs/MATTER-LICENSE.txt": {
+   "base": null,
+   "new": "ed182087be5b26734aa6d4789743de3a97417950e8c1e3ff2e3d19c6462720d3"
+  },
+  "public/libs/THREE-LICENSE.txt": {
+   "base": null,
+   "new": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+  },
+  "public/libs/chart.min.js": {
+   "base": null,
+   "new": "2812cb8825fdc57469eb2f7bb055e9429244e599920511ee477e828499b632cb"
+  },
+  "public/libs/matter.min.js": {
+   "base": null,
+   "new": "72d30be0f579eb02ce1e0b6f9d359a4f392e6837e5a26ba8be5dbee7f88e24ae"
+  },
+  "public/libs/p5.min.js": {
+   "base": null,
+   "new": "2ee031e707ccbd2cc8551c985fd1ebf5f59fea0abe186a7b23606568a1a306a1"
+  },
+  "public/libs/three.min.js": {
+   "base": null,
+   "new": "b6c541eb6940c2d538496ef5ab429ea2f80d036c62366c2dbce47efbeb3614b3"
+  },
+  "resources/android/CodePadSystemPlugin.java.in": {
+   "base": "7822ef5e833b837da27fc447b09436eea2e21dcbb1bf40f10dcfe12410fea612",
+   "new": "107d6962581be929b2cf145fd0cb059c3bee7caf72f316330edfb96cbe6e2536"
+  },
+  "resources/android/res/drawable-land-hdpi/splash.png": {
+   "base": "896fd2b32860688eecb4a9d274910b35ac939073f39e68aa622e50416f8de217",
+   "new": "fc580d97e1ebb94bff4457e98eb5a9f7dcbb0b5184567ba7cf8987d7fd4d5aee"
+  },
+  "resources/android/res/drawable-land-mdpi/splash.png": {
+   "base": "7e1a29793c50650da94512fd7ee0efd86c1eec58b033c10fc0cbb08c77fd79c6",
+   "new": "9b30232cfd54ba71bc7dabf2623886f871272eb7ec0355a519c6d47a3b023d9e"
+  },
+  "resources/android/res/drawable-land-xhdpi/splash.png": {
+   "base": "3dae820f011e23afe8ba10a654c88ccc830d1e7f1b97a6800caf88cb62ab7fad",
+   "new": "f3574400a7e26dc7503bfeefb456a221b72c0b3f9916f42e33a06644e29a4bc7"
+  },
+  "resources/android/res/drawable-land-xxhdpi/splash.png": {
+   "base": "0641165eb168bfabf568fca237632f89112eeea84bb6ac87ac44838cc558dc0e",
+   "new": "2682821b514bf938c56a91b472a6e978e011010b03bac2339e5b13f0380c2693"
+  },
+  "resources/android/res/drawable-land-xxxhdpi/splash.png": {
+   "base": "8f44162cd65bc2d58bbda83f14a0aa45181434ba7f4a971403128c5b7eec7c4e",
+   "new": "56e495c05a85359db5240fb6b111041ac48a0015d07ab54b5e114aa8cad25cea"
+  },
+  "resources/android/res/drawable-port-hdpi/splash.png": {
+   "base": "04d5ed45bb0ceea610a417ae501aa2c818bd7e049493a5e384884782ebdb72c1",
+   "new": "1a58501d332449a9e8c8fb18c6a44b238de34c5108969e12c9f9dc8490d2f79d"
+  },
+  "resources/android/res/drawable-port-mdpi/splash.png": {
+   "base": "ec726b32f0f1f7c3c2bade3ee69731ca692a70abccd8cfb50d3ca13ec5ef7d05",
+   "new": "a5141c9f96b7d6ec2a2281b734e181486f3adfeb9d99b17785e2d996025afb12"
+  },
+  "resources/android/res/drawable-port-xhdpi/splash.png": {
+   "base": "2783fb32d921a23e6f7b534dfeb002d9e9798d1db77a2af45ba20f0da6b7f3ff",
+   "new": "2d05e58db6a39aa54e3035d83190843237d2635043fe53ac42f1eda0ea1ba7a1"
+  },
+  "resources/android/res/drawable-port-xxhdpi/splash.png": {
+   "base": "9092ea258bc5b55234b8c7675ee92c5c74cca5167e504315b4d20874a54551d3",
+   "new": "be50451ae29a14956925aa5a65f274fe751ac19e93a8ba64c0c8ed280a228fa1"
+  },
+  "resources/android/res/drawable-port-xxxhdpi/splash.png": {
+   "base": "6c697f70ec6882e8c2a5e8fa60095a17b99056e4c49fefdd3044ca71442afb0c",
+   "new": "f609ea07d83837aa6fd5cfeb607e8b9517b191c9d4f802e955aa498ffe90182b"
+  },
+  "resources/android/res/drawable/splash.png": {
+   "base": "7e1a29793c50650da94512fd7ee0efd86c1eec58b033c10fc0cbb08c77fd79c6",
+   "new": "9b30232cfd54ba71bc7dabf2623886f871272eb7ec0355a519c6d47a3b023d9e"
+  },
+  "resources/android/res/mipmap-hdpi/ic_launcher.png": {
+   "base": "3bbf3e960bc693707458f1ed16ac7acfd8b7091b33a74084e2739639da83979e",
+   "new": "775ab240ef8a0316adc295946b2544443cac080503bad70e0db27539b9c2bc8a"
+  },
+  "resources/android/res/mipmap-hdpi/ic_launcher_foreground.png": {
+   "base": "6c2002e81562234a6c68010daba7ac298ccc29beeb8835de90244ead651088a9",
+   "new": "3b220633e8ce98ebdaae263b87bac63fb81889daa6cb08d7ea5f45818de6d41e"
+  },
+  "resources/android/res/mipmap-hdpi/ic_launcher_round.png": {
+   "base": "3bbf3e960bc693707458f1ed16ac7acfd8b7091b33a74084e2739639da83979e",
+   "new": "8e0a37720d6b8f490dcdae9a22d6bfff37cad25e7e8d8496ba54c25d6427252c"
+  },
+  "resources/android/res/mipmap-mdpi/ic_launcher.png": {
+   "base": "625e3dadc71dc05dff6e33efaab2fe60b1203b21cd231438133aa8dfe453afa2",
+   "new": "64214d1abe47a4753e9966861a557553e9e03df54ae7c68ef8dd227944c374cd"
+  },
+  "resources/android/res/mipmap-mdpi/ic_launcher_foreground.png": {
+   "base": "6ec991094aeae84e9b2a64769186457732449a8fcb99ec20f329910d5e7d6f53",
+   "new": "2c7f7410bb8bb1fb37f1f78b7dae7d1da627e04765aebfdf2dc3d47236cff655"
+  },
+  "resources/android/res/mipmap-mdpi/ic_launcher_round.png": {
+   "base": "625e3dadc71dc05dff6e33efaab2fe60b1203b21cd231438133aa8dfe453afa2",
+   "new": "1ea9e070f13eabd003d4099c325f527c23dc55fc3d2df5acdc22d7ccf6ab4558"
+  },
+  "resources/android/res/mipmap-xhdpi/ic_launcher.png": {
+   "base": "e639733e16ed6a7ffbc9a0008c96c5f82ab5ecf3a88082db06504aa0a04a4631",
+   "new": "8757cc00e0f8688a5d3e2d38dfb4d5c5fc27826ebc515e285517930bf6beb981"
+  },
+  "resources/android/res/mipmap-xhdpi/ic_launcher_foreground.png": {
+   "base": "3f72aa27e0756fbbd18ff5810e6b78f758f0d32143fe7dd02542701688ff99e9",
+   "new": "cb7e146b2b2507bf8e88ec156f953cda3967087a996ab9e78e153ebcace2938b"
+  },
+  "resources/android/res/mipmap-xhdpi/ic_launcher_round.png": {
+   "base": "e639733e16ed6a7ffbc9a0008c96c5f82ab5ecf3a88082db06504aa0a04a4631",
+   "new": "3e8252613faf3e951f14ab29758f32068c62e68d58c30e72f8de730d7e87645f"
+  },
+  "resources/android/res/mipmap-xxhdpi/ic_launcher.png": {
+   "base": "e5d248886ddebc2ed4f0563f092962c142369537703a91381a188174eb466757",
+   "new": "d6e6dfe21eff0cd015f6f6107adf3a5d9cb07de88e320ba128a9950cc03d3383"
+  },
+  "resources/android/res/mipmap-xxhdpi/ic_launcher_foreground.png": {
+   "base": "2c61e59a499ca284e38b064b5e4cb701f3baca6cda9a36049bbd4e39898b02ce",
+   "new": "95db5a6ce43a630ecb00029c484d3e0a5ac2b8165715774364fba4e9c2ade54e"
+  },
+  "resources/android/res/mipmap-xxhdpi/ic_launcher_round.png": {
+   "base": "e5d248886ddebc2ed4f0563f092962c142369537703a91381a188174eb466757",
+   "new": "c023342aea8341cacf3b2f94dda68b2f7424b3a3660123e14940c71a5f7c9da2"
+  },
+  "resources/android/res/mipmap-xxxhdpi/ic_launcher.png": {
+   "base": "d547ed7f48ed76ef8965d5f92b9bbbca82e756c8ae15511dbce6909c049fb102",
+   "new": "54973fe45464ccb287c50f893e3ae0aeb77be51b141b03f9fd32d9e863c24119"
+  },
+  "resources/android/res/mipmap-xxxhdpi/ic_launcher_foreground.png": {
+   "base": "ab7a668090605b3ea45d426046b93daff87dbd501cf98171993d9784a317869a",
+   "new": "c9759e6a66cd292d41df611f2d0da1c9c5cf5d05dbd2b1a709f57680dc831836"
+  },
+  "resources/android/res/mipmap-xxxhdpi/ic_launcher_round.png": {
+   "base": "d547ed7f48ed76ef8965d5f92b9bbbca82e756c8ae15511dbce6909c049fb102",
+   "new": "57f94049e85d1769fcba28be9bfcbf930f8b5c26bf6f7ef60375796b2f641f78"
+  },
+  "resources/android/res/values/ic_launcher_background.xml": {
+   "base": "8768900820851d02b8b9620008babd6ee57766ae60a2160cf197e6735e5758f5",
+   "new": "1288cf44e0bd38c401af293dd036bcc0a14141c9a5896ad8e404c12aeee02373"
+  },
+  "resources/python/codepad.py": {
+   "base": "0650eb97b685c60a3124a1292db4d2e1f3542422d3edd554a19b7dcfccf8d191",
+   "new": "d922f869050eb3d0c894a9582f32b5e443c0cea053256f40cf9be3689a15cc95"
+  },
+  "resources/python/codepad_console.py": {
+   "base": "cce71f2147c985ffb347f97d8f3a271dea3d0d7732e2371bf9ac29e259673d44",
+   "new": "4753e96d23ef3b191bbc44423df45361f029a608550366bc05e953e8015f10ae"
+  },
+  "resources/python/codepad_runtime.py": {
+   "base": "bc8d515dbd4ae73552c6e6a3592d0f66936fd7f785fbd9aaab73a9e5958f2855",
+   "new": "abaf4597d13e56711cf1101f89632da6d50091d7bf60e3c6de4a901dca522e60"
+  },
+  "resources/windows/desktop/README-Desktop.txt": {
+   "base": null,
+   "new": "33e3228b24bdbf45869bc4683b72ba1e56934fc0c7cc4110779511d91d0a154b"
+  },
+  "resources/windows/desktop/icon.ico": {
+   "base": null,
+   "new": "617a90ceb2fe734ed7495d88eced889dfe16e449ab33e80d1f1c8fdc54b10543"
+  },
+  "resources/windows/desktop/icon.png": {
+   "base": null,
+   "new": "768c9ab8450ea14ae036f413e515852d5fe9e646857509380862f7b25782a57d"
+  },
+  "resources/windows/desktop/main.js": {
+   "base": null,
+   "new": "626ec704d1a222d8e4769e79c5fb7d239ad5e851974edf78b0f4c2683c5e6ba3"
+  },
+  "resources/windows/desktop/package.json": {
+   "base": null,
+   "new": "3c60491c93fe6a0f6535fedec8ee75d4974b31cb6ffe6c227335204ebb8288b2"
+  },
+  "resources/windows/desktop/preload.js": {
+   "base": null,
+   "new": "0eda431f0039f53efbf6172eb5167f415c60212d2de89a3f8166525eca5f4168"
+  },
+  "resources/windows/desktop/pyhost/desktop_host.py": {
+   "base": null,
+   "new": "3796a817fba5b65ba0f9ad4939bae21223a4345197fa4d1702c9c74c5e7a4207"
+  },
+  "resources/windows/desktop/system.js": {
+   "base": null,
+   "new": "543191c8974a28b3b69893d8f03b13b61dbffc453eb7c58a0f8b813c547541d5"
+  },
+  "scripts/ai-provider.test.mjs": {
+   "base": null,
+   "new": "f7cc1047a8fbb5a8ff529b573704b705abe185a83d3fce00ae9a4413303619d0"
+  },
+  "scripts/android-prepare.mjs": {
+   "base": "338408499cde41ec970826172330c78d83b147abcee62f1eb2e01d97cebc4303",
+   "new": "2fafd5742c58f60b92eb374a535ae23473a7a67b6e0ca3a9d4842cf383825bbd"
+  },
+  "scripts/build-mobile.mjs": {
+   "base": "dafd9e6449995d55986b6a85d04571a2b0e781e3ad09807c542e83fcc6aecd00",
+   "new": "ef8894a74055d25768dcb65873b80b1be15c499ee6d94d8d5ef1d18b171d52ee"
+  },
+  "scripts/build-windows-desktop.mjs": {
+   "base": null,
+   "new": "022a50c942111da99c17ec355d0936b5b366e79015c613f295642da54a01abc0"
+  },
+  "scripts/confidential.test.mjs": {
+   "base": null,
+   "new": "b259710ad64faf66beae15a149fb22e04b5da4e6378fe080cc40e31bb6cd9239"
+  },
+  "scripts/desktop-smoke.cjs": {
+   "base": null,
+   "new": "bf8b97ea44135094e827fbe1b0685015f9793be57a9becdc460eec63e8672aaf"
+  },
+  "scripts/desktop-system.test.mjs": {
+   "base": null,
+   "new": "f5f950a2d3fa8cd115bb066dcd7b939d0dba98bff88549b5b936ccf0e8dd3054"
+  },
+  "scripts/device-tools.test.mjs": {
+   "base": null,
+   "new": "786c4aa413d4eace8d6347f8ddae32b8e47d3165afdb6ba82126b93e03cbfcfc"
+  },
+  "scripts/hub-academy.test.mjs": {
+   "base": null,
+   "new": "4254ab22a0ad85ebbafd1d656475132981f2da115275fdebcf4f52902427c425"
+  },
+  "scripts/hub-ctf.test.mjs": {
+   "base": null,
+   "new": "0630868fe3e4e8b4c3efe169601ac9f77285be70abf2bfa9bdae15ba861fd78a"
+  },
+  "scripts/hub-forensics.test.mjs": {
+   "base": null,
+   "new": "5cd2530a9bf8bcee42fb8f37ce1a4f2319dc3269653bd910ac9c2cf06d184f74"
+  },
+  "scripts/hub-input.test.mjs": {
+   "base": null,
+   "new": "77d6b6f294b6dd6e5ca8577cbbbf4f514fe0f324da5c0c38ab8250b03bb82003"
+  },
+  "scripts/hub.test.mjs": {
+   "base": null,
+   "new": "d6d5c79e41c92e9b12ae5fdff3ad2d86696151191b4b5d41d2e473994cd6fdd8"
+  },
+  "scripts/music.test.mjs": {
+   "base": null,
+   "new": "8d68bb39bbac613d6b596e56839e572be36def949854b8fc55ba2e84e8c322fc"
+  },
+  "scripts/python-host.test.mjs": {
+   "base": null,
+   "new": "c0e5b529a6d3faf04c7f8389d584b7885f9459a28ec034c04ed4449ae8ca79c4"
+  },
+  "scripts/python-routing-reachability.test.mjs": {
+   "base": null,
+   "new": "c52586a2d018166dda7c7cfc209d88fe5194ff42392d2719639687f1dec949f6"
+  },
+  "scripts/run-config.test.mjs": {
+   "base": null,
+   "new": "05663f5cefd1aa063dda80ff58007beada62244e8142d5c58233c8fbba73963f"
+  },
+  "scripts/security-host.test.mjs": {
+   "base": null,
+   "new": "d399a36b6e794c93a10561436d40b2bafedc2a41c45a288bd9fe650170b00fb9"
+  },
+  "scripts/security-lab.test.mjs": {
+   "base": null,
+   "new": "31c1755a764b24ea62b77a797c54225584475181cba6896d215f0da00270c59f"
+  },
+  "scripts/security-netcheck.test.mjs": {
+   "base": null,
+   "new": "507238f7775a30063f246c41c39d31d17d8c8653c7b0264969850122d4a6ab1c"
+  },
+  "scripts/security-share.test.mjs": {
+   "base": null,
+   "new": "362c4b04969750078c8e9ad091f5e6ed69f6738130eef298343e608a90058337"
+  },
+  "scripts/test-live-input.mjs": {
+   "base": "1e3862d4c7b198ed6b7e94eae697fe882524a50c7d039c47a7051d2504388ab1",
+   "new": "7d6cdabedffc04200617322597bd99b12fc58c7a558f7f9750d526bd398bc0fd"
+  },
+  "scripts/test-native-emulator.mjs": {
+   "base": "4db070bbbfd7dcfc623b1ad8d53d9f5b7c8ac480b475315619be1cccf505b7b4",
+   "new": "11ccafadcdb29005dead608f360eb470ce0abf88c73670a2c6f3ac8418337fce"
+  },
+  "scripts/zip-folder.py": {
+   "base": null,
+   "new": "418f0ef6450077d29530d057ba3b94fc8fe72f34ec825fc446719bb0d291e84e"
+  }
+ }
+}

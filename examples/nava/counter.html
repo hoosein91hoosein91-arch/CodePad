@@ -1,0 +1,737 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>شمارنده</title><style>:root{--nava-accent:#c6f135}
+:root{color-scheme:dark}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;min-height:100%;background:#101410;color:#edf4ed;font-family:Vazirmatn,Tahoma,sans-serif}body{min-height:100vh;background:radial-gradient(ellipse at 50% -20%,color-mix(in srgb,#c6f135 15%,#101410),#101410 65%)}.nv-app{min-height:100vh;display:grid;place-items:center;padding:20px}.nv-card{width:min(100%,460px);padding:24px;border:1px solid #ffffff20;border-radius:28px;background:#171e19ef;box-shadow:0 24px 80px #0008;display:flex;flex-direction:column;gap:14px}.nv-app[data-nava-graphics="low"] .nv-card{box-shadow:0 12px 32px #0007}.nv-app[data-nava-graphics="ultra"] .nv-card{border-color:#ffffff35;box-shadow:0 24px 80px #0008,0 0 36px color-mix(in srgb,#c6f135 12%,transparent)}.nv-brand{color:#c6f135;font-size:12px;letter-spacing:.08em}h1{font-size:26px;line-height:1.4;margin:0}.nv-copy{color:#b8c6ba;line-height:1.9;margin:0;white-space:pre-wrap}.nv-value{font-size:22px;font-weight:700;margin:2px 0;white-space:pre-wrap;line-height:1.7}.nv-input{width:100%;padding:13px 15px;border:1px solid #ffffff25;border-radius:14px;background:#0e130f;color:#fff;font:inherit;outline:none;resize:vertical}.nv-input:focus{border-color:#c6f135;box-shadow:0 0 0 3px color-mix(in srgb,#c6f135 22%,transparent)}.nv-button{min-height:48px;padding:11px 16px;border:0;border-radius:14px;background:#c6f135;color:#11170e;font:inherit;font-weight:700;cursor:pointer;transition:transform .15s,filter .15s;touch-action:manipulation}.nv-button:active{transform:scale(.97);filter:brightness(.9)}.nv-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.nv-row>*{flex:1 1 0;min-width:0}.nv-image{width:100%;max-height:260px;object-fit:cover;border-radius:18px}.nv-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.nv-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#0e130f;border:1px solid #ffffff14}.nv-list li span{flex:1;overflow-wrap:anywhere}.nv-list .nv-empty{color:#7f8f82;justify-content:center}.nv-del{border:0;background:#ff6a7a22;color:#ff8f9b;border-radius:10px;width:32px;height:32px;font:inherit;cursor:pointer}.nv-canvas{display:block;width:100%;margin:0 auto;border-radius:18px;background:#05090699;border:1px solid #ffffff18;touch-action:none}.nv-scene{background:radial-gradient(circle at 50% 30%,color-mix(in srgb,#c6f135 18%,#0b1220),#05070d)}.nv-error{padding:12px 14px;border-radius:14px;background:#3a1016;color:#ffb3bc;font-size:14px;line-height:1.8}.nv-toast{position:fixed;inset-inline:0;bottom:28px;margin:auto;width:max-content;max-width:86vw;padding:10px 16px;border-radius:14px;background:#000d;color:#c6f135;border:1px solid color-mix(in srgb,#c6f135 50%,transparent);font-weight:700;box-shadow:0 10px 40px #0009}
+
+.nv-button.nv-packed{position:relative;isolation:isolate;overflow:hidden;align-self:center;width:min(100%,max(64px,var(--nv-width)));max-width:100%;min-width:0;aspect-ratio:var(--nv-ratio);height:auto;min-height:44px;flex-shrink:0;padding:12px 20px;border:2px solid var(--nv-second);border-radius:var(--nv-radius);background:var(--nv-first);color:var(--nv-ink);filter:none;transition:transform .15s}
+.nv-packed .nv-button-label{position:relative;z-index:1;display:block;overflow-wrap:anywhere;line-height:1.5}
+.nv-packed::before,.nv-packed::after{content:"";position:absolute;z-index:0;pointer-events:none;background:var(--nv-second)}
+.nv-packed::before{width:6px;top:0;bottom:0;left:0}.nv-packed::after{width:24%;height:4px;right:14%;top:0}
+.nv-packed[data-nava-layout="1"]::before{left:auto;right:0}.nv-packed[data-nava-layout="1"]::after{top:auto;bottom:0;right:auto;left:14%}
+.nv-packed[data-nava-layout="2"]::before{width:12px;height:12px;left:6px;top:6px;bottom:auto;border-radius:50%}.nv-packed[data-nava-layout="2"]::after{top:auto;bottom:0;width:36%;right:14%}
+.nv-packed[data-nava-layout="3"]::before{left:auto;right:0;width:10px;clip-path:polygon(0 0,100% 0,100% 100%,0 70%)}.nv-packed[data-nava-layout="3"]::after{left:14%;right:auto;width:28%}
+.nv-button.nv-packed[data-nava-relief="true"]{box-shadow:inset 0 2px 0 #ffffff70,inset 0 -4px 0 #00000024,0 7px 0 #00000045,0 12px 26px #00000035;transform:translateY(-2px)}.nv-button.nv-packed[data-nava-relief="true"]:active{box-shadow:inset 0 2px 0 #ffffff70,inset 0 -2px 0 #00000024,0 2px 0 #00000045;transform:translateY(2px)}
+.nv-button.nv-packed:active{filter:none;transform:scale(.98)}.nv-button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.nv-message{margin:0;padding:12px 16px;border:1px solid #ffffff30;border-radius:12px;overflow-wrap:anywhere;color:#edf4ed;background:#101410}.nv-message[hidden]{display:none}
+@media(max-width:360px){.nv-app{padding:12px}.nv-card{padding:18px}}
+@media(prefers-reduced-motion:reduce){.nv-button{transition:none}.nv-button:active{transform:none}}
+
+.nv-utility output{display:block;text-align:center;font:64px monospace;padding:32px 0;color:var(--nava-accent,#c6f135);direction:ltr}.nv-utility>div{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.nv-utility button{min-height:48px;border:1px solid #ffffff20;background:#27302b;color:white;border-radius:14px;font:inherit;cursor:pointer}
+</style></head><body><main class="nv-app" data-nava-graphics="ultra"><div class="nv-card"><div class="nv-brand">Score</div>
+<h1>Score</h1>
+<section id="nava-kit-0" class="nv-utility"><output aria-live="polite">۰</output><div><button type="button" data-utility="sub">−</button><button type="button" data-utility="add">+</button><button type="button" data-utility="reset">از اول</button></div></section>
+<p class="nv-message" role="status" aria-live="polite" aria-atomic="true" hidden></p><div class="nv-error" role="alert" hidden></div></div><div class="nv-toast" role="status" hidden></div></main><script>(()=>{const P={"title":"Score","accent":"#c6f135","vars":[],"persist":[],"actions":{},"start":[],"timers":[],"onTouch":null,"onKey":null,"onFrame":null,"graphics":"ultra","buttons":[],"shows":[],"lists":[],"shapes":[],"canvas":null,"scene":null,"images":[]};const navaEngine=(function navaEngine(P     , io     )      {
+  const S      = Object.create(null);
+  const MAXLOOP = 100000;
+  const MAXSTEPS = 3000000;
+  const root      = { v: S, p: null };
+  const has = (o     , k        ) => Object.prototype.hasOwnProperty.call(o, k);
+  let steps = 0;
+  let depth = 0;
+  let timers        = [];
+  let running = false;
+  let lastSaved = "";
+  let t0 = io.now();
+  let reported = false;
+
+  const fail = (line        , msg        )        => {
+    const e      = new Error(msg);
+    e.navaLine = line;
+    throw e;
+  };
+  const digits = (s        ) =>
+    String(s)
+      .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 1776))
+      .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 1632))
+      .replace(/٫/g, ".")
+      .replace(/[٬,\s]/g, "");
+  const numish = (v     ) => typeof v === "number" || (typeof v === "string" && /^\s*[-+]?[\d۰-۹٠-٩٬,]+(?:[.٫][\d۰-۹٠-٩]+)?\s*$/.test(v));
+  const toNum = (v     )         => {
+    if (typeof v === "number") return v;
+    if (typeof v === "boolean") return v ? 1 : 0;
+    if (Array.isArray(v)) return v.length;
+    const n = Number(digits(String(v ?? "")));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const fmt = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 });
+  const str = (v     )         =>
+    typeof v === "number"
+      ? Number.isFinite(v) ? fmt.format(v) : "∞"
+      : typeof v === "boolean"
+        ? v ? "درست" : "نادرست"
+        : Array.isArray(v)
+          ? v.map((x) => (Array.isArray(x) ? `[${str(x)}]` : str(x))).join("، ")
+          : v == null ? "" : String(v);
+  const truthy = (v     ) => (Array.isArray(v) ? v.length > 0 : !!v);
+  const same = (a     , b     )          => {
+    if (Array.isArray(a) || Array.isArray(b)) {
+      if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+      return a.every((x, i) => same(x, b[i]));
+    }
+    if (typeof a === typeof b) return a === b;
+    if (numish(a) && numish(b) && typeof a !== "boolean" && typeof b !== "boolean") return toNum(a) === toNum(b);
+    return false;
+  };
+  const add = (a     , b     ) => {
+    if (Array.isArray(a)) return a.concat(Array.isArray(b) ? b : [b]);
+    if (typeof a === "number" && typeof b === "number") return a + b;
+    if ((typeof a === "string" || typeof b === "string") && !(numish(a) && numish(b))) return str(a) + str(b);
+    return toNum(a) + toNum(b);
+  };
+  const compare = (op        , a     , b     ) => {
+    const x = numish(a) && numish(b) ? toNum(a) : str(a);
+    const y = numish(a) && numish(b) ? toNum(b) : str(b);
+    return op === "<" ? x < y : op === ">" ? x > y : op === "<=" ? x <= y : x >= y;
+  };
+  const rnd = (a      , b      ) => {
+    if (a === undefined) return io.random();
+    let lo = 1, hi = toNum(a);
+    if (b !== undefined) { lo = toNum(a); hi = toNum(b); }
+    if (hi < lo) { const t = lo; lo = hi; hi = t; }
+    return Math.floor(io.random() * (Math.floor(hi) - Math.ceil(lo) + 1)) + Math.ceil(lo);
+  };
+  const nums = (xs       ) => xs.flatMap((x) => (Array.isArray(x) ? x : [x])).map(toNum);
+  const rad = (d     ) => (toNum(d) * Math.PI) / 180;
+  const B      = {
+    تصادفی: rnd,
+    طول: (x     ) => (Array.isArray(x) || typeof x === "string" ? x.length : str(x).length),
+    گرد: (x     , d      ) => { const k = Math.pow(10, d === undefined ? 0 : toNum(d)); return Math.round(toNum(x) * k) / k; },
+    صحیح: (x     ) => Math.trunc(toNum(x)),
+    قدرمطلق: (x     ) => Math.abs(toNum(x)),
+    جذر: (x     ) => Math.sqrt(toNum(x)),
+    توان: (a     , b     ) => Math.pow(toNum(a), toNum(b)),
+    حداقل: (...xs       ) => Math.min(...nums(xs)),
+    حداکثر: (...xs       ) => Math.max(...nums(xs)),
+    جمع: (...xs       ) => nums(xs).reduce((s, x) => s + x, 0),
+    سینوس: (d     ) => Math.sin(rad(d)),
+    کسینوس: (d     ) => Math.cos(rad(d)),
+    فاصله: (x1     , y1     , x2     , y2     ) => Math.hypot(toNum(x2) - toNum(x1), toNum(y2) - toNum(y1)),
+    عدد: (x     ) => toNum(x),
+    متن: (x     ) => str(x),
+    زمان: () => (io.now() - t0) / 1000,
+    ساعت: () => new Date().toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
+    تاریخ: () => new Date().toLocaleDateString("fa-IR"),
+    شامل: (a     , b     ) => (Array.isArray(a) ? a.some((x) => same(x, b)) : str(a).includes(str(b))),
+    جای: (a     , b     ) => (Array.isArray(a) ? a.findIndex((x) => same(x, b)) : str(a).indexOf(str(b))) + 1,
+    جدا: (s     , sep      ) => (sep === undefined ? str(s).split(/\s+/) : str(s).split(str(sep))).filter((x) => x !== ""),
+    چسب: (l     , sep      ) => (Array.isArray(l) ? l : [l]).map(str).join(sep === undefined ? "، " : str(sep)),
+    خطوط: (s     ) => str(s).split(/\r?\n/).filter((x) => x.trim() !== ""),
+    برعکس: (l     ) => (Array.isArray(l) ? [...l].reverse() : [...str(l)].reverse().join("")),
+    مرتب: (l     ) => (Array.isArray(l) ? [...l].sort((a, b) => (numish(a) && numish(b) ? toNum(a) - toNum(b) : str(a).localeCompare(str(b), "fa"))) : l),
+    بخش: (l     , from     , to      ) => { const a = Array.isArray(l) ? l : str(l); const f = Math.max(0, toNum(from) - 1); return a.slice(f, to === undefined ? undefined : toNum(to)); },
+    فایل: (name     ) => io.fileText(str(name)),
+  };
+
+  const lookup = (env     , name        , line        ) => {
+    for (let e = env; e; e = e.p) if (has(e.v, name)) return e.v[name];
+    return fail(line, `متغیر «${name}» تعریف نشده است.`);
+  };
+  const assign = (env     , name        , val     , line        ) => {
+    for (let e = env; e; e = e.p) if (has(e.v, name)) { e.v[name] = val; return; }
+    fail(line, `متغیر «${name}» تعریف نشده است.`);
+  };
+  const slot = (list     , i     , line        ) => {
+    if (!Array.isArray(list) && typeof list !== "string") fail(line, "فقط لیست یا متن شماره دارد؛ مثل کارها[۱].");
+    const n = Math.trunc(toNum(i));
+    const pos = n < 0 ? list.length + n : n - 1;
+    if (n === 0 || pos < 0 || pos >= list.length) fail(line, `شمارهٔ ${str(n)} در لیست نیست (طول لیست ${str(list.length)} است؛ شماره از ۱ شروع می‌شود).`);
+    return pos;
+  };
+
+  const ev = (e     , env     , line        )      => {
+    switch (e.k) {
+      case "v": return e.v;
+      case "n": return lookup(env, e.n, line);
+      case "t": return e.parts.map((p     ) => (typeof p === "string" ? p : str(ev(p, env, line)))).join("");
+      case "l": return e.items.map((x     ) => ev(x, env, line));
+      case "i": { const base = ev(e.a, env, line); return base[slot(base, ev(e.i, env, line), line)]; }
+      case "u": { const v = ev(e.a, env, line); return e.op === "!" ? !truthy(v) : e.op === "-" ? -toNum(v) : toNum(v); }
+      case "c": {
+        const args = e.args.map((x     ) => ev(x, env, line));
+        const f = B[e.f];
+        return f ? f(...args) : callUser(e.f, args, line);
+      }
+      case "b": {
+        if (e.op === "&&") return truthy(ev(e.a, env, line)) ? truthy(ev(e.b, env, line)) : false;
+        if (e.op === "||") return truthy(ev(e.a, env, line)) ? true : truthy(ev(e.b, env, line));
+        const a = ev(e.a, env, line), b = ev(e.b, env, line);
+        switch (e.op) {
+          case "+": return add(a, b);
+          case "-": return toNum(a) - toNum(b);
+          case "*": return toNum(a) * toNum(b);
+          case "/": if (toNum(b) === 0) fail(line, "تقسیم بر صفر ممکن نیست."); return toNum(a) / toNum(b);
+          case "%": if (toNum(b) === 0) fail(line, "باقی‌ماندهٔ تقسیم بر صفر ممکن نیست."); return ((toNum(a) % toNum(b)) + toNum(b)) % toNum(b);
+          case "==": return same(a, b);
+          case "!=": return !same(a, b);
+          default: return compare(e.op, a, b);
+        }
+      }
+    }
+    return fail(line, "عبارت نامعتبر است.");
+  };
+
+  const listOf = (env     , name        , line        ) => {
+    const v = lookup(env, name, line);
+    if (!Array.isArray(v)) fail(line, `«${name}» لیست نیست؛ آن را با «لیست ${name}» بساز.`);
+    return v;
+  };
+  const child = (env     ) => ({ v: Object.create(null), p: env });
+  const callUser = (name        , args       , line        )      => {
+    const a = P.actions[name];
+    if (!a) return fail(line, `کنش یا تابع «${name}» تعریف نشده است.`);
+    if (++depth > 200) fail(line, "کنش‌ها بیش از حد همدیگر را صدا زده‌اند (بیش از ۲۰۰ لایه).");
+    const env = child(root);
+    a.params.forEach((p        , i        ) => { env.v[p] = args[i] === undefined ? "" : args[i]; });
+    try { exec(a.body, env); return ""; }
+    catch (err     ) { if (err && err.navaRet) return err.value === undefined ? "" : err.value; throw err; }
+    finally { depth--; }
+  };
+
+  const exec = (body       , env     )       => {
+    for (const s of body) {
+      if (++steps > MAXSTEPS) fail(s.line, "اجرای برنامه بیش از حد طول کشید (شاید یک حلقهٔ بی‌پایان داری).");
+      const E = (x     ) => ev(x, env, s.line);
+      switch (s.k) {
+        case "let": env.v[s.n] = E(s.e); break;
+        case "set": {
+          let val = E(s.e);
+          if (s.idx && s.idx.length) {
+            let target = lookup(env, s.n, s.line);
+            for (let i = 0; i < s.idx.length - 1; i++) target = target[slot(target, E(s.idx[i]), s.line)];
+            if (!Array.isArray(target)) fail(s.line, "فقط خانهٔ لیست را می‌شود عوض کرد.");
+            const pos = slot(target, E(s.idx[s.idx.length - 1]), s.line);
+            if (s.op === "+=") val = add(target[pos], val);
+            else if (s.op === "-=") val = toNum(target[pos]) - toNum(val);
+            target[pos] = val;
+          } else {
+            if (s.op === "+=") val = add(lookup(env, s.n, s.line), val);
+            else if (s.op === "-=") val = toNum(lookup(env, s.n, s.line)) - toNum(val);
+            assign(env, s.n, val, s.line);
+          }
+          break;
+        }
+        case "if": {
+          let done = false;
+          for (const br of s.br) if (truthy(E(br.c))) { exec(br.body, child(env)); done = true; break; }
+          if (!done && s.els) exec(s.els, child(env));
+          break;
+        }
+        case "rep": {
+          const n = Math.trunc(toNum(E(s.n)));
+          if (n > MAXLOOP) fail(s.line, "حداکثر ۱۰۰٬۰۰۰ بار تکرار مجاز است.");
+          for (let i = 1; i <= n; i++) { const c = child(env); if (s.v) c.v[s.v] = i; exec(s.body, c); }
+          break;
+        }
+        case "each": {
+          const list = E(s.e);
+          const items = Array.isArray(list) ? [...list] : typeof list === "string" ? [...list] : fail(s.line, "«برای هر» روی لیست یا متن کار می‌کند.");
+          for (const x of items) { const c = child(env); c.v[s.v] = x; exec(s.body, c); }
+          break;
+        }
+        case "for": {
+          const from = toNum(E(s.from)), to = toNum(E(s.to));
+          if (Math.abs(to - from) > MAXLOOP) fail(s.line, "حداکثر ۱۰۰٬۰۰۰ بار تکرار مجاز است.");
+          const step = from <= to ? 1 : -1;
+          for (let i = from; step > 0 ? i <= to : i >= to; i += step) { const c = child(env); c.v[s.v] = i; exec(s.body, c); }
+          break;
+        }
+        case "while": {
+          let guard = 0;
+          while (truthy(E(s.c))) {
+            if (++guard > MAXLOOP) fail(s.line, "حلقهٔ «تا وقتی» تمام نمی‌شود (بیش از ۱۰۰٬۰۰۰ دور).");
+            exec(s.body, child(env));
+          }
+          break;
+        }
+        case "push": { const list = listOf(env, s.n, s.line); const v = E(s.e); if (s.front) list.unshift(v); else list.push(v); break; }
+        case "del": {
+          const list = listOf(env, s.n, s.line);
+          if (s.which === "first") list.shift();
+          else if (s.which === "last") list.pop();
+          else if (s.which === "at") list.splice(slot(list, E(s.e), s.line), 1);
+          else { const v = E(s.e); const i = list.findIndex((x     ) => same(x, v)); if (i >= 0) list.splice(i, 1); }
+          break;
+        }
+        case "clear": listOf(env, s.n, s.line).length = 0; break;
+        case "msg": io.toast(str(E(s.e))); break;
+        case "tone": {
+          const a = E(s.a[0]);
+          if (typeof a === "string" && !numish(a)) io.play(a);
+          else io.tone(toNum(a), s.a[1] ? toNum(E(s.a[1])) : 150);
+          break;
+        }
+        case "melody": io.melody(s.a.map((x     ) => toNum(E(x))), 180); break;
+        case "say": io.say(str(E(s.e))); break;
+        case "ask": {
+          const prompt = str(E(s.e));
+          const target = s.n;
+          S[target] = "… در حال فکر کردن";
+          Promise.resolve()
+            .then(() => io.ask(prompt))
+            .then(
+              (text     ) => { S[target] = String(text ?? ""); after(); },
+              (err     ) => { S[target] = `⚠️ ${err && err.message ? err.message : String(err)}`; after(); },
+            );
+          break;
+        }
+        case "draw": io.draw(s.op, s.a.map(E), s.line); break;
+        case "obj": io.obj(s.op, s.n, s.a.map(E), s.line); break;
+        case "cam": io.cam(...(s.a ? s.a.map((x     ) => toNum(E(x))) : [toNum(E(s.e))])); break;
+        case "scene": io.scene(s.op, s.a.map(E), s.line); break;
+        case "call": callUser(s.n, s.a.map(E), s.line); break;
+        case "stop": stopTimers(); break;
+        case "resume": startTimers(); break;
+        case "ret": throw { navaRet: true, value: s.e ? E(s.e) : undefined };
+      }
+    }
+  };
+
+  const pick = () => { const o      = {}; for (const n of P.persist) o[n] = S[n]; return o; };
+  const persist = () => {
+    if (!P.persist.length) return;
+    const snap = JSON.stringify(pick());
+    if (snap === lastSaved) return;
+    lastSaved = snap;
+    try { Promise.resolve(io.save(JSON.parse(snap))).catch(() => {}); } catch { /* ذخیره ممکن نشد */ }
+  };
+  function after() { io.render(); persist(); }
+  const report = (err     ) => {
+    const msg = (err && err.navaLine ? `خط ${err.navaLine}: ` : "") + (err && err.message ? err.message : String(err));
+    stopTimers();
+    if (!reported) { reported = true; io.error(msg); }
+  };
+  const handle = (body                          ) => {
+    if (!body) return;
+    steps = 0; depth = 0;
+    try { exec(body, child(root)); } catch (err     ) { if (!(err && err.navaRet)) report(err); }
+    after();
+  };
+  let animationFrame = 0, frameTime                = null;
+  const nextFrame = (time        ) => {
+    animationFrame = 0;
+    if (!running) return;
+    const dt = frameTime === null ? 0 : Math.min(.05, Math.max(0, (time - frameTime) / 1000));
+    frameTime = time; S["دلتا"] = dt; handle(P.onFrame);
+    if (running && !reported) animationFrame = io.requestFrame(nextFrame);
+  };
+  function stopTimers() { if (animationFrame) io.cancelFrame(animationFrame); animationFrame = 0; frameTime = null; for (const t of timers) io.clearInterval(t); timers = []; running = false; }
+  function startTimers() {
+    if (running) return;
+    running = true;
+    if (P.onFrame && io.requestFrame) animationFrame = io.requestFrame(nextFrame);
+    for (const t of P.timers) {
+      if (t.once) continue;
+      let sec = 1;
+      try { sec = toNum(ev(t.sec, root, t.line)); } catch (err) { report(err); return; }
+      timers.push(io.setInterval(() => handle(t.body), Math.max(16, sec * 1000)));
+    }
+  }
+
+  const api = {
+    S, str, toNum, truthy,
+    get running() { return running; },
+    value: (name        ) => S[name],
+    text: (e     , line        ) => { try { return str(ev(e, root, line)); } catch (err) { report(err); return ""; } },
+    truth: (e     , line        ) => { try { return truthy(ev(e, root, line)); } catch (err) { report(err); return false; } },
+    click: (i        ) => handle(P.buttons[i]),
+    key: (k        ) => { S["کلید"] = k; handle(P.onKey); },
+    touch: (x        , y        ) => { S["ایکس"] = Math.round(x); S["ایگرگ"] = Math.round(y); handle(P.onTouch); },
+    input: (name        , value     ) => { S[name] = value; after(); },
+    removeAt: (name        , index        ) => { const l = S[name]; if (Array.isArray(l) && index >= 0 && index < l.length) l.splice(index, 1); after(); },
+    stop: stopTimers,
+    run: handle,
+    start: async () => {
+      t0 = io.now();
+      S["ایکس"] = 0; S["ایگرگ"] = 0; S["کلید"] = ""; S["دلتا"] = 0;
+      try { for (const d of P.vars) { steps = 0; S[d.n] = ev(d.e, root, d.line); } } catch (err) { report(err); io.render(); return; }
+      if (P.persist.length) {
+        try {
+          const saved = await io.load();
+          if (saved && typeof saved === "object") for (const n of P.persist) if (has(saved, n) && saved[n] !== null && saved[n] !== undefined) S[n] = saved[n];
+        } catch { /* حافظه در دسترس نبود */ }
+        lastSaved = JSON.stringify(pick());
+      }
+      try { for (const sh of P.shapes) if (sh.at) io.obj("جابجا", sh.n, sh.at.map((x     ) => toNum(ev(x, root, sh.line))), sh.line); } catch (err) { report(err); }
+      if (io.ready) await io.ready();
+      handle(P.start);
+      if (!reported) {
+        startTimers();
+        for (const t of P.timers) if (t.once) { let sec = 1; try { sec = toNum(ev(t.sec, root, t.line)); } catch { /* */ } io.setTimeout(() => handle(t.body), Math.max(0, sec * 1000)); }
+      }
+    },
+  };
+  return api;
+});(function navaDom(P     , engine     , sceneFactory     )       {
+  const doc = document;
+  const $ = (s        ) => doc.querySelector(s)       ;
+  const errBox = $(".nv-error");
+  const toastBox = $(".nv-toast");
+  const lineErr = (line        , msg        )        => { const e      = new Error(msg); e.navaLine = line; throw e; };
+  const J      = (window       ).jibos;
+
+  // ── صدا (Web Audio داخل همین قاب) ──
+  let ac      = null;
+  const audio = () => { const A = (window       ).AudioContext || (window       ).webkitAudioContext; if (!A) return null; if (!ac) ac = new A(); if (ac.state === "suspended") ac.resume(); return ac; };
+  const tone = (f        , ms        ) => {
+    try {
+      const c = audio(); if (!c || !(f > 0)) return;
+      const o = c.createOscillator(), g = c.createGain(), t = c.currentTime, d = Math.max(20, Math.min(5000, ms || 150)) / 1000;
+      o.type = "square"; o.frequency.value = Math.min(8000, f);
+      g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d + 0.03);
+    } catch { /* صدا در دسترس نیست */ }
+  };
+
+  // ── بوم دوبعدی ──
+  const cv      = doc.getElementById("nv-canvas");
+  const cw = P.canvas ? P.canvas.w : 0, ch = P.canvas ? P.canvas.h : 0;
+  let g2      = null;
+  if (cv) {
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    g2 = cv.getContext("2d");
+    if (g2) { g2.scale(dpr, dpr); g2.textAlign = "center"; g2.textBaseline = "middle"; }
+  }
+  const images      = {};
+  const image = (src        ) => { if (!images[src]) { const im = new Image(); im.src = src; images[src] = im; } return images[src]; };
+  const draw = (op        , a       , line        ) => {
+    if (!g2) lineErr(line, "برای نقاشی اول یک «بوم» بساز؛ مثل: بوم ۳۲۰، ۳۲۰");
+    const n = (i        , d = 0) => (a[i] === undefined ? d : api.toNum(a[i]));
+    const col = (i        , d        ) => (a[i] === undefined ? d : String(a[i]));
+    g2.save();
+    if (op === "پاک") {
+      if (a[0] === undefined) g2.clearRect(0, 0, cw, ch); else { g2.fillStyle = col(0, "#000"); g2.fillRect(0, 0, cw, ch); }
+    } else if (op === "دایره") {
+      g2.fillStyle = col(3, P.accent); g2.beginPath(); g2.arc(n(0), n(1), Math.max(0, n(2, 10)), 0, Math.PI * 2); g2.fill();
+    } else if (op === "مستطیل") {
+      g2.fillStyle = col(4, P.accent); g2.fillRect(n(0), n(1), n(2, 10), n(3, 10));
+    } else if (op === "خط") {
+      g2.strokeStyle = col(4, P.accent); g2.lineWidth = n(5, 3); g2.lineCap = "round"; g2.beginPath(); g2.moveTo(n(0), n(1)); g2.lineTo(n(2), n(3)); g2.stroke();
+    } else if (op === "نوشته") {
+      g2.fillStyle = col(3, "#ffffff"); g2.font = `700 ${n(4, 18)}px Vazirmatn, Tahoma, sans-serif`; g2.fillText(api.str(a[0]), n(1), n(2));
+    } else if (op === "تصویر") {
+      const im = image(String(a[0] ?? ""));
+      if (im.complete && im.naturalWidth) g2.drawImage(im, n(1), n(2), a[3] === undefined ? im.naturalWidth : n(3), a[4] === undefined ? (a[3] === undefined ? im.naturalHeight : n(3)) : n(4));
+    }
+    g2.restore();
+  };
+
+  // Offline scene renderer is injected into generated previews as a self-contained function.
+  const sc      = doc.getElementById("nv-scene");
+  const sw = P.scene ? P.scene.w : 0, sh = P.scene ? P.scene.h : 0;
+
+  // ── پیام، خطا، حافظه، هوش مصنوعی ──
+  let toastTimer = 0;
+  const toast = (text        ) => {
+    if (!toastBox) return;
+    toastBox.textContent = text; toastBox.hidden = false;
+    clearTimeout(toastTimer); toastTimer = window.setTimeout(() => { toastBox.hidden = true; }, 2400);
+  };
+  const error = (msg        ) => {
+    if (errBox) { errBox.textContent = `⚠️ ${msg}`; errBox.hidden = false; }
+    try { console.error(`نوا — ${msg}`); } catch { /* */ }
+  };
+  let memory      = null;
+  const lsKey = `nava:${P.title}`;
+  const load = async () => {
+    if (J && J.storage) { try { return await J.storage.get("nava"); } catch { /* به حافظهٔ محلی می‌رویم */ } }
+    try { const raw = localStorage.getItem(lsKey); return raw ? JSON.parse(raw) : null; } catch { return memory; }
+  };
+  const save = async (data     ) => {
+    memory = data;
+    if (J && J.storage) { try { await J.storage.set("nava", data); return; } catch { /* */ } }
+    try { localStorage.setItem(lsKey, JSON.stringify(data)); } catch { /* فقط در حافظهٔ موقت */ }
+  };
+  const ask = (prompt        ) => {
+    if (J && typeof J.call === "function") return J.call("ai", prompt);
+    return Promise.reject(new Error("هوش مصنوعی فقط داخل CodePad (ویرایشگر یا لانچر) و با «اتصال Gemini» کار می‌کند."));
+  };
+  const fileText = (v        ) => {
+    if (!v.startsWith("data:")) throw new Error(`پیوست «${v}» پیدا نشد؛ فایل را به پروژه پیوست کن و نامش را دقیق بنویس.`);
+    const comma = v.indexOf(","), meta = v.slice(0, comma), body = v.slice(comma + 1);
+    if (!/;base64/i.test(meta)) return decodeURIComponent(body);
+    const bin = atob(body), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  };
+  const ready = () => Promise.all(
+    (P.images            ).map((src) => new Promise((done) => { const im = image(src); if (im.complete) done(true); else { im.onload = im.onerror = () => done(true); setTimeout(() => done(false), 3000); } })),
+  );
+
+  const scene3d = sceneFactory(P, sc, error);
+  const obj = scene3d.obj;
+  const want3d = () => scene3d.requestDraw?.();
+
+  const io = {
+    now: () => performance.now(),
+    random: Math.random,
+    setInterval: (f     , ms        ) => window.setInterval(f, ms),
+    clearInterval: (id        ) => window.clearInterval(id),
+    setTimeout: (f     , ms        ) => window.setTimeout(f, ms),
+    toast, tone, error, load, save, ask, fileText, ready, draw, obj,
+    cam: scene3d.cam, scene: scene3d.scene,
+    requestFrame: (fn     ) => requestAnimationFrame(fn),
+    cancelFrame: (id        ) => cancelAnimationFrame(id),
+    melody: (fs          , ms        ) => fs.forEach((f, i) => window.setTimeout(() => tone(f, ms), i * ms)),
+    play: (src        ) => { try { void new Audio(src).play().catch(() => {}); } catch { /* */ } },
+    say: (text        ) => {
+      // پیام «بگو» روی صفحه هم دیده می‌شود (حتی بدون پشتیبانی گفتار) و اگر ممکن باشد خوانده هم می‌شود
+      const msg = doc.querySelector(".nv-message")       ;
+      if (msg) { msg.textContent = text; msg.hidden = false; }
+      try { const u = new SpeechSynthesisUtterance(text); u.lang = /[\u0600-\u06ff]/.test(text) ? "fa-IR" : "en-US"; speechSynthesis.speak(u); }
+      catch { if (J && J.speak) void J.speak(text).catch(() => {}); }
+    },
+    render: () => render(),
+  };
+  const api = engine(P, io);
+
+  function render() {
+    doc.querySelectorAll("[data-nv-show]").forEach((el     ) => {
+      const spec = P.shows[Number(el.getAttribute("data-nv-show"))];
+      const visible = spec.when ? api.truth(spec.when, spec.line) : true;
+      el.hidden = !visible;
+      if (visible) { const t = api.text(spec.e, spec.line); if (el.textContent !== t) el.textContent = t; }
+    });
+    doc.querySelectorAll("[data-nv-input]").forEach((el     ) => {
+      if (doc.activeElement === el) return;
+      const name = el.getAttribute("data-nv-input");
+      const v = api.value(name);
+      const t = v === "" || v === undefined ? "" : api.str(v).replace(/٬/g, "");
+      if (el.value !== t && !(el.value === "" && v === 0 && el.getAttribute("data-nv-type") === "number")) el.value = t;
+    });
+    doc.querySelectorAll("[data-nv-list]").forEach((el     ) => {
+      const spec = P.lists[Number(el.getAttribute("data-nv-list"))];
+      const items = api.value(spec.n);
+      const arr = Array.isArray(items) ? items : [];
+      const sig = JSON.stringify(arr);
+      if (el.getAttribute("data-sig") === sig) return;
+      el.setAttribute("data-sig", sig);
+      el.replaceChildren();
+      if (!arr.length) { const li = doc.createElement("li"); li.className = "nv-empty"; li.textContent = "— خالی —"; el.append(li); }
+      arr.forEach((item     , i        ) => {
+        const li = doc.createElement("li");
+        const span = doc.createElement("span"); span.textContent = api.str(item); li.append(span);
+        if (spec.del) { const b = doc.createElement("button"); b.type = "button"; b.className = "nv-del"; b.textContent = "✕"; b.setAttribute("aria-label", "حذف"); b.setAttribute("data-nv-del", String(i)); li.append(b); }
+        el.append(li);
+      });
+    });
+    want3d();
+  }
+
+  doc.querySelectorAll("[data-nv-btn]").forEach((el     ) => el.addEventListener("click", () => { audio(); api.click(Number(el.getAttribute("data-nv-btn"))); }));
+  doc.querySelectorAll("[data-nv-input]").forEach((el     ) => el.addEventListener("input", () => {
+    const type = el.getAttribute("data-nv-type");
+    const raw = el.value;
+    api.input(el.getAttribute("data-nv-input"), type === "number" ? (raw.trim() === "" ? 0 : api.toNum(raw)) : raw);
+  }));
+  doc.querySelectorAll("[data-nv-list]").forEach((el     ) => el.addEventListener("click", (e     ) => {
+    const b = e.target && e.target.closest ? e.target.closest("[data-nv-del]") : null;
+    if (b) api.removeAt(P.lists[Number(el.getAttribute("data-nv-list"))].n, Number(b.getAttribute("data-nv-del")));
+  }));
+  const touchable = (el     , w        , h        ) => {
+    if (!el) return;
+    let sx = 0, sy = 0;
+    el.addEventListener("pointerdown", (e     ) => { sx = e.clientX; sy = e.clientY; audio(); });
+    el.addEventListener("pointerup", (e     ) => {
+      if (el === sc && scene3d.orbit) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (P.onKey && Math.hypot(dx, dy) > 28) { api.key(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "راست" : "چپ") : dy > 0 ? "پایین" : "بالا"); return; }
+      const r = el.getBoundingClientRect();
+      api.touch(((e.clientX - r.left) * w) / (r.width || 1), ((e.clientY - r.top) * h) / (r.height || 1));
+    });
+  };
+  touchable(cv, cw, ch);
+  touchable(sc, sw, sh);
+  if (P.onKey) {
+    const names      = { ArrowUp: "بالا", ArrowDown: "پایین", ArrowLeft: "چپ", ArrowRight: "راست", " ": "فاصله", Enter: "اینتر", Escape: "خروج" };
+    doc.addEventListener("keydown", (e     ) => {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      if (names[e.key]) e.preventDefault();
+      api.key(names[e.key] || e.key);
+    });
+  }
+  window.addEventListener("pagehide", () => { api.stop(); scene3d.dispose(); });
+  void api.start();
+})(P,navaEngine,(function navaScene3d(P     , canvas     , report                           )      {
+  const noop = () => {};
+  if (!canvas) return { obj: noop, cam: noop, scene: noop, draw: noop, dispose: noop, available: false, orbit: false };
+  const ultra = P.graphics !== "low", doc = canvas.ownerDocument;
+  const clamp = (n     , lo        , hi        , fallback = lo) => Math.max(lo, Math.min(hi, Number.isFinite(Number(n)) ? Number(n) : fallback));
+  const colorContext = doc.createElement("canvas").getContext("2d");
+  const colors = new Map                  ();
+  const rgb = (color        ) => {
+    if (colors.has(color)) return colors.get(color) ;
+    let value = color;
+    if (colorContext) { colorContext.fillStyle = "#67f5a5"; colorContext.fillStyle = color; value = String(colorContext.fillStyle); }
+    let result          ;
+    if (/^#[\da-f]{6}$/i.test(value)) result = [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16) / 255);
+    else if (/^#[\da-f]{3}$/i.test(value)) result = [1, 2, 3].map((i) => parseInt(value[i] .repeat(2), 16) / 255);
+    else result = (value.match(/[\d.]+/g) ?? ["103", "245", "165"]).slice(0, 3).map((n) => Number(n) / 255);
+    colors.set(color, result); return result;
+  };
+  const objects        = P.shapes.map((s     ) => ({ name: s.n, kind: s.kind, color: rgb(s.color), pos: [0, 0, 0], rot: [0, 0, 0], scale: [1, 1, 1], material: [.4, .15, 0] }));
+  const byName = new Map(objects.map((o) => [o.name, o]));
+  let distance = 6, pitch = 18, yaw = 0, orbit = false, pending = 0, disposed = false, lost = false;
+  let fog = rgb("#070b14"), fogNear = 10, fogFar = 35, light = [.45, .8, .6], intensity = 1.3, ambient = .28;
+  let gl      = canvas.getContext("webgl", { antialias: ultra, alpha: true, powerPreference: ultra ? "high-performance" : "low-power" });
+  let program     , locations      = {}, meshes      = {};
+  const shaders        = [], buffers        = [];
+  const matrix = (a          , b          ) => { const o = new Array(16).fill(0); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
+  const translate = (x        , y        , z        ) => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1];
+  const rx = (d        ) => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]; };
+  const ry = (d        ) => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]; };
+  const rz = (d        ) => { const a = d * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; };
+  const scale = (s          ) => [s[0] , 0, 0, 0, 0, s[1] , 0, 0, 0, 0, s[2] , 0, 0, 0, 0, 1];
+  const quad = (a          , b          , c          , d          ) => [a, b, c, a, c, d];
+  const build = (kind        ) => {
+    const tris             = [], normals             = [];
+    const surface = (rows        , cols        , point                                    , normal                                    ) => {
+      for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) for (const [u, v] of [[i / rows, j / cols], [(i + 1) / rows, j / cols], [(i + 1) / rows, (j + 1) / cols], [i / rows, j / cols], [(i + 1) / rows, (j + 1) / cols], [i / rows, (j + 1) / cols]]) { tris.push(point(u , v )); normals.push(normal(u , v )); }
+    };
+    const segments = ultra ? 48 : 20;
+    if (kind === "کره") {
+      const n = (u        , v        ) => [Math.sin(u * Math.PI) * Math.cos(v * Math.PI * 2), Math.cos(u * Math.PI), Math.sin(u * Math.PI) * Math.sin(v * Math.PI * 2)];
+      surface(ultra ? 32 : 12, segments, (u, v) => n(u, v).map((x) => x * .85), n);
+    } else if (kind === "حلقه") {
+      const n = (u        , v        ) => [Math.cos(u * Math.PI * 2) * Math.cos(v * Math.PI * 2), Math.sin(v * Math.PI * 2), Math.sin(u * Math.PI * 2) * Math.cos(v * Math.PI * 2)];
+      surface(segments, ultra ? 20 : 10, (u, v) => { const a = u * Math.PI * 2, b = v * Math.PI * 2, r = .85 + .22 * Math.cos(b); return [r * Math.cos(a), .22 * Math.sin(b), r * Math.sin(a)]; }, n);
+    } else if (kind === "استوانه" || kind === "مخروط") {
+      const cone = kind === "مخروط";
+      surface(1, segments, (u, v) => { const a = v * Math.PI * 2, r = cone ? .75 * (1 - u) : .75; return [r * Math.cos(a), u * 1.5 - .75, r * Math.sin(a)]; }, (_, v) => [Math.cos(v * Math.PI * 2), cone ? .5 : 0, Math.sin(v * Math.PI * 2)]);
+      for (let j = 0; j < segments; j++) {
+        const a = j * Math.PI * 2 / segments, b = (j + 1) * Math.PI * 2 / segments;
+        tris.push([0, -.75, 0], [.75 * Math.cos(a), -.75, .75 * Math.sin(a)], [.75 * Math.cos(b), -.75, .75 * Math.sin(b)]); normals.push([0, -1, 0], [0, -1, 0], [0, -1, 0]);
+        if (!cone) { tris.push([0, .75, 0], [.75 * Math.cos(b), .75, .75 * Math.sin(b)], [.75 * Math.cos(a), .75, .75 * Math.sin(a)]); normals.push([0, 1, 0], [0, 1, 0], [0, 1, 0]); }
+      }
+    } else if (kind === "زمین") tris.push(...quad([-4, 0, 4], [4, 0, 4], [4, 0, -4], [-4, 0, -4]));
+    else if (kind === "هرم") {
+      const top = [0, .85, 0], a = [-.85, -.7, .85], b = [.85, -.7, .85], c = [.85, -.7, -.85], d = [-.85, -.7, -.85];
+      tris.push(a, b, top, b, c, top, c, d, top, d, a, top, ...quad(d, c, b, a));
+    } else {
+      const v = (x        , y        , z        ) => [x * .75, y * .75, z * .75];
+      tris.push(...quad(v(-1,-1,1),v(1,-1,1),v(1,1,1),v(-1,1,1)), ...quad(v(1,-1,-1),v(-1,-1,-1),v(-1,1,-1),v(1,1,-1)), ...quad(v(-1,1,1),v(1,1,1),v(1,1,-1),v(-1,1,-1)), ...quad(v(-1,-1,-1),v(1,-1,-1),v(1,-1,1),v(-1,-1,1)), ...quad(v(1,-1,1),v(1,-1,-1),v(1,1,-1),v(1,1,1)), ...quad(v(-1,-1,-1),v(-1,-1,1),v(-1,1,1),v(-1,1,-1)));
+    }
+    const pos           = [], nor           = [];
+    for (let i = 0; i < tris.length; i += 3) {
+      const a = tris[i] , b = tris[i + 1] , c = tris[i + 2] , u = b.map((x, k) => x - a[k] ), v = c.map((x, k) => x - a[k] );
+      const face = [u[1]  * v[2]  - u[2]  * v[1] , u[2]  * v[0]  - u[0]  * v[2] , u[0]  * v[1]  - u[1]  * v[0] ];
+      for (let k = 0; k < 3; k++) { pos.push(...tris[i + k] ); nor.push(...(normals[i + k] ?? face)); }
+    }
+    const buffer = (data          ) => { const b = gl.createBuffer(); buffers.push(b); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW); return b; };
+    return { bp: buffer(pos), bn: buffer(nor), count: pos.length / 3 };
+  };
+  const initialize = () => {
+    if (!gl) return;
+    meshes = {}; locations = {}; buffers.length = 0; shaders.length = 0;
+    try {
+      const shader = (type        , source        ) => { const s = gl.createShader(type); shaders.push(s); gl.shaderSource(s, source); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+      program = gl.createProgram();
+      gl.attachShader(program, shader(gl.VERTEX_SHADER, `attribute vec3 p;attribute vec3 q;uniform mat4 m;uniform mat4 w;uniform mat3 nm;varying vec3 n;varying vec3 wp;void main(){wp=(w*vec4(p,1.0)).xyz;n=nm*q;gl_Position=m*vec4(p,1.0);}`));
+      gl.attachShader(program, shader(gl.FRAGMENT_SHADER, `precision mediump float;
+        uniform vec3 c,eye,ld,fc;uniform vec3 mat;uniform vec2 fogRange;uniform float power,amb,ground;uniform vec4 shadows[8];varying vec3 n,wp;
+        void main(){vec3 N=normalize(n),V=normalize(eye-wp),L=normalize(ld);float diffuse=max(dot(N,L),0.0);float rough=clamp(mat.x,0.08,1.0),metal=clamp(mat.y,0.0,1.0);vec3 H=normalize(L+V);
+        float spec=pow(max(dot(N,H),0.0),mix(180.0,5.0,rough))*diffuse;float rim=pow(1.0-max(dot(N,V),0.0),3.0);
+        vec3 linear=pow(c,vec3(2.2));vec3 lit=linear*(amb+power*diffuse*(1.0-metal*.55))+mix(vec3(.15),linear,metal)*spec*power*(1.0-rough*.5)+linear*mat.z+vec3(.07,.13,.18)*rim;
+        if(ground>.5){float shade=0.0;for(int i=0;i<8;i++){vec2 d=wp.xz-shadows[i].xy;shade+=exp(-dot(d,d)/max(shadows[i].z,.01))*shadows[i].w;}lit*=1.0-clamp(shade,0.0,.65);}
+        lit=lit/(vec3(1.0)+lit);vec3 result=pow(lit,vec3(1.0/2.2));float f=smoothstep(fogRange.x,fogRange.y,length(eye-wp));gl_FragColor=vec4(mix(result,fc,f),1.0);}`));
+      gl.linkProgram(program); if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+      gl.useProgram(program); gl.enable(gl.DEPTH_TEST);
+      for (const key of ["m", "w", "nm", "c", "eye", "ld", "fc", "mat", "fogRange", "power", "amb", "ground", "shadows[0]"]) locations[key] = gl.getUniformLocation(program, key);
+      locations.p = gl.getAttribLocation(program, "p"); locations.q = gl.getAttribLocation(program, "q");
+      for (const o of objects) if (!meshes[o.kind]) meshes[o.kind] = build(o.kind);
+    } catch (e) { report(`3D shader: ${e instanceof Error ? e.message : String(e)}`); gl = null; }
+  };
+  const shadowData = new Float32Array(32);
+  const draw = () => {
+    if (!gl || disposed || lost) return;
+    const rect = canvas.getBoundingClientRect(), dpr = Math.min(ultra ? 2 : 1, globalThis.devicePixelRatio || 1);
+    const width = Math.max(1, Math.min(2048, Math.round((rect.width || P.scene.w) * dpr))), height = Math.max(1, Math.min(2048, Math.round((rect.height || P.scene.h) * dpr)));
+    if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+    gl.viewport(0, 0, width, height); gl.clearColor(fog[0], fog[1], fog[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(program);
+    const f = 1 / Math.tan(50 * Math.PI / 360), near = .1, far = 250, aspect = (rect.width || P.scene.w) / (rect.height || P.scene.h);
+    const projection = [f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, 2 * far * near / (near - far), 0];
+    const view = matrix(translate(0, 0, -distance), matrix(rx(pitch), ry(yaw))), pv = matrix(projection, view);
+    const cameraRotation = matrix(ry(-yaw), rx(-pitch));
+    gl.uniform3fv(locations.eye, [cameraRotation[8]  * distance, cameraRotation[9]  * distance, cameraRotation[10]  * distance]);
+    gl.uniform3fv(locations.ld, light); gl.uniform3fv(locations.fc, fog); gl.uniform2fv(locations.fogRange, [fogNear, fogFar]); gl.uniform1f(locations.power, intensity); gl.uniform1f(locations.amb, ambient);
+    const floors = objects.filter((o) => o.kind === "زمین" && Math.abs(o.rot[0] % 360) < .001 && Math.abs(o.rot[2] % 360) < .001);
+    for (const o of objects) {
+      if (o.scale.some((s        ) => s <= 0)) continue;
+      const mesh = meshes[o.kind];
+      const rotation = matrix(ry(o.rot[1]), matrix(rx(o.rot[0]), rz(o.rot[2]))), model = matrix(translate(...o.pos                          ), matrix(rotation, scale(o.scale)));
+      // Inverse transpose for nonuniform scale, avoiding incorrect lighting on stretched meshes.
+      const normal = [rotation[0]  / o.scale[0], rotation[1]  / o.scale[0], rotation[2]  / o.scale[0], rotation[4]  / o.scale[1], rotation[5]  / o.scale[1], rotation[6]  / o.scale[1], rotation[8]  / o.scale[2], rotation[9]  / o.scale[2], rotation[10]  / o.scale[2]];
+      gl.uniformMatrix4fv(locations.m, false, new Float32Array(matrix(pv, model))); gl.uniformMatrix4fv(locations.w, false, new Float32Array(model)); gl.uniformMatrix3fv(locations.nm, false, new Float32Array(normal));
+      gl.uniform3fv(locations.c, o.color); gl.uniform3fv(locations.mat, o.material); gl.uniform1f(locations.ground, ultra && floors.includes(o) ? 1 : 0);
+      if (ultra && floors.includes(o)) {
+        shadowData.fill(0); let i = 0;
+        for (const s of objects) if (s.kind !== "زمین" && s.pos[1] >= o.pos[1] && s.scale.every((v        ) => v > 0) && i < 8) { const height = s.pos[1] - o.pos[1]; shadowData.set([s.pos[0], s.pos[2], Math.max(.05, (Math.max(s.scale[0], s.scale[2]) * .65 + height * .15) ** 2), .45 / (1 + height * .5)], i++ * 4); }
+        gl.uniform4fv(locations["shadows[0]"], shadowData);
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bp); gl.enableVertexAttribArray(locations.p); gl.vertexAttribPointer(locations.p, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.bn); gl.enableVertexAttribArray(locations.q); gl.vertexAttribPointer(locations.q, 3, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+    }
+  };
+  const requestDraw = () => { if (!pending && !disposed && !lost && gl) pending = requestAnimationFrame(() => { pending = 0; draw(); }); };
+  const api      = {
+    get available() { return !!gl && !lost; }, get orbit() { return orbit; }, draw, requestDraw,
+    obj: (op        , name        , args       , line        ) => {
+      const o      = byName.get(name); if (!o) throw new Error(`Line ${line}: object ${name} is missing.`);
+      const v = (i        ) => clamp(args[i], -100000, 100000, 0);
+      if (op === "بچرخان") o.rot = o.rot.map((r        , i        ) => (r + v(i)) % 360);
+      if (op === "جابجا") o.pos = [v(0), v(1), v(2)];
+      if (op === "حرکت") o.pos = o.pos.map((p        , i        ) => p + v(i));
+      if (op === "اندازه") o.scale = [0, 1, 2].map((i) => clamp(args[args.length === 1 ? 0 : i], 0, 100, 1));
+      if (op === "متریال") o.material = [clamp(args[0], .08, 1, .4), clamp(args[1], 0, 1, .15), clamp(args[2], 0, 4, 0)];
+      if (op === "رنگشکل") o.color = rgb(String(args[0]));
+      requestDraw();
+    },
+    cam: (d        , x         , y         ) => { distance = clamp(d, 1.5, 120, 6); if (x !== undefined) pitch = clamp(x, -85, 85, 18); if (y !== undefined) yaw = clamp(y, -36000, 36000, 0) % 360; requestDraw(); },
+    scene: (op        , a       ) => {
+      if (op === "مدار") orbit = !!a[0];
+      if (op === "مه") { fog = rgb(String(a[0])); fogNear = clamp(a[1], 0, 240, 10); fogFar = Math.max(fogNear + .1, clamp(a[2], .1, 250, 35)); }
+      if (op === "نور") { light = [Number(a[0]) || 0, Number(a[1]) || 0, Number(a[2]) || 0]; if (Math.hypot(...light) < .001) light = [.45, .8, .6]; intensity = clamp(a[3], 0, 8, 1.3); }
+      if (op === "محیط") ambient = clamp(a[0], 0, 2, .28);
+      requestDraw();
+    },
+    dispose: () => { disposed = true; if (pending) cancelAnimationFrame(pending); observer?.disconnect(); if (gl && !lost) { buffers.forEach((b) => gl.deleteBuffer(b)); shaders.forEach((s) => gl.deleteShader(s)); if (program) gl.deleteProgram(program); } },
+  };
+  const pointers = new Map                                  (); let span = 0;
+  const pinchSpan = () => { const a = [...pointers.values()]; return a.length >= 2 ? Math.hypot(a[0] .x - a[1] .x, a[0] .y - a[1] .y) : 0; };
+  canvas.addEventListener("pointerdown", (e     ) => { if (!orbit) return; pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.setPointerCapture?.(e.pointerId); span = pinchSpan(); });
+  canvas.addEventListener("pointermove", (e     ) => { const old = pointers.get(e.pointerId); if (!orbit || !old) return; pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pointers.size === 1) { yaw += (e.clientX - old.x) * .35; pitch = clamp(pitch + (e.clientY - old.y) * .3, -85, 85); } else { const next = pinchSpan(); if (span > 0 && next > 0) distance = clamp(distance * span / next, 1.5, 120); span = next; } requestDraw(); });
+  const release = (e     ) => { pointers.delete(e.pointerId); span = pinchSpan(); };
+  canvas.addEventListener("pointerup", release); canvas.addEventListener("pointercancel", release);
+  canvas.addEventListener("wheel", (e     ) => { if (!orbit) return; e.preventDefault(); distance = clamp(distance * Math.exp(clamp(e.deltaY, -300, 300) * .001), 1.5, 120); requestDraw(); }, { passive: false });
+  canvas.addEventListener("webglcontextlost", (e     ) => { e.preventDefault(); lost = true; if (pending) cancelAnimationFrame(pending); pending = 0; });
+  canvas.addEventListener("webglcontextrestored", () => { lost = false; initialize(); requestDraw(); });
+  const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(requestDraw) : null; observer?.observe(canvas);
+  initialize(); requestDraw();
+  if (!gl) report("WebGL is unavailable. The 3D scene cannot render on this device.");
+  return api;
+}));})();
+(function mountUtility(id        , kind        , duration        ) {
+  const root = document.getElementById(id) ;
+  const output = root.querySelector             ("output") ;
+  let count = 0, remaining = duration * 1000, deadline = 0, running = false;
+  const render = () => {
+    if (kind === "counter") output.textContent = new Intl.NumberFormat("fa-IR").format(count);
+    else { const seconds = Math.ceil(Math.max(0, remaining) / 1000); output.textContent = String(Math.floor(seconds / 60)).padStart(2, "0") + ":" + String(seconds % 60).padStart(2, "0"); }
+  };
+  root.addEventListener("click", (event) => {
+    const key = (event.target               ).closest             ("[data-utility]")?.dataset.utility;
+    if (kind === "counter") { if (key === "add") count++; if (key === "sub") count--; if (key === "reset") count = 0; }
+    else {
+      if (key === "start" && remaining > 0) { deadline = Date.now() + remaining; running = true; }
+      if (key === "pause") { if (running) remaining = Math.max(0, deadline - Date.now()); running = false; }
+      if (key === "reset") { running = false; remaining = duration * 1000; }
+    }
+    render();
+  });
+  if (kind === "timer") {
+    const update = () => { if (running) { remaining = Math.max(0, deadline - Date.now()); if (remaining === 0) running = false; render(); } requestAnimationFrame(update); };
+    requestAnimationFrame(update);
+  }
+  render();
+})("nava-kit-0","counter",60);</script></body></html>

@@ -1,0 +1,20 @@
+<!-- title: JS فیزیک: matter.js آفلاین
+desc: اجسام فیزیکی دو‌بعدی؛ با تپ جعبه و توپ اضافه کن
+cat: jslib
+level: 2 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;background:#070c10;overflow:hidden}canvas{display:block}</style></head><body>
+<script src="lib:matter"></script>
+<script>
+const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Events } = Matter;
+const eng = Engine.create(), W = innerWidth, H = innerHeight;
+const render = Render.create({ element: document.body, engine: eng, options: { width: W, height: H, wireframes: false, background: '#070c10' } });
+Composite.add(eng.world, [Bodies.rectangle(W / 2, H + 25, W, 50, { isStatic: true }), Bodies.rectangle(-25, H / 2, 50, H, { isStatic: true }), Bodies.rectangle(W + 25, H / 2, 50, H, { isStatic: true })]);
+const colors = ['#35ffa0', '#00d0ff', '#ffcf5a', '#ff5c8a', '#b388ff'];
+function add(x, y) { const c = colors[Math.floor(Math.random() * colors.length)]; Composite.add(eng.world, Math.random() < 0.5 ? Bodies.circle(x, y, 14 + Math.random() * 20, { restitution: 0.7, render: { fillStyle: c } }) : Bodies.rectangle(x, y, 30 + Math.random() * 40, 30 + Math.random() * 40, { restitution: 0.4, render: { fillStyle: c } })); }
+for (let i = 0; i < 25; i++) add(Math.random() * W, Math.random() * H / 2);
+const mouse = Mouse.create(render.canvas); Composite.add(eng.world, MouseConstraint.create(eng, { mouse, constraint: { render: { visible: false } } }));
+render.canvas.addEventListener('dblclick', e => add(e.clientX, e.clientY)); render.canvas.addEventListener('touchstart', e => add(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+Render.run(render); Runner.run(Runner.create(), eng);
+</script></body></html>

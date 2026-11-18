@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import http from 'node:http';import {resolve,extname,sep} from 'node:path';
+import {chromium}from'playwright';
+const root=resolve('dist/client'),output=resolve(process.env.CODEPAD_QA_OUTPUT||'/workspace/screenshots');await mkdir(output,{recursive:true});
+const mime={'.html':'text/html','.js':'application/javascript','.mjs':'application/javascript','.wasm':'application/wasm','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.svg':'image/svg+xml','.png':'image/png'};
+const server=http.createServer(async(req,res)=>{try{const pathname=new URL(req.url,'http://local').pathname;const name=resolve(root,'.'+(['/','/launcher'].includes(pathname)?'/index.html':decodeURIComponent(pathname)));if(!name.startsWith(root+sep))throw Error('path');res.setHeader('Content-Type',mime[extname(name)]||'application/octet-stream');res.end(await readFile(name));}catch{res.writeHead(404).end()}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port;
+const browser=await chromium.launch({headless:true,...(process.env.CODEPAD_CHROMIUM?{executablePath:process.env.CODEPAD_CHROMIUM}:{}),args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const errors=[];const page=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});page.on('pageerror',e=>errors.push(e.message));
+await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.fulfill({status:200,contentType:'application/javascript',body:''}));
+const seed={id:'qa-project',name:'پروژهٔ آزمایش',activeFileId:'qa-file',files:[{id:'qa-file',name:'main.py',lang:'python',content:'print("BACKUP_ORIGINAL")',stdin:''}]};
+await page.addInitScript(seed=>{if(window!==window.top||localStorage.getItem('qa-seeded'))return;localStorage.setItem('qa-seeded','1');localStorage.setItem('jibcode-en',JSON.stringify({state:{projects:[seed],activeProjectId:seed.id},version:1}));localStorage.setItem('jibcode-launcher',JSON.stringify({state:{apps:[]},version:0}));localStorage.setItem('codepad.apk.versions.v1',JSON.stringify({'com.codepad.qa':7}));localStorage.setItem('jibos-app-qa-app',JSON.stringify({score:42}));},seed);
+try{
+ await page.goto(url);await page.getByRole('button',{name:'پروژه‌ها',exact:true}).waitFor();
+ await page.evaluate(async()=>{const m=await import('/assets/runtime.js');await m.Et('qa-project',[new File(['attached-data'],'notes.txt',{type:'text/plain'})]);});
+ await page.getByRole('button',{name:'پروژه‌ها',exact:true}).click();await page.getByRole('button',{name:'تاریخچه، پشتیبان و کتابخانه‌ها',exact:true}).click();
+ await page.getByRole('dialog').filter({hasText:'مرکز پروژه'}).waitFor();await page.getByRole('button',{name:'ثبت نسخهٔ اکنون'}).click();await page.getByRole('status').filter({hasText:'نسخهٔ فعلی ذخیره شد.'}).waitFor();
+ await page.screenshot({path:resolve(output,'codepad-2.11-history-mobile.png')});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+ const first=await page.evaluate(async()=>{const r=await import('/assets/recovery.js');const record=await r.snapshot('مرجع آزمون',true);return record.id});
+ await page.evaluate(async()=>{const m=await import('/assets/runtime.js');m.pt.getState().updateContent('print("BACKUP_CHANGED")');const r=await import('/assets/recovery.js');await r.snapshot('تغییر آزمون',true);});
+ await page.getByRole('button',{name:'پشتیبان',exact:true}).click();const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'ذخیرهٔ پشتیبان کامل'}).click();const download=await downloadPromise;const backup=JSON.parse(await readFile(await download.path(),'utf8'));
+ assert.match(backup.values['jibcode-en'],/BACKUP_CHANGED/);assert.equal(backup.values['jibos-app-qa-app'],'{"score":42}');assert.equal(JSON.parse(backup.values['codepad.apk.versions.v1'])['com.codepad.qa'],7);assert.equal(backup.assets[0].name,'notes.txt');assert.equal(Buffer.from(backup.assets[0].b64,'base64').toString(),'attached-data');
+ await page.evaluate(async id=>{const r=await import('/assets/recovery.js');await r.restore(id);},first);await page.reload();await page.getByRole('button',{name:'پروژه‌ها',exact:true}).waitFor();
+ assert.match(await page.evaluate(()=>localStorage.getItem('jibcode-en')),/BACKUP_ORIGINAL/);
+ const restored=await page.evaluate(async()=>{const m=await import('/assets/runtime.js');return (await m.At('qa-project','notes.txt')).text()});assert.equal(restored,'attached-data');
+ const invalid=await page.evaluate(async()=>{const r=await import('/assets/recovery.js'),before=localStorage.getItem('jibcode-en');try{await r.importFull(new File([JSON.stringify({format:'codepad-full-backup',schema:1,values:{'jibcode-en':'{"state":{"projects":[]}}'},assets:[]})],'bad.json'));return false}catch{return before===localStorage.getItem('jibcode-en')}});assert.equal(invalid,true);
+ await page.getByRole('button',{name:'پروژه‌ها',exact:true}).click();await page.getByRole('button',{name:'تاریخچه، پشتیبان و کتابخانه‌ها',exact:true}).click();await page.getByRole('button',{name:'کتابخانه‌ها',exact:true}).click();await page.getByText('pygame / tkinter',{exact:true}).waitFor();await page.screenshot({path:resolve(output,'codepad-2.11-packages-mobile.png')});await page.setViewportSize({width:1280,height:800});await page.screenshot({path:resolve(output,'codepad-2.11-packages-desktop.png')});
+ await page.getByRole('button',{name:'بستن',exact:true}).click();
+ console.log('PASS real editor recovery menu, snapshots, restore with attachment, full backup download, application data and version counters, invalid backup rejection, package guide mobile/desktop');
+ // Export through the delivered UI and actual browser/Pyodide worker.
+ await page.getByRole('button',{name:'خروجی برنامه',exact:true}).click();await page.getByTestId('apk-export-sheet').waitFor();
+ const apkDownload=page.waitForEvent('download',{timeout:180000});await page.getByRole('button',{name:'ساخت و ذخیرهٔ APK',exact:true}).click();const apk=await apkDownload;const apkBytes=await readFile(await apk.path());await writeFile(resolve(output,'exported-qa.apk'),apkBytes);assert(apkBytes.length>1000000);await page.getByTestId('apk-ready').waitFor();
+ const identity=await page.evaluate(()=>localStorage.getItem('codepad.apk.signing-key.v1'));assert.equal(JSON.parse(identity).kty,'RSA');
+ console.log('PASS actual APK export UI → module Worker → pure Python build → browser download: '+apkBytes.length+' bytes');
+ await page.getByRole('button',{name:'ویندوز · PC',exact:true}).click();const pcDownload=page.waitForEvent('download',{timeout:180000});await page.getByRole('button',{name:'ساخت و ذخیرهٔ PC',exact:true}).click();const pc=await pcDownload;const pcBytes=await readFile(await pc.path());await writeFile(resolve(output,'exported-qa-windows.zip'),pcBytes);assert(pcBytes.length>1000000);console.log('PASS actual Windows export UI and Worker → portable ZIP download: '+pcBytes.length+' bytes');
+ await page.getByRole('button',{name:'بستن',exact:true}).click();
+ const mix='@@ python\nraise ValueError("VISIBLE_MIX_ERROR")\n@@ html\n<h1>ShouldNotAppear</h1>';
+ await page.evaluate(async mix=>{const m=await import('/assets/runtime.js');m.pt.getState().importProject('خطای Mix',[{name:'error.mix',lang:'mix',content:mix}]);m.j.getState().put({id:'mix-error-app',name:'خطای ترکیبی',icon:'!',entryFile:'error.mix',files:[{name:'error.mix',content:mix}],installedAt:Date.now()});},mix);
+ await page.getByRole('button',{name:'اجرا',exact:true}).click();await page.getByText(/VISIBLE_MIX_ERROR/).first().waitFor({timeout:60000});assert.equal(await page.getByText('ShouldNotAppear',{exact:true}).count(),0);
+ await page.goto(url+'/launcher');await page.getByRole('button',{name:'اجرای خطای ترکیبی',exact:true}).click();await page.getByText(/VISIBLE_MIX_ERROR/).first().waitFor({timeout:60000});assert.equal(await page.getByText('ShouldNotAppear',{exact:true}).count(),0);await page.screenshot({path:resolve(output,'codepad-2.11-mix-error.png')});console.log('PASS actual Mix errors remain visible in editor and launcher instead of a blank HTML page');
+ assert.deepEqual(errors,[]);
+}catch(error){console.log('BODY',await page.locator('body').innerText());console.log('PAGEERRORS',errors);await page.screenshot({path:resolve(output,'codepad-2.11-qa-error.png')});throw error}finally{await browser.close();await new Promise(r=>server.close(r));}

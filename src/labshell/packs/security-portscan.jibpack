@@ -1,0 +1,47 @@
+@@@ jibpack 1 دمو اسکن پورت (تعاملی)
+@@@ file index.html
+<!doctype html>
+<html lang="fa" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>دمو اسکن پورت (شبیه‌سازی‌شده)</title>
+<style>
+  body{margin:0;background:#04100a;color:#c8ffe4;font-family:ui-monospace,Menlo,monospace;padding:16px}
+  h1{font-size:18px;color:#00ff9c}
+  .warn{background:#3a2400;color:#ffd27a;border:1px solid #6a4a00;border-radius:10px;padding:10px;font-size:12px;line-height:1.7}
+  input,button{font:inherit;border-radius:10px;border:1px solid #0a5;background:#02160d;color:#c8ffe4;padding:8px 10px}
+  button{background:#00ff9c;color:#012; font-weight:700;border:0;cursor:pointer}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+  td,th{text-align:start;padding:6px 8px;border-bottom:1px solid #0a3d28}
+  .open{color:#00ff9c}.filtered{color:#ffd27a}.closed{color:#6b8a7c}
+  .bar{height:6px;background:#0a3d28;border-radius:6px;overflow:hidden;margin:10px 0}
+  .bar>i{display:block;height:100%;width:0;background:#00ff9c;transition:width .1s}
+</style>
+<h1>&gt; اسکن پورت (شبیه‌سازی‌شده)</h1>
+<p class="warn">⚠️ آموزشی: هیچ بسته‌ای روی شبکهٔ واقعی فرستاده نمی‌شود و هیچ سوکت واقعی باز نمی‌شود. مرورگر/WebView به سوکت خام TCP/UDP دسترسی ندارد، پس اسکن واقعی (nmap) اینجا ممکن نیست. داده‌ها ساختگی‌اند. اسکن شبکهٔ دیگران بدون اجازه ممکن است غیرقانونی باشد.</p>
+<div style="display:flex;gap:8px;margin-top:12px">
+  <input id="host" value="192.168.1.10" aria-label="میزبان" style="flex:1">
+  <button onclick="scan()">اسکن</button>
+</div>
+<div class="bar"><i id="prog"></i></div>
+<table><thead><tr><th>پورت</th><th>وضعیت</th><th>سرویس</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+  const COMMON=[[21,"ftp"],[22,"ssh"],[23,"telnet"],[25,"smtp"],[53,"domain"],[80,"http"],[110,"pop3"],[143,"imap"],[443,"https"],[3306,"mysql"],[3389,"rdp"],[5432,"postgresql"],[6379,"redis"],[8080,"http-proxy"]];
+  function seed(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+  async function scan(){
+    const host=document.getElementById('host').value.trim()||'localhost';
+    const h=seed(host.toLowerCase()); const rows=document.getElementById('rows'); rows.innerHTML='';
+    const prog=document.getElementById('prog');
+    for(let i=0;i<COMMON.length;i++){
+      const [port,svc]=COMMON[i]; const r=(h>>>(i%24))&7;
+      const state=r===0?'open':r===1?'filtered':'closed';
+      prog.style.width=Math.round((i+1)/COMMON.length*100)+'%';
+      await new Promise(f=>setTimeout(f,70));
+      if(state==='closed') continue;
+      rows.insertAdjacentHTML('beforeend',`<tr><td>${port}</td><td class="${state}">${state}</td><td>${svc}</td></tr>`);
+    }
+    if(!rows.children.length) rows.innerHTML='<tr><td colspan=3 class=closed>(هیچ پورت باز/فیلترشده در دادهٔ ساختگی)</td></tr>';
+  }
+  scan();
+</script>
+</html>

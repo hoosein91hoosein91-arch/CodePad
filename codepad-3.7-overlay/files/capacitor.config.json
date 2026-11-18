@@ -1,0 +1,13 @@
+{
+  "appId": "com.hoosein.codepad.vision212",
+  "appName": "CodePad Studio",
+  "webDir": "dist/client",
+  "backgroundColor": "#080e0c",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "adjustMarginsForEdgeToEdge": "disable",
+    "allowMixedContent": true
+  }
+}

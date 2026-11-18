@@ -1,0 +1,13 @@
+node_modules/
+/dist/
+/android/
+.tanstack/
+.output/
+.vercel/
+.node_modules.lock
+
+/build-qa/
+CodePad-stable-signing-key.json
+*.pk8
+*.keystore
+*.jks

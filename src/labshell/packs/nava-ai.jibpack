@@ -1,0 +1,21 @@
+@@@ jibpack 1 نوا: دستیار هوشمند
+@@@ file main.nava
+// Nava sample
+Ap "دستیار نوا"
+Fg #c5a2ff
+Hd "🤖 از هوش مصنوعی بپرس"
+In V1 "سوالت را بنویس…" Multi
+Var V2 = ""
+Arr V3
+Row
+  Bt "بپرس": Do V4 V1
+  Bt "یک ایده بده": Do V4 "یک ایدهٔ کوتاه برای یک برنامهٔ موبایل ساده بگو"
+End
+Out V2
+List V3 With Del
+
+Act V4 With V5
+  If V5 = "": Msg "اول سوالت را بنویس"; Return
+  Ask V2 = V5
+  Push V5 Into First V3
+End
