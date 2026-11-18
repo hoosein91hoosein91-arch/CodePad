@@ -23,11 +23,18 @@
 .hb-acad-chapter h2{margin:0;font-size:18px;color:#eafff5}
 .hb-acad-card{display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:18px;background:#061711;border:1px solid rgba(0,255,156,.14)}
 .hb-acad-intro{margin:0;color:#c8ffe6;line-height:1.85;font-size:14px}
+.hb-acad-section{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:12px;background:rgba(0,255,156,.04);border-inline-start:3px solid var(--ag2)}
+.hb-acad-section h4{margin:0;font-size:13px;color:var(--ag2);letter-spacing:.02em}
+.hb-acad-section p{margin:0;color:#c8ffe6;line-height:1.85;font-size:13.5px;white-space:pre-line}
 .hb-acad-points{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;color:#9fd9c4;font-size:13px;line-height:1.7}
 .hb-acad-example{border:1px dashed rgba(25,230,255,.35);border-radius:12px;padding:12px;background:rgba(25,230,255,.05)}
-.hb-acad-example-h{font-size:11px;letter-spacing:.1em;color:var(--ag2);margin-bottom:6px}
+.hb-acad-example-h{font-size:11px;letter-spacing:.1em;color:var(--ag2);margin-bottom:6px;font-weight:700}
 .hb-acad-example pre{margin:0 0 6px;direction:ltr;text-align:left;white-space:pre-wrap;font:12.5px/1.6 var(--font-mono,ui-monospace,monospace);color:#eafff5}
 .hb-acad-example small{color:#7fb8cd}
+.hb-acad-example.bad{border:1px dashed rgba(255,59,107,.45);background:rgba(255,59,107,.06)}
+.hb-acad-example.bad .hb-acad-example-h{color:#ff8fa8}
+.hb-acad-example.good{border:1px dashed rgba(0,255,156,.45);background:rgba(0,255,156,.06)}
+.hb-acad-example.good .hb-acad-example-h{color:var(--ag)}
 .hb-acad-code{direction:ltr;text-align:left;width:100%;min-height:160px;padding:14px;border-radius:14px;border:1px solid rgba(0,255,156,.25);background:#030d0a;color:#c8ffe6;font:13px/1.6 var(--font-mono,ui-monospace,monospace);resize:vertical;tab-size:2}
 .hb-acad-code:focus{outline:2px solid var(--ag);outline-offset:1px}
 .hb-acad-btn{min-height:46px;padding:9px 18px;border-radius:12px;border:1px solid rgba(0,255,156,.35);background:#082019;color:#d6fff0;font:700 13px inherit;cursor:pointer}

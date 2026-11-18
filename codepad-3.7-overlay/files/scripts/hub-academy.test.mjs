@@ -13,7 +13,7 @@ test("every chapter has a runnable solution that actually passes its own tests",
     sqli: "function isSqliPayload(input) { return /'|--/.test(input) || /or\\s+1\\s*=\\s*1/i.test(input); }",
     xss: "function escapeHtml(str) { return str.replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c])); }",
     jwt: "function decodeJwtPayload(token) { const p = token.split('.')[1]; return JSON.parse(atob(p.replace(/-/g,'+').replace(/_/g,'/'))); }",
-    network: "function isPrivateIp(ip) { const p = ip.split('.').map(Number); if (p.length!==4||p.some(n=>Number.isNaN(n)||n<0||n>255)) return false; return p[0]===10||p[0]===127||(p[0]===192&&p[1]===168)||(p[0]===172&&p[1]>=16&&p[1]<=31); }",
+    network: "function isPrivateIp(ip) { const p = ip.split('.').map(Number); if (p.length!==4||p.some(n=>Number.isNaN(n)||n<0||n>255)) return false; return p[0]===10||p[0]===127||(p[0]===192&&p[1]===168)||(p[0]===172&&p[1]>=16&&p[1]<=31)||(p[0]===169&&p[1]===254); }",
   };
   assert.deepEqual(Object.keys(solutions).sort(), CHAPTERS.map((c) => c.id).sort(), "every chapter needs a reference solution in this test");
   for (const c of CHAPTERS) {

@@ -111,10 +111,17 @@ export function viewAcademy(ui) {
   }
 
   function lessonBox(c) {
+    const intros = String(c.lesson.intro).split("\n\n").map((t) => h("p", { class: "hb-acad-intro" }, t));
+    const sections = (c.lesson.sections || []).map((s) =>
+      h("div", { class: "hb-acad-section" }, h("h4", {}, s.h), h("p", {}, s.body)));
+    const examples = (c.lesson.examples || (c.lesson.example ? [c.lesson.example] : [])).map((ex) =>
+      h("div", { class: "hb-acad-example" + (ex.bad ? " bad" : ex.label ? " good" : "") },
+        h("div", { class: "hb-acad-example-h" }, ex.label || "نمونه"), h("pre", {}, ex.code), h("small", {}, ex.note)));
     return h("div", { class: "hb-acad-card" },
-      h("p", { class: "hb-acad-intro" }, c.lesson.intro),
+      ...intros,
       h("ul", { class: "hb-acad-points" }, c.lesson.points.map((p) => h("li", {}, p))),
-      h("div", { class: "hb-acad-example" }, h("div", { class: "hb-acad-example-h" }, "نمونه"), h("pre", {}, c.lesson.example.code), h("small", {}, c.lesson.example.note)),
+      ...sections,
+      ...examples,
       h("button", { type: "button", class: "hb-acad-btn pri", onclick: () => { setChapterState(c.id, { stage: "exercise" }); render(); } }, "برو به تمرین کد ▶"));
   }
 

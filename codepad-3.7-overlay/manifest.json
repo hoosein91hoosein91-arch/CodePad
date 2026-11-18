@@ -47,15 +47,15 @@
   },
   "mobile-src/assets/hub-academy-data.js": {
    "base": null,
-   "new": "74eb0308f75b1296ab11fd031b1517b238d848e91c1338dbeba2d7f7c6dff576"
+   "new": "3f41d6d645052f2368d9f067d2a9f6b89ddf017165416f85455af3ea7ff331a8"
   },
   "mobile-src/assets/hub-academy.css": {
    "base": null,
-   "new": "caface92e6c9e43144e4f27a9698bce7bbf6fedbc136bd17ef0eafac8ac5d99a"
+   "new": "09ebbffadd974d43e141cbd17eae2d6989ab404d673d4ff5940355e00481151c"
   },
   "mobile-src/assets/hub-academy.js": {
    "base": null,
-   "new": "d1449b65e87deccab2dde4c0eff57c08e04b42ec5338464b24b32aaae2976cd9"
+   "new": "e2e0c5f434d9f99e0d6ccb1c698f2bd66f6d53d301b455090f9e2a50318258bc"
   },
   "mobile-src/assets/hub-confidential.js": {
    "base": null,
@@ -399,7 +399,7 @@
   },
   "scripts/hub-academy.test.mjs": {
    "base": null,
-   "new": "4254ab22a0ad85ebbafd1d656475132981f2da115275fdebcf4f52902427c425"
+   "new": "da2e9be98e68073bbfe8597941c58e3a708a326175015c0f2d6234f9b23aabf4"
   },
   "scripts/hub-ctf.test.mjs": {
    "base": null,
