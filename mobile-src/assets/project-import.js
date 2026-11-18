@@ -1,4 +1,5 @@
 import {prepareProjectFiles,ZIP_LIMITS} from './project-zip.js';
+import {modal} from './ui-dom.js';
 const runtime=()=>import('./runtime.js');
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const message=(node,text)=>{node.textContent=text;};
@@ -32,15 +33,15 @@ export async function importPreparedProject(plan,name,entry){
  }
 }
 export function openZip(file){return new Promise(async resolve=>{
- const dialog=document.createElement('dialog');dialog.className='cp-project-import';dialog.dir='rtl';
- dialog.innerHTML='<header><div><small>CODEPAD PROJECT</small><h2>بازکردن پروژه از ZIP</h2></div><button data-zip-close>بستن</button></header><section><p data-zip-status role="status">در حال خواندن و بررسی فایل‌ها…</p><div data-zip-preview></div></section>';
- document.body.append(dialog);dialog.showModal();const controller=new AbortController();let saving=false,settled=false;
- const close=value=>{if(saving||settled)return;settled=true;controller.abort();dialog.close();dialog.remove();resolve(value);};
- dialog.querySelector('[data-zip-close]').onclick=()=>close(false);dialog.oncancel=e=>{e.preventDefault();close(false);};
+ const box=modal({title:'بازکردن پروژه از ZIP',kind:'modal',onClose:()=>{if(!settled){settled=true;controller.abort();resolve(false);}}});
+ const dialog=box.body;dialog.classList.add('ui-form');dialog.innerHTML='<p data-zip-status role="status">در حال خواندن و بررسی فایل‌ها…</p><div data-zip-preview class="ui-form"></div>';
+ const controller=new AbortController();let saving=false,settled=false;
+ const close=value=>{if(saving||settled)return;settled=true;controller.abort();box.close();resolve(value);};
+ 
  try{
   const unpacked=await readZIP(file,controller.signal),rt=await runtime(),plan=prepareProjectFiles(unpacked,rt.gt);if(settled)return;
   const preview=dialog.querySelector('[data-zip-preview]');
-  preview.innerHTML=`<div class="cp-project-summary"><strong>${plan.files.length.toLocaleString('fa-IR')} فایل سورس</strong><span>${plan.assets.length.toLocaleString('fa-IR')} پیوست</span></div><p>همهٔ فایل‌ها در یک پروژه قرار می‌گیرند. فایل شروع اجرا می‌شود و فایل‌های کمکی را با import بارگذاری می‌کند.</p><label>نام پروژه<input data-zip-name maxlength="80" value="${escape(file.name.replace(/\.zip$/i,'').slice(0,80))}"></label><label>فایل شروع<select data-zip-entry dir="ltr"><option value="">انتخاب فایل شروع…</option>${plan.candidates.map(n=>`<option value="${escape(n)}" ${n===plan.entry?'selected':''}>${escape(n)}</option>`).join('')}</select></label><details><summary>فایل‌های پروژه</summary><ul dir="ltr">${[...plan.files,...plan.assets].map(f=>`<li>${escape(f.name)}</li>`).join('')}</ul></details><button data-zip-import class="cp-project-primary">افزودن پروژه</button><p class="cp-project-note">ZIP تا ۶۴ مگابایت، حداکثر ۱۲۸ مگابایت پس از بازشدن. نصب وابستگی‌های خارجی جداست؛ واردکردن ZIP همهٔ کتابخانه‌های دسکتاپ را فراهم نمی‌کند.</p>`;
+  preview.innerHTML=`<div class="ui-actions"><strong>${plan.files.length.toLocaleString('fa-IR')} فایل سورس</strong><span>${plan.assets.length.toLocaleString('fa-IR')} پیوست</span></div><p>همهٔ فایل‌ها در یک پروژه قرار می‌گیرند. فایل شروع اجرا می‌شود و فایل‌های کمکی را با import بارگذاری می‌کند.</p><label>نام پروژه<input data-zip-name maxlength="80" value="${escape(file.name.replace(/\.zip$/i,'').slice(0,80))}"></label><label>فایل شروع<select data-zip-entry dir="ltr"><option value="">انتخاب فایل شروع…</option>${plan.candidates.map(n=>`<option value="${escape(n)}" ${n===plan.entry?'selected':''}>${escape(n)}</option>`).join('')}</select></label><details><summary>فایل‌های پروژه</summary><ul dir="ltr">${[...plan.files,...plan.assets].map(f=>`<li>${escape(f.name)}</li>`).join('')}</ul></details><button data-zip-import class="ui-btn ui-btn--primary">افزودن پروژه</button><p class="ui-caption">ZIP تا ۶۴ مگابایت، حداکثر ۱۲۸ مگابایت پس از بازشدن. نصب وابستگی‌های خارجی جداست؛ واردکردن ZIP همهٔ کتابخانه‌های دسکتاپ را فراهم نمی‌کند.</p>`;
   message(dialog.querySelector('[data-zip-status]'),plan.prefix?'پوشهٔ بیرونی ZIP شناسایی شد؛ ساختار داخلی پروژه حفظ می‌شود.':'آمادهٔ افزودن پروژه');
   preview.querySelector('[data-zip-import]').onclick=async()=>{
    if(saving)return;saving=true;const button=preview.querySelector('[data-zip-import]');button.disabled=true;
@@ -60,7 +61,7 @@ export async function runProject(){
 }
 export async function renderProjectHub(host){
  const rt=await runtime(),p=rt.dt(rt.pt.getState());
- host.innerHTML=`<div class="studio-intro"><span class="studio-kicker">PROJECT WORKSPACE</span><h2>یک پروژه، همهٔ فایل‌ها</h2><p>سورس ZIP را وارد کن، فایل شروع را مشخص کن و پروژه را اجرا کن. فایل‌های کمکی از همان پروژه import می‌شوند.</p></div><div class="studio-row"><button class="studio-primary" data-project-zip>واردکردن پروژه ZIP</button><button data-portal-example>نمونهٔ فیلترهای دو دست</button></div><article class="studio-extension"><h3>${escape(p.name)}</h3><p>${p.files.length.toLocaleString('fa-IR')} فایل سورس در پروژهٔ فعال</p><label>فایل شروع<select data-project-entry dir="ltr"><option value="">اجرای فایل بازشده</option>${p.files.map(f=>`<option value="${escape(f.name)}" ${p.entryFile===f.name?'selected':''}>${escape(f.name)}</option>`).join('')}</select></label><div class="studio-row"><button data-run-project class="studio-primary">اجرای پروژه</button></div><p class="studio-note">با انتخاب فایل شروع، دکمهٔ اجرای ویرایشگر هم همان فایل را اجرا می‌کند؛ حتی وقتی یک فایل کمکی را برای ویرایش باز کرده‌ای.</p></article><pre data-project-status dir="auto"></pre>`;
+ host.innerHTML=`<div class="ui-intro"><h2>یک پروژه، همهٔ فایل‌ها</h2><p>سورس ZIP را وارد کن، فایل شروع را مشخص کن و پروژه را اجرا کن. فایل‌های کمکی از همان پروژه import می‌شوند.</p></div><div class="ui-actions"><button class="ui-btn ui-btn--primary" data-project-zip>واردکردن پروژه ZIP</button><button data-portal-example>نمونهٔ فیلترهای دو دست</button></div><article class="ui-card"><h3>${escape(p.name)}</h3><p>${p.files.length.toLocaleString('fa-IR')} فایل سورس در پروژهٔ فعال</p><label>فایل شروع<select data-project-entry dir="ltr"><option value="">اجرای فایل بازشده</option>${p.files.map(f=>`<option value="${escape(f.name)}" ${p.entryFile===f.name?'selected':''}>${escape(f.name)}</option>`).join('')}</select></label><div class="ui-actions"><button data-run-project class="ui-btn ui-btn--primary">اجرای پروژه</button></div><p class="ui-caption">با انتخاب فایل شروع، دکمهٔ اجرای ویرایشگر هم همان فایل را اجرا می‌کند؛ حتی وقتی یک فایل کمکی را برای ویرایش باز کرده‌ای.</p></article><pre data-project-status dir="auto"></pre>`;
  host.querySelector('[data-project-zip]').onclick=chooseZIP;
  host.querySelector('[data-portal-example]').onclick=async()=>{try{const response=await fetch(new URL('../examples/Filters-Portal.zip',import.meta.url));if(!response.ok)throw Error('نمونه پیدا نشد.');window.CodePadStudio?.close();await openZip(new File([await response.arrayBuffer()],'Filters-Portal.zip',{type:'application/zip'}));}catch(error){message(host.querySelector('[data-project-status]'),error.message);}};
  host.querySelector('[data-project-entry]').onchange=e=>{rt.pt.setState(s=>({projects:s.projects.map(x=>x.id===p.id?{...x,entryFile:e.target.value||undefined}:x)}));};

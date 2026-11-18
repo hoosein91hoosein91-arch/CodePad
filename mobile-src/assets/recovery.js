@@ -1,4 +1,5 @@
 import {VERSION} from './version.js';
+import {modal,tabs as tabsEl} from './ui-dom.js';
 import {pt as lab,j as launcher,Mt as assets,kt as loadAssets,x as stop,saveCodePadFile as saveFile,E as importLauncher} from './runtime.js';
 
 const MAX_SNAPSHOTS=20, MAX_BYTES=160*1024*1024;
@@ -78,25 +79,34 @@ const guides=[
 const el=(tag,text,className)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n};
 let dialog,body,status,tab='history',busy=false;
 function message(text,error=false){status.textContent=text;status.dataset.error=String(error)}
-function button(text,action,primary=false){const b=el('button',text,primary?'cp-primary':'');b.type='button';b.onclick=async()=>{if(busy)return;busy=true;b.disabled=true;message('در حال انجام…');try{await action()}catch(error){message(error.message||String(error),true)}finally{busy=false;b.disabled=false}};return b}
+function button(text,action,primary=false){const b=el('button',text,'ui-btn '+(primary?'ui-btn--primary':'ui-btn--line'));b.type='button';b.onclick=async()=>{if(busy)return;busy=true;b.disabled=true;message('در حال انجام…');try{await action()}catch(error){message(error.message||String(error),true)}finally{busy=false;b.disabled=false}};return b}
 async function render(){body.replaceChildren();if(tab==='history'){
-  body.append(el('p','تا ۲۰ نسخهٔ آخر به‌صورت خودکار روی همین دستگاه نگه داشته می‌شود. بازگردانی، یک نسخه از وضعیت فعلی هم حفظ می‌کند.','cp-muted'));
+  body.append(el('p','تا ۲۰ نسخهٔ آخر به‌صورت خودکار روی همین دستگاه نگه داشته می‌شود. بازگردانی، یک نسخه از وضعیت فعلی هم حفظ می‌کند.','ui-caption'));
   body.append(button('ثبت نسخهٔ اکنون',async()=>{await snapshot('دستی',true);await render();message('نسخهٔ فعلی ذخیره شد.')}));
-  const list=el('div',undefined,'cp-history');body.append(list);const all=await request((await recoveryDB).transaction('snapshots').objectStore('snapshots').getAll());all.sort((a,b)=>b.at-a.at);
+  const list=el('div',undefined,'ui-stack');body.append(list);const all=await request((await recoveryDB).transaction('snapshots').objectStore('snapshots').getAll());all.sort((a,b)=>b.at-a.at);
   if(!all.length)list.append(el('p','هنوز نسخه‌ای ذخیره نشده است.'));
-  for(const s of all){const row=el('article'),info=el('div');info.append(el('strong',new Date(s.at).toLocaleString('fa-IR')),el('p',s.reason+' · '+JSON.parse(s.values['jibcode-en']||'{}')?.state?.projects?.length+' پروژه','cp-muted'));row.append(info,button('بازگردانی',async()=>{await restore(s.id);message('نسخه بازگردانده شد.');location.reload()}));list.append(row)}
+  for(const s of all){const row=el('article'),info=el('div');info.append(el('strong',new Date(s.at).toLocaleString('fa-IR')),el('p',s.reason+' · '+JSON.parse(s.values['jibcode-en']||'{}')?.state?.projects?.length+' پروژه','ui-caption'));row.append(info,button('بازگردانی',async()=>{await restore(s.id);message('نسخه بازگردانده شد.');location.reload()}));list.append(row)}
   if(lastError)message('پشتیبان خودکار ذخیره نشد: '+lastError,true);
 }else if(tab==='backup'){
-  body.append(el('p','پشتیبان کامل شامل کدها، پیوست‌ها، برنامه‌های لانچر، دادهٔ برنامه‌ها و کلید امضای خروجی‌های شخصی است. کلید Gemini ذخیره نمی‌شود.','cp-muted'));
+  body.append(el('p','پشتیبان کامل شامل کدها، پیوست‌ها، برنامه‌های لانچر، دادهٔ برنامه‌ها و کلید امضای خروجی‌های شخصی است. کلید Gemini ذخیره نمی‌شود.','ui-caption'));
   body.append(button('ذخیرهٔ پشتیبان کامل',async()=>{const text=await exportFull();const saved=await saveFile('CodePad-backup-'+new Date().toISOString().slice(0,10)+'.json',new TextEncoder().encode(text),'application/json');message(saved?'پشتیبان ذخیره شد.':'ذخیره لغو شد.')},true));
   const file=el('input');file.type='file';file.accept='.json,.codepad-backup';file.hidden=true;body.append(file);file.onchange=async()=>{if(!file.files[0])return;busy=true;message('در حال بررسی پشتیبان…');try{const result=await importFull(file.files[0]);message(result.legacy?result.count+' برنامه منتقل شد.':'پشتیبان بازگردانده شد.');location.reload()}catch(error){message(error.message,true)}finally{busy=false;file.value=''}};
   body.append(button('بازگردانی از فایل',()=>{file.click();message('فایل پشتیبان را انتخاب کن.')}));
-  body.append(el('h3','انتقال از نسخهٔ ۲.۱۰'),el('p','در نسخهٔ قبلی، از تنظیمات لانچر پشتیبان بگیر و اینجا همان فایل را بازگردانی کن. پروژه‌های ویرایشگر را نیز از گزینهٔ ذخیرهٔ فایل منتقل کن. این نصب مستقل است؛ نسخهٔ قبلی را تا انتقال اطلاعات نگه دار.','cp-muted'));
+  body.append(el('h3','انتقال از نسخهٔ ۲.۱۰'),el('p','در نسخهٔ قبلی، از تنظیمات لانچر پشتیبان بگیر و اینجا همان فایل را بازگردانی کن. پروژه‌های ویرایشگر را نیز از گزینهٔ ذخیرهٔ فایل منتقل کن. این نصب مستقل است؛ نسخهٔ قبلی را تا انتقال اطلاعات نگه دار.','ui-caption'));
 }else{
-  body.append(el('p','CodePad از Python مرورگری استفاده می‌کند. بسته‌های Python خالص و بسته‌های مخصوص Pyodide قابل استفاده‌اند؛ همهٔ کتابخانه‌های سیستم قابل نصب نیستند.','cp-muted'));
-  for(const[name,kind,install,use,note]of guides){const card=el('article',undefined,'cp-package');card.append(el('strong',name),el('span',kind,'cp-badge'),el('p',note,'cp-muted'));if(install){const code=el('pre',install+'\n\n'+use);code.dir='ltr';card.append(code,button('کپی نصب و نمونه',async()=>{await navigator.clipboard.writeText(install+'\n\n'+use);message('دستور نصب برای کنسول و کد استفاده برای فایل Python کپی شد.')}))}body.append(card)}
+  body.append(el('p','CodePad از Python مرورگری استفاده می‌کند. بسته‌های Python خالص و بسته‌های مخصوص Pyodide قابل استفاده‌اند؛ همهٔ کتابخانه‌های سیستم قابل نصب نیستند.','ui-caption'));
+  for(const[name,kind,install,use,note]of guides){const card=el('article',undefined,'ui-card');card.append(el('strong',name),el('span',kind,'ui-chip ui-chip--primary'),el('p',note,'ui-caption'));if(install){const code=el('pre',install+'\n\n'+use);code.dir='ltr';card.append(code,button('کپی نصب و نمونه',async()=>{await navigator.clipboard.writeText(install+'\n\n'+use);message('دستور نصب برای کنسول و کد استفاده برای فایل Python کپی شد.')}))}body.append(card)}
 }}
-export async function openTools(){if(!dialog){dialog=el('dialog',undefined,'cp-tools');dialog.dir='rtl';const header=el('header'),titles=el('div');titles.append(el('h2','مرکز پروژه'),el('p','CodePad '+VERSION,'cp-muted'));header.append(titles,button('بستن',()=>dialog.close()));const nav=el('nav');for(const[id,label]of[['history','تاریخچه'],['backup','پشتیبان'],['packages','کتابخانه‌ها']]){const b=button(label,async()=>{tab=id;for(const other of nav.children)other.dataset.active=String(other===b);message('');await render()});b.dataset.active=String(id===tab);nav.append(b)}body=el('section',undefined,'cp-tools-body');status=el('p','', 'cp-status');status.setAttribute('role','status');dialog.append(header,nav,body,status);document.body.append(dialog);dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()}})}dialog.showModal();await render()}
+export async function openTools(){
+  if(dialog)return;
+  dialog=modal({title:'مرکز پروژه',kind:'modal',onClose:()=>{dialog=null}});
+  dialog.head.insertBefore(el('span','CodePad '+VERSION,'ui-caption'),dialog.head.lastChild);
+  const nav=tabsEl([['history','تاریخچه','clock'],['backup','پشتیبان','save'],['packages','کتابخانه‌ها','box']],tab,async id=>{tab=id;message('');await render()});
+  body=dialog.body;body.classList.add('ui-form');
+  status=el('p','','ui-status');status.setAttribute('role','status');
+  dialog.el.insertBefore(nav,body);dialog.el.append(status);
+  await render();
+}
 window.CodePadRecovery={open:openTools};
 function schedule(){clearTimeout(timer);timer=setTimeout(()=>snapshot().catch(()=>{}),8000)}
 lab.subscribe((next,previous)=>{if(next.projects!==previous.projects)schedule()});launcher.subscribe(schedule);assets.subscribe(schedule);

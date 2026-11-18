@@ -2,6 +2,7 @@
 //  • ویندوز: بی‌پرسش در یک پوشهٔ عمومی کنار فایل‌های خودت ذخیره می‌شود: Documents\CodePad\Reports (و دکمهٔ «نمایش در پوشه»).
 //  • اندروید: انتخابگر فایل خود سیستم باز می‌شود تا هر پوشهٔ عمومی (Download، Documents…) را انتخاب کنی؛ «اشتراک» برگهٔ اشتراک‌گذاری اندروید را باز می‌کند.
 //  • مرورگر: دانلود معمولی؛ «اشتراک» اگر مرورگر Web Share داشته باشد.
+import { h, btn, modal } from "./ui-dom.js";
 const te = new TextEncoder();
 const TEXT_RE = /^(text\/|application\/(json|xml|javascript))/;
 export const isText = (mime, name = "") => TEXT_RE.test(mime || "") || /\.(txt|log|md|csv|json|html?|xml|ini|conf)$/i.test(name);
@@ -46,19 +47,16 @@ export async function shareReport({ name, bytes, mime, title }) {
 
 let dialog;
 function ensureDialog() {
-  if (dialog) return dialog;
-  const style = document.createElement("style");
-  style.textContent = `.cp-report{position:fixed;inset:0;margin:auto;height:fit-content;max-height:92dvh;overflow:auto;border:1px solid #1f7a58;border-radius:14px;padding:0;background:#04100c;color:#d6fff0;max-width:min(560px,94vw);width:100%;direction:rtl;font:14px/1.7 Vazirmatn,system-ui,sans-serif}
-.cp-report::backdrop{background:rgba(0,0,0,.7)}.cp-report form{display:flex;flex-direction:column;gap:10px;padding:16px}
-.cp-report h2{margin:0;font-size:16px;color:#00ff9c}.cp-report small{color:#6fb59a}.cp-report pre{margin:0;max-height:34vh;overflow:auto;padding:10px;border:1px solid #0f4a35;border-radius:8px;background:#020807;color:#9ef7cf;font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;word-break:break-all;direction:ltr;text-align:left}
-.cp-report .row{display:flex;flex-wrap:wrap;gap:8px}.cp-report button{min-height:44px;padding:8px 14px;border:1px solid #1f7a58;border-radius:10px;background:#082019;color:#d6fff0;font:600 13px inherit;cursor:pointer}
-.cp-report button.pri{background:#00ff9c;color:#00160d;border-color:#00ff9c}.cp-report [role=status]{min-height:22px;color:#ffd23f;font-size:13px;word-break:break-all}`;
-  document.head.append(style);
-  dialog = document.createElement("dialog");
-  dialog.className = "cp-report"; dialog.setAttribute("aria-label", "گزارش");
-  dialog.innerHTML = `<form method="dialog"><div><h2></h2><small></small></div><pre hidden></pre><p role="status"></p><div class="row"><button type="button" class="pri" data-save>💾 ذخیره</button><button type="button" data-share>📤 اشتراک</button><button type="button" data-copy hidden>📋 کپی متن</button><button type="button" data-reveal hidden>📂 نمایش در پوشه</button><button type="submit">بستن</button></div></form>`;
-  document.body.append(dialog);
-  return dialog;
+  dialog?.close();
+  const api = modal({ title: "گزارش", kind: "modal", onClose: () => { dialog = null; } });
+  dialog = api;
+  const tag = (el, attr) => { el.setAttribute(attr, ""); return el; };
+  const copyBtn = tag(btn("کپی متن", { icon: "copy", kind: "line" }), "data-copy"), revealBtn = tag(btn("نمایش در پوشه", { icon: "folder", kind: "line" }), "data-reveal");
+  copyBtn.hidden = true; revealBtn.hidden = true;
+  api.body.classList.add("ui-form");
+  api.body.append(h("small", { class: "ui-caption" }), h("pre", { hidden: true }), h("p", { role: "status", class: "ui-caption" }),
+    h("div", { class: "ui-actions" }, tag(btn("ذخیره", { icon: "save", kind: "primary" }), "data-save"), tag(btn("اشتراک", { icon: "open", kind: "line" }), "data-share"), copyBtn, revealBtn));
+  return api.el;
 }
 
 /** کارت گزارش را نشان می‌دهد. item: {name, bytes|b64|path, mime, title} */
@@ -92,7 +90,6 @@ export async function showReport(item) {
   };
   copy.onclick = async () => { try { await navigator.clipboard.writeText(text ?? ""); status.textContent = "متن کپی شد."; } catch { status.textContent = "کپی نشد."; } };
   reveal.onclick = () => globalThis.cpDesktop?.files?.reveal?.(savedPath).catch?.(() => {});
-  if (!d.open) d.showModal();
   return d;
 }
 
