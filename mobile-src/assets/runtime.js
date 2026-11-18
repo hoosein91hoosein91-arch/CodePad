@@ -30328,6 +30328,8 @@ var runPython = (e, t, n, entryFile) => runPythonRaw(e, t, n, entryFile),
     dim: 80,
     fontSize: 15,
     autocomplete: !0,
+    palette: `aurora`,
+    ligatures: !1,
   },
   safeStorage = {
     getItem: (e) => (typeof window > `u` ? null : localStorage.getItem(e)),

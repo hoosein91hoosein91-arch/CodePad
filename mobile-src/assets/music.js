@@ -1,23 +1,13 @@
 // پخش‌کنندهٔ موسیقی CodePad: پوشهٔ محلی (دسکتاپ: Music\Phonk - Video Songs) · رادیوی فانک با دکمهٔ «بعدی» · پلی‌لیست تمرکز.
 // مینی‌پلیر هنگام کدنویسی روی صفحه می‌ماند. window.CodePadMusic.open() پنل کامل را باز می‌کند.
 import { FOCUS_PLAYLIST, matchesTrack, searchUrl } from "./focus-playlist.js";
+import { h, icon, btn, row, state as uiState, modal, tabs } from "./ui-dom.js";
 
 const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { /* حافظه در دسترس نیست */ } return null; };
 const API_BASES = ["https://de1.api.radio-browser.info", "https://nl1.api.radio-browser.info", "https://at1.api.radio-browser.info"];
 export const RADIO_TAGS = ["phonk", "drift phonk", "brazilian phonk", "memphis", "darksynth", "synthwave", "lofi"];
 const VIDEO_EXT = /^(mp4|m4v|webm|mov)$/i;
 
-const h = (tag, attrs = {}, ...kids) => {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === "class") el.className = v;
-    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
-    else if (v === true) el.setAttribute(k, "");
-    else if (v !== false && v != null) el.setAttribute(k, v);
-  }
-  for (const kid of kids.flat()) if (kid != null) el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
-  return el;
-};
 /** موقعیت پخش‌کنندهٔ شناور را داخل صفحه نگه می‌دارد (قابل آزمون بدون DOM). */
 export function clampPillPos(x, y, vw, vh, w = 60, hgt = 44) {
   const nx = Math.min(Math.max(Number.isFinite(x) ? x : 0, 4), Math.max(4, vw - w - 4));
@@ -74,11 +64,13 @@ function updateUi() {
   const title = t ? t.title : "—";
   if (els.title) els.title.textContent = title;
   if (els.sub) els.sub.textContent = t ? (t.sub || (t.kind === "radio" ? "Radio" : "Local")) : "";
-  if (els.pillTitle) els.pillTitle.textContent = t ? title : "MUSIC";
-  for (const b of [els.play, els.pillPlay]) if (b) b.textContent = playing ? "⏸" : "▶";
+  if (els.pillTitle) els.pillTitle.textContent = t ? title : "—";
+  if (els.pillSub) els.pillSub.textContent = t ? (t.sub || (t.kind === "radio" ? "رادیو" : "پوشهٔ من")) : "";
+  if (pill) pill.hidden = !t || !!dialog;
+  for (const b of [els.play, els.pillPlay]) setPlayIcon(b, playing);
   if (pill) pill.classList.toggle("playing", !!playing);
   if (els.seek) { const live = !Number.isFinite(media.duration); els.seekRow.classList.toggle("live", live); if (!live) { els.seek.max = String(media.duration); els.seek.value = String(media.currentTime); els.time.textContent = `${fmt(media.currentTime)} / ${fmt(media.duration)}`; } else els.time.textContent = media.src ? "LIVE" : ""; }
-  if (els.list) for (const li of els.list.querySelectorAll("li[data-i]")) li.classList.toggle("on", Number(li.dataset.i) === state.index && li.dataset.q === state.source);
+  if (els.list) for (const li of els.list.querySelectorAll("li[data-i]")) { const on = Number(li.dataset.i) === state.index && li.dataset.q === state.source; (li.firstElementChild || li).setAttribute("aria-current", String(on)); }
   if ("mediaSession" in navigator && t) { try { navigator.mediaSession.metadata = new MediaMetadata({ title: title, artist: t.sub || "CodePad" }); } catch { /* ignore */ } }
 }
 
@@ -88,7 +80,7 @@ async function playIndex(i) {
   const t = current();
   media.src = t.src;
   const isVideo = t.kind === "local" && VIDEO_EXT.test(t.ext || "");
-  els.videoBox?.classList.toggle("has-video", isVideo);
+  if (els.videoBox) els.videoBox.style.display = isVideo ? "block" : "none";
   try { await media.play(); setStatus(""); state.failures = 0; } catch (e) { if (e && e.name !== "AbortError") onError(); }
   updateUi();
 }
@@ -161,11 +153,16 @@ async function useRadio(tag = state.tag) {
 }
 
 // ── رابط ──
+const setPlayIcon = (b, playing) => b && b.replaceChildren(icon(playing ? "pause" : "play"));
 function renderList() {
   if (!els.list) return;
   const q = (els.search?.value || "").toLowerCase();
   const items = (state.source === "focus" ? [] : state.queue).map((t, i) => [t, i]).filter(([t]) => !q || t.title.toLowerCase().includes(q));
-  els.list.replaceChildren(...items.slice(0, 400).map(([t, i]) => h("li", { "data-i": i, "data-q": state.source, onclick: () => playIndex(i) }, h("b", {}, t.title), h("small", {}, t.sub || ""))));
+  if (!items.length) {
+    els.list.replaceChildren(h("li", {}, uiState({ icon: "headphones", title: state.source === "radio" ? "ایستگاهی پیدا نشد" : "فهرست خالی است", text: state.source === "radio" ? "برچسب دیگری امتحان کن یا اینترنت را بررسی کن." : "پوشه یا فایل‌های موسیقی را انتخاب کن." })));
+    return updateUi();
+  }
+  els.list.replaceChildren(...items.slice(0, 400).map(([t, i]) => h("li", { "data-i": i, "data-q": state.source }, row({ icon: "music", title: t.title, detail: t.sub || "", onclick: () => playIndex(i), current: i === state.index }))));
   updateUi();
 }
 function renderFocus() {
@@ -173,17 +170,17 @@ function renderFocus() {
   const all = FOCUS_PLAYLIST.groups.flatMap((g) => g.tracks);
   const matched = all.map((t) => [t, state.local.find((f) => matchesTrack(f.title + " " + (f.rel || ""), t))]);
   const found = matched.filter(([, f]) => f).map(([, f]) => f);
-  box.append(h("p", { class: "mu-tip" }, FOCUS_PLAYLIST.tips),
-    h("div", { class: "mu-row" },
-      h("button", { type: "button", class: "pri", disabled: !found.length, onclick: () => { setQueue("focus", found, -1); playIndex(0); } }, found.length ? `▶ پخش ${found.length} آهنگ از پوشهٔ من` : "هیچ‌کدام در پوشهٔ تو پیدا نشد"),
-      h("button", { type: "button", onclick: () => navigator.clipboard?.writeText(all.map((t) => `${t.artist} - ${t.title}`).join("\n")).then(() => setStatus("فهرست کپی شد."), () => {}) }, "کپی فهرست")));
+  box.append(h("p", { class: "ui-caption" }, FOCUS_PLAYLIST.tips),
+    h("div", { class: "ui-actions" },
+      btn(found.length ? `پخش ${found.length} آهنگ از پوشهٔ من` : "هیچ‌کدام در پوشهٔ تو پیدا نشد", { icon: "play", kind: "primary", disabled: !found.length, onclick: () => { setQueue("focus", found, -1); playIndex(0); } }),
+      btn("کپی فهرست", { icon: "copy", kind: "line", onclick: () => navigator.clipboard?.writeText(all.map((t) => `${t.artist} - ${t.title}`).join("\n")).then(() => setStatus("فهرست کپی شد."), () => {}) })));
   for (const g of FOCUS_PLAYLIST.groups) {
-    box.append(h("h4", {}, g.title));
+    box.append(h("h3", { class: "ui-label", style: { margin: "16px 0 4px" } }, g.title));
     for (const t of g.tracks) {
       const local = matched.find(([x]) => x === t)[1];
-      box.append(h("div", { class: "mu-track" }, h("div", {}, h("b", {}, t.title), h("small", {}, t.artist + " · " + t.note)),
-        local ? h("button", { type: "button", class: "pri", title: "از پوشهٔ تو", onclick: () => { setQueue("focus", found, found.indexOf(local)); playIndex(found.indexOf(local)); } }, "▶")
-          : h("button", { type: "button", title: "جست‌وجو در مرورگر", onclick: () => openExternal(searchUrl(t)) }, "🔎")));
+      box.append(row({ icon: "music", title: t.title, detail: t.artist + " · " + t.note,
+        end: local ? btn("پخش از پوشهٔ من", { icon: "play", kind: "tool", onclick: () => { setQueue("focus", found, found.indexOf(local)); playIndex(found.indexOf(local)); } })
+          : btn("جست‌وجو در مرورگر", { icon: "search", kind: "tool", onclick: () => openExternal(searchUrl(t)) }) }));
     }
   }
 }
@@ -191,21 +188,22 @@ function renderSource() {
   const src = els.sourceBar; src.replaceChildren();
   if (state.source === "local") {
     const desktop = !!window.cpDesktop?.music;
-    src.append(h("div", { class: "mu-row" },
-      desktop ? h("button", { type: "button", onclick: chooseFolderDesktop }, "📁 انتخاب پوشه") : h("button", { type: "button", onclick: () => pickFiles(true) }, "📁 انتخاب پوشه"),
-      h("button", { type: "button", onclick: () => pickFiles(false) }, "➕ انتخاب فایل‌ها"),
-      desktop ? h("button", { type: "button", onclick: async () => { await loadLocalDesktop(); setQueue("local", state.local); renderAll(); } }, "↻ بازخوانی") : null),
-      h("small", { class: "mu-path", dir: "ltr" }, state.folder || (desktop ? "…" : "پوشه یا فایل‌های موسیقی را انتخاب کن (در نسخهٔ دسکتاپ پوشهٔ Music خودکار خوانده می‌شود)")));
+    src.append(h("div", { class: "ui-actions" },
+      btn("انتخاب پوشه", { icon: "folder", kind: "line", onclick: desktop ? chooseFolderDesktop : () => pickFiles(true) }),
+      btn("انتخاب فایل‌ها", { icon: "plus", kind: "line", onclick: () => pickFiles(false) }),
+      desktop ? btn("بازخوانی", { icon: "refresh", kind: "quiet", onclick: async () => { await loadLocalDesktop(); setQueue("local", state.local); renderAll(); } }) : null),
+      h("p", { class: "ui-caption ui-ltr", dir: "ltr" }, state.folder || (desktop ? "…" : "")),
+      desktop ? null : h("p", { class: "ui-caption" }, "پوشه یا فایل‌های موسیقی را انتخاب کن. در نسخهٔ دسکتاپ پوشهٔ Music خودکار خوانده می‌شود."));
   } else if (state.source === "radio") {
-    src.append(h("div", { class: "mu-chips" }, RADIO_TAGS.map((tag) => h("button", { type: "button", class: tag === state.tag ? "on" : "", onclick: () => useRadio(tag) }, tag))));
+    src.append(h("div", { class: "ui-actions", role: "group", "aria-label": "برچسب رادیو" }, RADIO_TAGS.map((tag) => h("button", { type: "button", class: "ui-chip" + (tag === state.tag ? " ui-chip--primary" : ""), "aria-pressed": String(tag === state.tag), style: { minHeight: "40px", cursor: "pointer", border: 0 }, onclick: () => useRadio(tag) }, tag))));
   }
 }
 function renderAll() {
-  for (const b of els.tabs.querySelectorAll("button")) b.setAttribute("aria-selected", String(b.dataset.s === state.source));
+  for (const b of els.tabs.querySelectorAll("button")) b.setAttribute("aria-selected", String(b.dataset.t === state.source));
   renderSource();
   els.listBox.hidden = state.source === "focus"; els.focus.hidden = state.source !== "focus";
   if (state.source === "focus") renderFocus(); else renderList();
-  els.shuffle.classList.toggle("on", state.shuffle);
+  els.shuffle.setAttribute("aria-pressed", String(state.shuffle));
   updateUi();
 }
 async function chooseSource(source) {
@@ -218,73 +216,63 @@ async function chooseSource(source) {
 }
 
 function build() {
-  media = h("video", { id: "cp-media", playsinline: true, preload: "metadata" });
+  media = h("video", { id: "cp-media", playsinline: true, preload: "metadata", style: { width: "100%", borderRadius: "12px", background: "#000" } });
   media.volume = Math.min(1, Math.max(0, Number(LS("codepad-music-volume") ?? 0.8)));
   media.addEventListener("ended", () => (state.source === "radio" ? null : next(1)));
   media.addEventListener("error", onError);
   for (const ev of ["play", "pause", "timeupdate", "loadedmetadata"]) media.addEventListener(ev, updateUi);
   if ("mediaSession" in navigator) for (const [a, f] of [["play", toggle], ["pause", toggle], ["previoustrack", () => next(-1)], ["nexttrack", () => next(1)]]) { try { navigator.mediaSession.setActionHandler(a, f); } catch { /* ignore */ } }
 
-  els.pillTitle = h("span", { class: "mu-pill-title" }, "MUSIC");
-  els.pillPlay = h("button", { type: "button", "aria-label": "پخش/توقف", onclick: toggle }, "▶");
-  pill = h("div", { id: "cp-music-pill" },
-    h("button", { type: "button", class: "mu-open", "aria-label": "موسیقی", onclick: open }, "♪"),
-    els.pillTitle,
-    h("button", { type: "button", "aria-label": "قبلی", class: "mu-opt", onclick: () => next(-1) }, "⏮"),
+  // مینی‌پلیر: فقط وقتی آهنگی انتخاب شده نمایش داده می‌شود و بالای ناوبری می‌نشیند.
+  els.pillTitle = h("strong", {}, "—"); els.pillSub = h("span", {}, "");
+  els.pillPlay = h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "پخش یا توقف", onclick: toggle }, icon("play"));
+  pill = h("div", { id: "cp-music-pill", class: "ui-root ui-mini", role: "region", "aria-label": "پخش‌کنندهٔ موسیقی", hidden: true },
+    h("button", { type: "button", class: "ui-row ui-fill", style: { padding: 0 }, "aria-label": "باز کردن پخش‌کننده", onclick: open }, icon("music"), h("span", { class: "ui-row-main" }, els.pillTitle, els.pillSub)),
+    h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "قبلی", onclick: () => next(-1) }, icon("prev")),
     els.pillPlay,
-    h("button", { type: "button", "aria-label": "بعدی", onclick: () => next(1) }, "⏭"));
-  makePillDraggable(pill);
+    h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "بعدی", onclick: () => next(1) }, icon("next")));
 
-  els.title = h("b", { class: "mu-title" }, "—"); els.sub = h("small", { class: "mu-sub" });
-  els.play = h("button", { type: "button", class: "mu-big", onclick: toggle }, "▶");
-  els.seek = h("input", { type: "range", min: "0", max: "1", step: "0.1", value: "0", "aria-label": "جلو/عقب" });
+  els.title = h("strong", { class: "ui-h2", style: { display: "block" } }, "—"); els.sub = h("span", { class: "ui-caption" });
+  els.play = h("button", { type: "button", class: "ui-btn ui-btn--primary ui-btn--pill", "aria-label": "پخش یا توقف", style: { width: "64px", height: "64px" }, onclick: toggle }, icon("play"));
+  els.seek = h("input", { type: "range", class: "ui-range", min: "0", max: "1", step: "0.1", value: "0", "aria-label": "جلو یا عقب" });
   els.seek.addEventListener("input", () => { if (Number.isFinite(media.duration)) media.currentTime = Number(els.seek.value); });
-  els.time = h("small", {}, ""); els.seekRow = h("div", { class: "mu-seek" }, els.seek, els.time);
-  const vol = h("input", { type: "range", min: "0", max: "1", step: "0.01", value: String(media.volume), "aria-label": "صدا" });
+  els.time = h("span", { class: "ui-caption ui-ltr" }, ""); els.seekRow = h("div", { class: "ui-stack", style: { gap: "4px" } }, els.seek, els.time);
+  const vol = h("input", { type: "range", class: "ui-range", min: "0", max: "1", step: "0.01", value: String(media.volume), "aria-label": "صدا" });
   vol.addEventListener("input", () => { media.volume = Number(vol.value); LS("codepad-music-volume", String(media.volume)); });
-  els.shuffle = h("button", { type: "button", onclick: () => { state.shuffle = !state.shuffle; LS("codepad-music-shuffle", state.shuffle ? "1" : "0"); els.shuffle.classList.toggle("on", state.shuffle); } }, "🔀");
-  els.status = h("p", { class: "mu-status", role: "status" });
-  els.videoBox = h("div", { class: "mu-video" }, media);
-  els.tabs = h("div", { class: "mu-tabs", role: "tablist" }, [["local", "LOCAL"], ["radio", "RADIO"], ["focus", "FOCUS"]].map(([s, label]) => h("button", { type: "button", role: "tab", "data-s": s, onclick: () => chooseSource(s) }, label)));
-  els.sourceBar = h("div", { class: "mu-source" });
-  els.search = h("input", { type: "search", placeholder: "جست‌وجو در فهرست…", dir: "auto", "aria-label": "جست‌وجو" }); els.search.addEventListener("input", renderList);
-  els.list = h("ul", { class: "mu-list" });
-  els.listBox = h("div", { class: "mu-listbox" }, els.search, els.list);
-  els.focus = h("div", { class: "mu-focus", hidden: true });
-  panel = h("section", { id: "cp-music", role: "dialog", "aria-label": "Music", hidden: true },
-    h("div", { class: "mu-head" }, h("div", { class: "mu-name" }, "PHONK PLAYER", h("small", {}, "local · radio · focus")), h("button", { type: "button", "aria-label": "بستن", onclick: close }, "✕")),
-    els.tabs,
-    h("div", { class: "mu-now" }, els.title, els.sub, els.videoBox, els.seekRow,
-      h("div", { class: "mu-ctrl" }, h("button", { type: "button", onclick: () => next(-1) }, "⏮"), els.play, h("button", { type: "button", onclick: () => next(1) }, "⏭"), els.shuffle),
-      h("button", { type: "button", class: "mu-next", onclick: () => next(1) }, "⚡ موزیک بعدی / NEXT"),
-      h("label", { class: "mu-vol" }, "🔊", vol), els.status),
-    els.sourceBar, els.listBox, els.focus);
-  document.body.append(pill, panel);
+  els.shuffle = h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "پخش تصادفی", "aria-pressed": String(state.shuffle), onclick: () => { state.shuffle = !state.shuffle; LS("codepad-music-shuffle", state.shuffle ? "1" : "0"); els.shuffle.setAttribute("aria-pressed", String(state.shuffle)); els.shuffle.style.color = state.shuffle ? "var(--ui-primary)" : ""; } }, icon("shuffle"));
+  els.shuffle.style.color = state.shuffle ? "var(--ui-primary)" : "";
+  els.status = h("p", { class: "ui-caption", role: "status" });
+  els.videoBox = h("div", { class: "mu-video", style: { display: "none" } }, media);
+  els.tabs = tabs([["local", "پوشهٔ من", "folder"], ["radio", "رادیو", "headphones"], ["focus", "تمرکز", "star"]], state.source, (s) => chooseSource(s));
+  els.sourceBar = h("div", { class: "ui-stack" });
+  els.search = h("input", { type: "search", class: "ui-input", placeholder: "جست‌وجو در فهرست…", dir: "auto", "aria-label": "جست‌وجو" }); els.search.addEventListener("input", renderList);
+  els.list = h("ul", { class: "ui-list" });
+  els.listBox = h("div", { class: "ui-stack" }, els.search, els.list);
+  els.focus = h("div", { class: "ui-stack", hidden: true });
+  els.now = h("div", { class: "ui-card ui-stack" }, h("div", {}, els.title, els.sub), els.videoBox, els.seekRow,
+    h("div", { class: "ui-actions", style: { justifyContent: "center", alignItems: "center" } },
+      h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "قبلی", onclick: () => next(-1) }, icon("prev")), els.play,
+      h("button", { type: "button", class: "ui-btn ui-btn--tool", "aria-label": "بعدی", onclick: () => next(1) }, icon("next")), els.shuffle),
+    h("label", { class: "ui-actions", style: { alignItems: "center" } }, icon("volume"), h("span", { class: "ui-fill" }, vol)), els.status);
+  document.body.append(pill);
 }
 
-function makePillDraggable(el) {
-  const grip = h("span", { class: "mu-grip", role: "button", "aria-label": "جابه‌جایی پخش‌کننده (دوبار لمس: برگشت به جای اول)", title: "بکش تا جابه‌جا شود", tabindex: "0" }, "⠿");
-  el.prepend(grip);
-  const apply = (x, y) => { const p = clampPillPos(x, y, innerWidth, innerHeight, el.offsetWidth, el.offsetHeight); el.style.left = p.x + "px"; el.style.top = p.y + "px"; el.style.right = "auto"; el.style.bottom = "auto"; return p; };
-  try { const saved = JSON.parse(LS("codepad-music-pos") || "null"); if (saved && Number.isFinite(saved.x)) requestAnimationFrame(() => apply(saved.x, saved.y)); } catch { /* موقعیت ذخیره‌شده خراب است */ }
-  let drag = null;
-  grip.addEventListener("pointerdown", (e) => { const r = el.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; grip.setPointerCapture(e.pointerId); e.preventDefault(); });
-  grip.addEventListener("pointermove", (e) => { if (drag) apply(e.clientX - drag.dx, e.clientY - drag.dy); });
-  const end = () => { if (!drag) return; drag = null; const r = el.getBoundingClientRect(); LS("codepad-music-pos", JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); };
-  grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
-  grip.addEventListener("dblclick", () => { for (const k of ["left", "top", "right", "bottom"]) el.style.removeProperty(k); LS("codepad-music-pos", ""); });
-  grip.addEventListener("keydown", (e) => { const step = e.shiftKey ? 40 : 12, r = el.getBoundingClientRect(), d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key]; if (!d) return; e.preventDefault(); const p = apply(r.left + d[0], r.top + d[1]); LS("codepad-music-pos", JSON.stringify(p)); });
-  addEventListener("resize", () => { if (el.style.left) { const r = el.getBoundingClientRect(); apply(r.left, r.top); } });
+/** پنل کامل پخش‌کننده (فقط هنگام باز بودن ساخته می‌شود). */
+let dialog;
+export function open() {
+  if (dialog) return;
+  dialog = modal({ title: "موسیقی", kind: "page", onClose: () => { dialog = null; updateUi(); } });
+  dialog.el.id = "cp-music";
+  dialog.body.append(els.tabs, els.now, els.sourceBar, els.listBox, els.focus);
+  pill.hidden = true;
+  chooseSource(state.source).catch((e) => setStatus(e.message));
 }
-
-export function open() { panel.hidden = false; chooseSource(state.source).catch((e) => setStatus(e.message)); }
-export function close() { if (panel) panel.hidden = true; }
+export function close() { if (dialog) dialog.close(); }
 
 if (typeof window !== "undefined" && typeof document !== "undefined") {
   const init = () => {
     build();
     window.CodePadMusic = { open, close, next, toggle, state: () => ({ source: state.source, index: state.index, queue: state.queue.length, playing: !media.paused, title: current()?.title, currentTime: media.currentTime, folder: state.folder }), setQueue, useRadio };
-    window.addEventListener("keydown", (e) => e.key === "Escape" && panel && !panel.hidden && close());
     if (window.cpDesktop?.music) loadLocalDesktop().then(() => { if (state.source === "local" && !state.queue.length) state.queue = state.local; }).catch(() => {});
   };
   if (document.body) init(); else document.addEventListener("DOMContentLoaded", init);

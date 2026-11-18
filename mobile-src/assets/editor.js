@@ -1,3 +1,4 @@
+import { makeKit } from "./ui-kit.js";
 import {
   $ as e,
   $t as t,
@@ -20626,16 +20627,16 @@ function ZC(e) {
 }
 var $ = ot(),
   QC = qd.define([
-    { tag: q.keyword, color: `var(--color-lime)` },
-    { tag: q.comment, color: `var(--color-mist)`, fontStyle: `italic` },
-    { tag: q.string, color: `var(--color-coral)` },
-    { tag: q.number, color: `var(--color-lime)` },
-    { tag: q.bool, color: `var(--color-lime)` },
-    { tag: q.operator, color: `var(--color-paper)` },
-    { tag: q.bracket, color: `var(--color-mist)` },
-    { tag: q.function(q.variableName), color: `var(--color-paper)` },
-    { tag: q.definition(q.variableName), color: `var(--color-paper)` },
-    { tag: q.variableName, color: `var(--color-paper)` },
+    { tag: q.keyword, color: `var(--ui-syn-keyword)` },
+    { tag: q.comment, color: `var(--ui-syn-comment)`, fontStyle: `italic` },
+    { tag: q.string, color: `var(--ui-syn-string)` },
+    { tag: q.number, color: `var(--ui-syn-number)` },
+    { tag: q.bool, color: `var(--ui-syn-number)` },
+    { tag: q.operator, color: `var(--ui-code)` },
+    { tag: q.bracket, color: `var(--ui-muted)` },
+    { tag: q.function(q.variableName), color: `var(--ui-syn-function)` },
+    { tag: q.definition(q.variableName), color: `var(--ui-syn-function)` },
+    { tag: q.variableName, color: `var(--ui-code)` },
   ]),
   $C = new Set(p),
   ew = bf.define({
@@ -20667,26 +20668,25 @@ function tw(e) {
   return H.theme({
     "&": {
       height: `100%`,
-      backgroundColor: `var(--color-ink)`,
-      color: `var(--color-paper)`,
+      backgroundColor: `var(--ui-canvas)`,
+      color: `var(--ui-code)`,
       direction: e ? `rtl` : `ltr`,
       textAlign: e ? `right` : `left`,
     },
     "&.cm-focused": { outline: `none` },
     ".cm-scroller": {
       overflow: `auto`,
-      fontFamily: e ? `Vazirmatn, "JetBrains Mono", ui-monospace, monospace` : `var(--font-mono)`,
-      fontSize: `var(--editor-font-size, 16px)`,
-      lineHeight: e ? `1.65` : `1.5`,
+      fontFamily: e ? `Vazirmatn, "JetBrains Mono", ui-monospace, monospace` : `var(--ui-mono)`,
+      fontSize: `var(--ui-code-size, 15px)`,
+      lineHeight: e ? `1.8` : `var(--ui-code-leading, 1.65)`,
+      fontVariantLigatures: `var(--ui-ligatures, none)`,
     },
     ".cm-content": { padding: `0.75rem 0` },
-    ".cm-gutters": { backgroundColor: `var(--color-ink)`, color: `var(--color-mist)`, border: `none` },
-    ".cm-activeLine": { backgroundColor: `color-mix(in srgb, var(--color-panel) 80%, transparent)` },
-    ".cm-activeLineGutter": { backgroundColor: `transparent`, color: `var(--color-lime)` },
-    ".cm-cursor, .cm-dropCursor": { borderLeftColor: `var(--color-lime)` },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-      backgroundColor: `color-mix(in srgb, var(--color-lime) 28%, transparent)`,
-    },
+    ".cm-gutters": { backgroundColor: `var(--ui-canvas)`, color: `#6b7488`, border: `none` },
+    ".cm-activeLine": { backgroundColor: `var(--ui-line-active)` },
+    ".cm-activeLineGutter": { backgroundColor: `transparent`, color: `var(--ui-secondary)` },
+    ".cm-cursor, .cm-dropCursor": { borderLeftColor: `var(--ui-caret)` },
+    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": { backgroundColor: `var(--ui-selection)` },
   });
 }
 var nw = new Set(ae),
@@ -21290,50 +21290,29 @@ function ww(e, t) {
       return [`${n}: command not found. Type help.`];
   }
 }
+const UI = makeKit(w);
+const CpLink = lt;
 function Tw({ snap: e }) {
   let t = e?.bits ?? r(0);
-  return (0, $.jsxs)(`div`, {
-    className: `flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-ink p-3`,
-    dir: `rtl`,
-    children: [
-      (0, $.jsxs)(`div`, {
-        className: `flex items-end justify-between gap-3`,
-        children: [
-          (0, $.jsx)(`p`, {
-            className: `font-mono text-2xl tracking-widest text-lime`,
-            dir: `ltr`,
-            children: t,
-          }),
-          (0, $.jsx)(`p`, { className: `text-sm text-mist`, children: e ? `register ${e.a}` : `register 0` }),
-        ],
-      }),
-      (0, $.jsx)(`div`, {
-        className: `flex gap-1`,
-        dir: `ltr`,
-        "aria-label": `هشت لامپ رجیستر`,
-        children: t
-          .split(``)
-          .map((e, t) =>
-            (0, $.jsx)(
-              `span`,
-              {
-                className: `h-8 min-w-0 flex-1 rounded-full ${e === `1` ? `bg-lime` : `border border-line bg-panel-2`}`,
-              },
-              t,
-            ),
-          ),
-      }),
-      (0, $.jsx)(`p`, {
-        className: `text-sm leading-relaxed text-paper`,
-        children: e ? e.gloss : `برای روشن‌کردن ماشین اجرا را بزن.`,
-      }),
-      (0, $.jsx)(`p`, {
-        className: `font-mono text-xs text-mist`,
-        dir: `ltr`,
-        children: e ? `PC ${e.pc}  steps ${e.steps}` : `PC 0`,
-      }),
-    ],
-  });
+  return UI.h(
+    `div`,
+    { className: `ui-log`, style: { display: `flex`, flexDirection: `column`, gap: 12, fontFamily: `var(--ui-font)` }, dir: `rtl` },
+    UI.h(
+      `div`,
+      { style: { display: `flex`, alignItems: `flex-end`, justifyContent: `space-between`, gap: 12 } },
+      UI.h(`p`, { className: `ui-ltr`, dir: `ltr`, style: { fontSize: 28, color: `var(--ui-primary)`, margin: 0 } }, t),
+      UI.h(`p`, { className: `ui-caption`, style: { margin: 0 } }, e ? `رجیستر ${e.a}` : `رجیستر 0`),
+    ),
+    UI.h(
+      `div`,
+      { dir: `ltr`, role: `img`, "aria-label": `هشت لامپ رجیستر`, style: { display: `flex`, gap: 4 } },
+      t.split(``).map((v, i) =>
+        UI.h(`span`, { key: i, style: { flex: 1, height: 32, borderRadius: 999, background: v === `1` ? `var(--ui-primary)` : `var(--ui-surface-2)` } }),
+      ),
+    ),
+    UI.h(`p`, { style: { margin: 0 } }, e ? e.gloss : `برای روشن‌کردن ماشین اجرا را بزن.`),
+    UI.h(`p`, { className: `ui-ltr ui-caption`, dir: `ltr`, style: { margin: 0 } }, e ? `PC ${e.pc}  steps ${e.steps}` : `PC 0`),
+  );
 }
 var Ew = `grid size-10 shrink-0 place-items-center rounded-lab text-paper outline-none hover:bg-panel-2`;
 function Dw() {
@@ -21565,39 +21544,22 @@ function Iw({ item: e, onInsert: t, onDelete: r }) {
         }
       );
     }, [e.projectId, e.name, e.stamp, e.type]),
-    (0, $.jsxs)(`div`, {
-      className: `flex items-center gap-1`,
-      children: [
-        (0, $.jsxs)(`button`, {
-          type: `button`,
-          className: `flex h-12 min-w-0 flex-1 items-center gap-2 rounded-lab px-2 text-sm hover:bg-panel-2`,
-          "aria-label": `Insert ${e.name} into code`,
-          onClick: t,
-          children: [
-            (0, $.jsx)(`span`, {
-              className: `grid size-9 shrink-0 place-items-center overflow-hidden rounded bg-ink text-mist`,
-              children: i
-                ? (0, $.jsx)(`img`, { src: i, alt: ``, className: `size-full object-cover` })
-                : (0, $.jsx)(pt, { className: `size-4` }),
-            }),
-            (0, $.jsxs)(`span`, {
-              className: `flex min-w-0 flex-col items-start`,
-              children: [
-                (0, $.jsx)(`span`, { className: `w-full truncate text-start`, dir: `ltr`, children: e.name }),
-                (0, $.jsx)(`span`, { className: `text-xs text-mist`, dir: `ltr`, children: g(e.size) }),
-              ],
-            }),
-          ],
-        }),
-        (0, $.jsx)(`button`, {
-          type: `button`,
-          className: Ow,
-          "aria-label": `Delete ${e.name}`,
-          onClick: r,
-          children: (0, $.jsx)(qe, { className: `size-5` }),
-        }),
-      ],
-    })
+    UI.h(
+      `div`,
+      { className: `ui-row` },
+      UI.h(
+        `button`,
+        { type: `button`, className: `ui-row ui-fill`, style: { padding: 0 }, "aria-label": `درج ${e.name} در کد`, onClick: t },
+        UI.h(`span`, { className: `ui-ext`, style: { overflow: `hidden` } }, i ? UI.h(`img`, { src: i, alt: ``, style: { width: `100%`, height: `100%`, objectFit: `cover` } }) : UI.h(UI.Icon, { n: `file` })),
+        UI.h(
+          `span`,
+          { className: `ui-row-main` },
+          UI.h(`strong`, { className: `ui-ltr`, dir: `ltr` }, e.name),
+          UI.h(`span`, { className: `ui-ltr`, dir: `ltr` }, g(e.size)),
+        ),
+      ),
+      UI.h(`button`, { type: `button`, className: `ui-btn ui-btn--tool`, "aria-label": `حذف ${e.name}`, onClick: r }, UI.h(UI.Icon, { n: `trash` })),
+    )
   );
 }
 const codepadStreamRows = new Map();
@@ -21628,7 +21590,7 @@ window.addEventListener("codepad-runtime-restored", (e) => {
 window.addEventListener("codepad-runtime-state", (e) => {
   if (!e.detail.running) x.getState().setRunning(false);
 });
-function Lw() {
+function Lw({ theme }) {
   let e = x((e) => e.projects),
     n = x((e) => e.activeProjectId),
     r = x((e) => e.panel),
@@ -22044,630 +22006,9 @@ function Lw() {
       We([b(`sys`, `کپی نشد.`)]);
     }
   }
-  return (0, $.jsxs)(`main`, {
-    className: `cp-workbench flex h-dvh flex-col overflow-hidden bg-ink pt-[env(safe-area-inset-top)] text-paper`,
-    children: [
-      (0, $.jsx)(`div`, { className: `h-0.5 shrink-0 bg-lime` }),
-      (0, $.jsxs)(`div`, {
-        className: `cp-appbar`,
-        children: [
-          (0, $.jsxs)(`div`, {className:`cp-brand`, children:[
-            (0, $.jsx)(`img`,{src:new URL('../favicon.svg',import.meta.url).href,alt:'',width:36,height:36}),
-            (0, $.jsxs)(`div`,{children:[(0,$.jsx)(`strong`,{children:'CODEPAD'}),(0,$.jsx)(`small`,{children:'CODE + RUNTIME / 3.6'})]})
-          ]}),
-          (0, $.jsxs)(`nav`,{className:`cp-workspaces`, 'aria-label':'فضای کار', children:[
-            (0,$.jsx)(`button`,{type:'button','aria-current':'page',children:'ویرایشگر'}),
-            (0,$.jsx)(`button`,{type:'button','data-studio-launch':'','aria-label':'بازکردن کارگاه CodePad Studio',onClick:()=>import('./studio.js').then(m=>m.open('projects')),children:'Studio / ابزارها'})
-          ]})
-        ]
-      }),
-      (0, $.jsxs)(`header`, {
-        className: `cp-toolbar flex h-12 shrink-0 items-center gap-0.5 border-b border-line bg-panel pe-1.5 ps-1`,
-        children: [
-          (0, $.jsxs)(f, {
-            open: ct,
-            onOpenChange: (e) => {
-              (lt(e), e || St(null));
-            },
-            children: [
-              (0, $.jsx)(Ye, {
-                asChild: !0,
-                children: (0, $.jsx)(`button`, {
-                  type: `button`,
-                  className: Ow,
-                  "aria-label": `پروژه‌ها`,
-                  children: (0, $.jsx)(gt, { className: `size-5` }),
-                }),
-              }),
-              (0, $.jsxs)(t, {
-                children: [
-                  (0, $.jsx)(ee, { className: `fixed inset-0 z-40 bg-ink/80` }),
-                  (0, $.jsxs)(le, {
-                    className: `fixed inset-y-0 start-0 z-50 flex w-80 max-w-full flex-col bg-panel outline-none`,
-                    children: [
-                      (0, $.jsxs)(`div`, {
-                        className: `flex items-start justify-between gap-3 border-b border-line p-4`,
-                        children: [
-                          (0, $.jsxs)(`div`, {
-                            children: [
-                              (0, $.jsx)(we, {
-                                className: `text-lg font-semibold text-balance`,
-                                children: ut,
-                              }),
-                              (0, $.jsx)(pe, {
-                                className: `mt-1 text-sm leading-relaxed text-pretty text-mist`,
-                                children: `چند زبان برنامه‌نویسی در یک برنامه، از پایتون و جاوااسکریپت تا صفر و یک. لامپ‌ها همان رجیستر هستند.`,
-                              }),
-                            ],
-                          }),
-                          (0, $.jsx)(de, {
-                            asChild: !0,
-                            children: (0, $.jsx)(`button`, {
-                              type: `button`,
-                              className: Ow,
-                              "aria-label": `بستن`,
-                              children: (0, $.jsx)(He, { className: `size-5` }),
-                            }),
-                          }),
-                        ],
-                      }),
-                      (0, $.jsxs)(`div`, {
-                        className: `flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4`,
-                        children: [
-                          (0, $.jsxs)(`section`, {
-                            className: `flex flex-col gap-2`,
-                            children: [
-                              (0, $.jsx)(`h2`, {
-                                className: `text-sm font-semibold text-mist`,
-                                children: `پروژه‌ها`,
-                              }),
-                              (0, $.jsx)(`button`, {type:`button`,className:`h-11 rounded-lab border border-line px-3 text-start text-sm text-lime`,onClick:()=>{lt(!1);window.CodePadRecovery?.open();},children:`تاریخچه، پشتیبان و کتابخانه‌ها`}),
-                              e.map((t) =>
-                                (0, $.jsxs)(
-                                  `div`,
-                                  {
-                                    className: `flex items-center gap-1`,
-                                    children: [
-                                      (0, $.jsx)(`button`, {
-                                        type: `button`,
-                                        className: `h-11 min-w-0 flex-1 truncate rounded-lab px-3 text-start text-sm ${t.id === S.id ? `bg-ink text-paper` : `text-paper hover:bg-panel-2`}`,
-                                        onClick: () => {
-                                          (g(t.id), lt(!1));
-                                        },
-                                        children: t.name,
-                                      }),
-                                      (0, $.jsx)(`button`, {
-                                        type: `button`,
-                                        className: `h-11 shrink-0 rounded-lab px-3 text-sm text-coral disabled:opacity-40`,
-                                        disabled: e.length < 2,
-                                        onClick: () => Fe(t.id),
-                                        children: `حذف`,
-                                      }),
-                                    ],
-                                  },
-                                  t.id,
-                                ),
-                              ),
-                              xt === `project`
-                                ? (0, $.jsxs)(`div`, {
-                                    className: `flex flex-col gap-1`,
-                                    children: [
-                                      v.map((e) =>
-                                        (0, $.jsxs)(
-                                          `button`,
-                                          {
-                                            type: `button`,
-                                            className: `flex min-h-11 flex-col items-start justify-center rounded-lab bg-ink px-3 py-2 text-start`,
-                                            onClick: () => {
-                                              (Ne(e.kind), St(null), lt(!1));
-                                            },
-                                            children: [
-                                              (0, $.jsx)(`span`, { className: `text-sm`, children: e.title }),
-                                              (0, $.jsx)(`span`, {
-                                                className: `text-xs text-mist`,
-                                                children: e.detail,
-                                              }),
-                                            ],
-                                          },
-                                          e.kind,
-                                        ),
-                                      ),
-                                      je.map((e) =>
-                                        (0, $.jsxs)(
-                                          `button`,
-                                          {
-                                            type: `button`,
-                                            className: `flex min-h-11 flex-col items-start justify-center rounded-lab bg-ink px-3 py-2 text-start`,
-                                            onClick: () => {
-                                              (St(null), lt(!1));
-                                              let t = nt(e.text);
-                                              t && tn(t);
-                                            },
-                                            children: [
-                                              (0, $.jsx)(`span`, { className: `text-sm`, children: e.title }),
-                                              (0, $.jsx)(`span`, {
-                                                className: `text-xs text-mist`,
-                                                children: e.detail,
-                                              }),
-                                            ],
-                                          },
-                                          `pack-${e.id}`,
-                                        ),
-                                      ),
-                                    ],
-                                  })
-                                : (0, $.jsx)(`button`, {
-                                    type: `button`,
-                                    className: `h-11 rounded-lab bg-lime px-3 text-sm font-semibold text-lime-ink`,
-                                    onClick: () => St(`project`),
-                                    children: `پروژهٔ تازه`,
-                                  }),
-                            ],
-                          }),
-                          (0, $.jsxs)(`section`, {
-                            className: `flex flex-col gap-2`,
-                            children: [
-                              (0, $.jsx)(`h2`, {
-                                className: `text-sm font-semibold text-mist`,
-                                children: `فایل‌ها`,
-                              }),
-                              S.files.map((e) =>
-                                (0, $.jsxs)(
-                                  `div`,
-                                  {
-                                    className: `flex items-center gap-1`,
-                                    children: [
-                                      (0, $.jsxs)(`button`, {
-                                        type: `button`,
-                                        className: `flex h-11 min-w-0 flex-1 items-center gap-2 rounded-lab px-3 text-sm ${e.id === C.id ? `bg-ink` : `hover:bg-panel-2`}`,
-                                        onClick: () => {
-                                          (on(e.id, e.lang), lt(!1));
-                                        },
-                                        children: [
-                                          (0, $.jsx)(`span`, {
-                                            className: `font-mono text-xs text-lime`,
-                                            children: m[e.lang].short,
-                                          }),
-                                          (0, $.jsx)(`span`, {
-                                            className: `min-w-0 truncate`,
-                                            dir: `ltr`,
-                                            children: e.name,
-                                          }),
-                                        ],
-                                      }),
-                                      (0, $.jsx)(`button`, {
-                                        type: `button`,
-                                        className: Ow,
-                                        "aria-label": `Delete ${e.name}`,
-                                        disabled: S.files.length < 2,
-                                        onClick: () => Se(e.id),
-                                        children: (0, $.jsx)(qe, { className: `size-5` }),
-                                      }),
-                                    ],
-                                  },
-                                  e.id,
-                                ),
-                              ),
-                              xt === `file`
-                                ? (0, $.jsx)(`div`, {
-                                    className: `grid grid-cols-2 gap-1`,
-                                    children: ne.map((e) =>
-                                      (0, $.jsx)(
-                                        `button`,
-                                        {
-                                          type: `button`,
-                                          className: `h-11 rounded-lab bg-ink px-3 text-sm`,
-                                          onClick: () => {
-                                            (xe(e), St(null), lt(!1));
-                                          },
-                                          children: m[e].label,
-                                        },
-                                        e,
-                                      ),
-                                    ),
-                                  })
-                                : (0, $.jsx)(`button`, {
-                                    type: `button`,
-                                    className: `h-11 rounded-lab border border-line px-3 text-sm`,
-                                    onClick: () => St(`file`),
-                                    children: `فایل تازه`,
-                                  }),
-                            ],
-                          }),
-                          (0, $.jsxs)(`section`, {
-                            className: `flex flex-col gap-2`,
-                            children: [
-                              (0, $.jsx)(`h2`, {
-                                className: `text-sm font-semibold text-mist`,
-                                children: `خروجی برنامه`,
-                              }),
-                              (0, $.jsxs)(`div`, {
-                                className: `grid grid-cols-2 gap-2 sm:hidden`,
-                                children: [
-                                  (0, $.jsxs)(`button`, {
-                                    type: `button`,
-                                    className: `flex min-h-11 items-center justify-center gap-2 rounded-lab bg-panel-2 text-sm`,
-                                    onClick: () => {
-                                      (ZC(`undo`), lt(!1));
-                                    },
-                                    children: [(0, $.jsx)(bt, { className: `size-4` }), `بازگردانی`],
-                                  }),
-                                  (0, $.jsxs)(`button`, {
-                                    type: `button`,
-                                    className: `flex min-h-11 items-center justify-center gap-2 rounded-lab bg-panel-2 text-sm`,
-                                    onClick: () => {
-                                      (ZC(`redo`), lt(!1));
-                                    },
-                                    children: [(0, $.jsx)(yt, { className: `size-4` }), `ازنو`],
-                                  }),
-                                ],
-                              }),
-                              (0, $.jsxs)(`button`, {
-                                type: `button`,
-                                className: `flex min-h-11 items-center justify-center gap-2 rounded-lab bg-lime px-3 text-sm font-bold text-lime-ink`,
-                                onClick: () => {
-                                  (pt(ye(Ce(x.getState()))), lt(!1));
-                                },
-                                children: [
-                                  (0, $.jsx)(Ge, { className: `size-4` }),
-                                  `خروجی APK یا PC از پروژهٔ فعال`,
-                                ],
-                              }),
-                            ],
-                          }),
-                          (0, $.jsxs)(`section`, {
-                            className: `flex flex-col gap-2`,
-                            children: [
-                              (0, $.jsx)(`h2`, {
-                                className: `text-sm font-semibold text-mist`,
-                                children: `عکس‌ها و فایل‌های پیوست`,
-                              }),
-                              (0, $.jsx)(`p`, {
-                                className: `text-xs leading-relaxed text-pretty text-mist`,
-                                children: `هر عکس یا فایلی (بدون محدودیت اندازه). با نامش در صفحه یا پایتون استفاده می‌شود: «photo.png» در html، open("data.csv") در پایتون. روی یک پیوست بزنی نامش در کد گذاشته می‌شود.`,
-                              }),
-                              $t.map((e) =>
-                                (0, $.jsx)(
-                                  Iw,
-                                  {
-                                    item: e,
-                                    onInsert: () => {
-                                      (lt(!1), window.setTimeout(() => JC(e.name), 0));
-                                    },
-                                    onDelete: () => void Pe(e.projectId, e.name),
-                                  },
-                                  `${e.projectId}/${e.name}`,
-                                ),
-                              ),
-                              (0, $.jsx)(`input`, {
-                                ref: Zt,
-                                type: `file`,
-                                multiple: !0,
-                                className: `hidden`,
-                                onChange: (e) => {
-                                  let t = [...(e.target.files ?? [])];
-                                  ((e.target.value = ``), en(t));
-                                },
-                              }),
-                              (0, $.jsxs)(`button`, {
-                                type: `button`,
-                                className: `flex h-11 items-center justify-center gap-2 rounded-lab border border-line px-3 text-sm`,
-                                onClick: () => Zt.current?.click(),
-                                children: [(0, $.jsx)(vt, { className: `size-4` }), `افزودن عکس یا فایل`],
-                              }),
-                            ],
-                          }),
-                          (0, $.jsx)(`p`, {
-                            className: `text-sm leading-relaxed text-pretty text-mist`,
-                            children: `Jib can add, branch, loop, call functions, keep lists, and run an 8-bit machine block. Python, JavaScript, C, C++, and CSS are still available as extra files. The machine is a teaching CPU, not a phone processor.`,
-                          }),
-                        ],
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-            ],
-          }),
-          (0, $.jsxs)(`div`, {
-            className: `min-w-0 flex-1 px-1`,
-            children: [
-              (0, $.jsx)(`p`, {
-                className: `truncate text-sm font-semibold leading-tight`,
-                children: S.name,
-              }),
-              (0, $.jsx)(`p`, {
-                className: `truncate font-mono text-[11px] leading-tight text-mist`,
-                dir: `ltr`,
-                children: C.name,
-              }),
-            ],
-          }),
-          (0, $.jsx)(xw, {}),
-          (0, $.jsx)(Dw, {}),
-          (0, $.jsx)(`input`, {
-            ref: O,
-            type: `file`,
-            multiple: !0,
-            className: `hidden`,
-            onChange: (e) => {
-              let t = [...(e.target.files ?? [])];
-              ((e.target.value = ``), nn(t));
-            },
-          }),
-          (0, $.jsx)(`button`, {
-            type: `button`,
-            className: Ow,
-            "aria-label": `باز کردن فایل یا ZIP پروژه`,
-            onClick: () => O.current?.click(),
-            children: (0, $.jsx)(mt, { className: `size-5` }),
-          }),
-          (0, $.jsx)(`button`, {
-            type: `button`,
-            className: `${Ow} hidden sm:grid`,
-            "aria-label": `بازگردانی`,
-            onClick: () => ZC(`undo`),
-            children: (0, $.jsx)(bt, { className: `size-5` }),
-          }),
-          (0, $.jsx)(`button`, {
-            type: `button`,
-            className: `${Ow} hidden sm:grid`,
-            "aria-label": `ازنو`,
-            onClick: () => ZC(`redo`),
-            children: (0, $.jsx)(yt, { className: `size-5` }),
-          }),
-          (0, $.jsx)(`button`, {
-            type: `button`,
-            "aria-label": `خروجی برنامه`,
-            title: `خروجی اندروید یا ویندوز`,
-            className: `h-9 min-w-11 shrink-0 rounded-lg border border-lime/30 bg-lime/10 px-2 font-mono text-xs font-bold text-lime hover:bg-lime/20`,
-            onClick: () => pt(ye(Ce(x.getState()))),
-            children: `خروجی`,
-          }),
-          (0, $.jsxs)(`button`, {
-            type: `button`,
-            className: `inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-4 text-sm font-semibold outline-none focus-visible:outline-2 focus-visible:outline-lime ${u ? `bg-coral text-ink` : `bg-lime text-lime-ink`}`,
-            "data-codepad-run": true,
-            onClick: () => {
-              u ? an() : (jt(!0), A());
-            },
-            children: [
-              u ? (0, $.jsx)(ge, { className: `size-4` }) : (0, $.jsx)(Le, { className: `size-4` }),
-              u ? `توقف` : S.entryFile ? `اجرای پروژه` : `اجرا`,
-            ],
-          }),
-        ],
-      }),
-      (0, $.jsxs)(`div`, {
-        className: `cp-file-tabs flex min-w-0 shrink-0 items-center overflow-x-auto border-b border-line bg-panel/60 px-1`,
-        children: [
-          S.files.map((e) => {
-            let t = e.id === C.id;
-            return (0, $.jsxs)(
-              `button`,
-              {
-                type: `button`,
-                "aria-current": t ? `true` : void 0,
-                dir: `ltr`,
-                className: `flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[13px] ${t ? `border-lime text-paper` : `border-transparent text-mist`}`,
-                onClick: () => on(e.id, e.lang),
-                children: [
-                  (0, $.jsx)(`span`, { className: `text-xs text-lime`, children: m[e.lang].short }),
-                  e.name,
-                ],
-              },
-              e.id,
-            );
-          }),
-          (0, $.jsx)(`button`, {
-            type: `button`,
-            className: Ow,
-            "aria-label": `فایل تازه`,
-            onClick: () => {
-              (St(`file`), lt(!0));
-            },
-            children: (0, $.jsx)(be, { className: `size-5` }),
-          }),
-        ],
-      }),
-      (0, $.jsxs)(`div`, {
-        ref: D,
-        className: `grid min-h-0 flex-1 lg:grid-cols-3 lg:grid-rows-1 ${At ? `grid-rows-[var(--rows)]` : `grid-rows-[1fr_auto]`}`,
-        style: At ? { "--rows": qt ? `0fr 1fr` : `${Gt}fr ${1 - Gt}fr` } : void 0,
-        children: [
-          (0, $.jsx)(`section`, {
-            className: `min-h-0 min-w-0 overflow-hidden lg:col-span-2`,
-            dir: `ltr`,
-            children: ot
-              ? (0, $.jsx)(_w, { fileId: C.id, lang: C.lang, content: C.content, onChange: y })
-              : (0, $.jsx)(`pre`, {
-                  className: `m-0 min-h-0 flex-1 overflow-auto p-3 font-mono text-base leading-relaxed text-paper`,
-                  children: C.content,
-                }),
-          }),
-          (0, $.jsxs)(`section`, {
-            className: `flex min-h-0 min-w-0 flex-col overflow-hidden border-t border-line bg-panel/40 lg:col-span-1 lg:border-s lg:border-t-0 ${At ? `` : `max-h-10 lg:max-h-none`}`,
-            children: [
-              (0, $.jsx)(`div`, {
-                className: `flex h-4 shrink-0 cursor-row-resize touch-none items-center justify-center lg:hidden`,
-                role: `separator`,
-                "aria-label": `تغییر اندازهٔ پنل`,
-                onPointerDown: (e) => {
-                  (e.currentTarget.setPointerCapture(e.pointerId), Jt(!1), jt(!0));
-                },
-                onPointerMove: (e) => {
-                  if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-                  let t = D.current?.getBoundingClientRect();
-                  !t || t.height <= 0 || Kt(Math.min(0.85, Math.max(0.15, (e.clientY - t.top) / t.height)));
-                },
-                children: (0, $.jsx)(`span`, { className: `h-1 w-12 rounded-full bg-line` }),
-              }),
-              (0, $.jsxs)(`div`, {
-                className: `flex shrink-0 items-center gap-1 px-2`,
-                children: [
-                  (0, $.jsxs)(`button`, {
-                    type: `button`,
-                    "aria-pressed": r === `out`,
-                    className: `inline-flex h-10 items-center gap-1 rounded-lab px-3 text-sm ${r === `out` ? `bg-panel-2 text-paper` : `text-mist`}`,
-                    onClick: () => p(`out`),
-                    children: [(0, $.jsx)(Me, { className: `size-4` }), `خروجی`],
-                  }),
-                  (0, $.jsxs)(`button`, {
-                    type: `button`,
-                    "aria-pressed": r === `stage`,
-                    className: `inline-flex h-10 items-center gap-1 rounded-lab px-3 text-sm ${r === `stage` ? `bg-panel-2 text-paper` : `text-mist`}`,
-                    onClick: () => p(`stage`),
-                    children: [
-                      (0, $.jsx)(ft, { className: `size-4` }),
-                      C.lang === `binary` ? `ماشین` : `صفحه`,
-                    ],
-                  }),
-                  (0, $.jsx)(`span`, { className: `flex-1` }),
-                  (0, $.jsx)(`button`, {
-                    type: `button`,
-                    className: `h-10 px-2 text-sm text-mist`,
-                    onClick: ze,
-                    children: `پاک‌کردن`,
-                  }),
-                  (0, $.jsx)(`button`, {
-                    type: `button`,
-                    className: `h-10 px-2 text-sm text-mist`,
-                    onClick: () => void cn(),
-                    children: Ct ? `کپی شد` : `کپی`,
-                  }),
-                  C.lang === `html` || ((C.lang === `mix` || C.lang === `nava`) && Ut?.fileId === C.id)
-                    ? (0, $.jsx)(`button`, {
-                        type: `button`,
-                        className: `grid size-10 place-items-center text-mist`,
-                        "aria-label": `ذخیره به‌صورت صفحهٔ مستقل (HTML)`,
-                        onClick: () => void sn(),
-                        children: (0, $.jsx)(Ge, { className: `size-5` }),
-                      })
-                    : null,
-                  (0, $.jsx)(`button`, {
-                    type: `button`,
-                    className: `grid size-10 place-items-center text-mist lg:hidden`,
-                    "aria-label": qt ? `اندازهٔ معمولی` : `تمام‌صفحه‌کردن پنل`,
-                    onClick: () => {
-                      (jt(!0), Jt((e) => !e));
-                    },
-                    children: qt
-                      ? (0, $.jsx)(_t, { className: `size-5` })
-                      : (0, $.jsx)(ht, { className: `size-5` }),
-                  }),
-                  (0, $.jsx)(`button`, {
-                    type: `button`,
-                    className: `grid size-10 place-items-center text-mist lg:hidden`,
-                    "aria-label": At ? `کوچک‌کردن خروجی` : `باز‌کردن خروجی`,
-                    onClick: () => jt((e) => !e),
-                    children: At
-                      ? (0, $.jsx)(Ae, { className: `size-5` })
-                      : (0, $.jsx)(Be, { className: `size-5` }),
-                  }),
-                ],
-              }),
-              rn
-                ? (0, $.jsxs)(`label`, {
-                    className: `flex shrink-0 items-start gap-2 border-t border-line px-3 py-2`,
-                    children: [
-                      (0, $.jsx)(`span`, {
-                        className: `mt-1 font-mono text-xs text-lime`,
-                        children: C.lang === `python` ? `جواب‌های آماده (هر خط یک جواب)` : `ورودی`,
-                      }),
-                      (0, $.jsx)(`textarea`, {
-                        value: C.stdin,
-                        onChange: (e) => ae(e.target.value),
-                        rows: 2,
-                        dir: `ltr`,
-                        spellCheck: !1,
-                        autoCapitalize: `off`,
-                        autoCorrect: `off`,
-                        "aria-label": `ورودی برنامه`,
-                        placeholder:
-                          C.lang === `binary`
-                            ? `0`
-                            : `12
-30`,
-                        className: `max-h-16 min-h-11 min-w-0 flex-1 resize-none bg-transparent font-mono text-sm leading-5 text-paper outline-none placeholder:text-mist`,
-                      }),
-                    ],
-                  })
-                : null,
-              r === `stage`
-                ? C.lang === `binary`
-                  ? (0, $.jsx)(Tw, { snap: Ft })
-                  : Yt
-                    ? (0, $.jsx)(`iframe`, {
-                        ref: Rt,
-                        title: `پیش‌نمایش صفحه`,
-                        sandbox: `allow-scripts allow-modals allow-forms allow-pointer-lock`,
-                        allow: `autoplay; fullscreen`,
-                        className: `min-h-0 w-full flex-1 border-0 bg-white`,
-                        srcDoc: C.lang === `html` ? Ht : Ut?.doc,
-                      })
-                    : (0, $.jsxs)(`div`, {
-                        className: `flex min-h-0 flex-1 flex-col`,
-                        children: [
-                          Ft
-                            ? (0, $.jsx)(`div`, {
-                                className: `max-h-40 shrink-0 overflow-hidden border-b border-line`,
-                                children: (0, $.jsx)(Tw, { snap: Ft }),
-                              })
-                            : null,
-                          (0, $.jsx)(`iframe`, {
-                            title: `صفحهٔ جیب`,
-                            sandbox: `allow-same-origin`,
-                            className: `min-h-0 w-full flex-1 border-0 bg-ink`,
-                            srcDoc: Ve(
-                              C.lang === `css` ? Mt : (Nt?.css ?? ``),
-                              C.lang === `css` ? void 0 : (Nt ?? void 0),
-                            ),
-                          }),
-                        ],
-                      })
-                : (0, $.jsxs)(`div`, {
-                    ref: k,
-                    className: `min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-sm leading-6`,
-                    "aria-live": `polite`,
-                    dir: `ltr`,
-                    children: [
-                      s.length === 0
-                        ? (0, $.jsx)(`p`, {
-                            className: `text-mist`,
-                            children: `خروجی اینجا نشان داده می‌شود.`,
-                          })
-                        : null,
-                      s.map((e) =>
-                        (0, $.jsx)(
-                          `p`,
-                          {
-                            dir: `auto`,
-                            className: `whitespace-pre-wrap break-words ${Mw[e.stream]}`,
-                            children: e.text,
-                          },
-                          e.id,
-                        ),
-                      ),
-                    ],
-                  }),
-              r === `out`
-                ? (0, $.jsxs)($.Fragment, {
-                    children: [
-                      Dt
-                        ? (0, $.jsx)(`div`, {
-                            role: `status`,
-                            dir: `auto`,
-                            className: `shrink-0 border-t border-line bg-panel px-3 py-2 text-xs text-lime`,
-                            children: Dt,
-                          })
-                        : null,
-                      (0, $.jsxs)(`form`, {
-                        className: `flex shrink-0 items-center gap-2 border-t border-line px-3`,
-                        dir: `ltr`,
-                        onSubmit: (e) => {
-                          e.preventDefault();
-                          let t = Tt.trim();
-                          if ((Et(``), !t)) return;
+  function submitTerminal(raw) {
+    let t = raw.trim();
+    if (!t) return;
                           if (/^(?:pip3?\b|python3?\s+-m\s+pip\b)/i.test(t)) {
                             if ((We([b(`cmd`, `$ ${t}`)]), kt.current)) {
                               We([b(`sys`, `عملیات قبلی هنوز در حال اجراست.`)]);
@@ -22760,74 +22101,141 @@ function Lw() {
                           }
                           let n = ww(t, () => qC.run());
                           We([b(`cmd`, `$ ${t}`), ...n.map((e) => b(`out`, e))]);
-                        },
-                        children: [
-                          (0, $.jsx)(`span`, { className: `font-mono text-lime`, children: `$` }),
-                          (0, $.jsx)(`input`, {
-                            value: Tt,
-                            onChange: (e) => Et(e.target.value),
-                            placeholder: `help · pip install numpy`,
-                            spellCheck: !1,
-                            autoCapitalize: `off`,
-                            autoCorrect: `off`,
-                            "aria-label": `ترمینال`,
-                            className: `h-10 min-w-0 flex-1 bg-transparent font-mono text-sm text-paper outline-none`,
-                          }),
-                        ],
-                      }),
-                    ],
-                  })
-                : null,
-            ],
-          }),
-        ],
+  }
+  const stageEl =
+    C.lang === `binary`
+      ? UI.h(Tw, { snap: Ft })
+      : Yt
+        ? UI.h(`iframe`, {
+            ref: Rt,
+            title: `پیش‌نمایش صفحه`,
+            sandbox: `allow-scripts allow-modals allow-forms allow-pointer-lock`,
+            allow: `autoplay; fullscreen`,
+            className: `ui-frame`,
+            srcDoc: C.lang === `html` ? Ht : Ut?.doc,
+          })
+        : UI.h(
+            `div`,
+            { style: { display: `flex`, flexDirection: `column`, flex: `1 1 0`, minHeight: 0 } },
+            Ft ? UI.h(`div`, { style: { maxHeight: 160, overflow: `hidden`, flex: `none` } }, UI.h(Tw, { snap: Ft })) : null,
+            UI.h(`iframe`, {
+              title: `صفحهٔ جیب`,
+              sandbox: `allow-same-origin`,
+              className: `ui-frame`,
+              style: { background: `var(--ui-canvas)` },
+              srcDoc: Ve(
+                C.lang === `css` ? Mt : (Nt?.css ?? ``),
+                C.lang === `css` ? void 0 : (Nt ?? void 0),
+              ),
+            }),
+          );
+  const keyList = [
+    ...(C.lang === `nava` ? [{ label: `Pack |`, pack: !0, accent: !0 }] : []),
+    ...(C.lang === `nava`
+      ? Aw
+      : C.lang === `mix`
+        ? kw
+        : C.lang === `farsi`
+          ? c
+          : C.lang === `english`
+            ? l
+            : C.lang === `binary`
+              ? at
+              : []),
+    ...jw,
+  ];
+  return UI.h(UI.Workbench, {
+    Link: CpLink,
+    theme: theme,
+    setTheme: (patch) => theme.set(patch),
+    resetTheme: () => theme.reset(),
+    project: S,
+    projects: e,
+    file: C,
+    meta: m,
+    fileKinds: ne,
+    projectKinds: v,
+    packs: je,
+    running: u,
+    lines: s,
+    panel: r,
+    setPanel: p,
+    editor: ot
+      ? UI.h(_w, { fileId: C.id, lang: C.lang, content: C.content, onChange: y })
+      : UI.h(`pre`, { className: `ui-ltr`, style: { margin: 0, padding: 12, color: `var(--ui-code)` } }, C.content),
+    stage: stageEl,
+    stageLabel: C.lang === `binary` ? `ماشین` : `صفحه`,
+    canSaveHtml: C.lang === `html` || ((C.lang === `mix` || C.lang === `nava`) && Ut?.fileId === C.id),
+    stdinOn: rn,
+    stdin: C.stdin,
+    onStdin: ae,
+    stdinLabel: C.lang === `python` ? `جواب‌های آماده (هر خط یک جواب)` : `ورودی`,
+    stdinPlaceholder: C.lang === `binary` ? `0` : `12\n30`,
+    busy: Dt,
+    onTerminal: submitTerminal,
+    keys: keyList,
+    onKey: (k) => {
+      k.label === `Tab` ? YC() : k.pack ? y(Ue(C.content)) : `move` in k && k.move ? XC(k.move) : k.insert && JC(k.insert);
+    },
+    attachments: $t,
+    renderAttachment: (a, closeDrawer) =>
+      UI.h(Iw, {
+        key: `${a.projectId}/${a.name}`,
+        item: a,
+        onInsert: () => {
+          (closeDrawer(), window.setTimeout(() => JC(a.name), 0));
+        },
+        onDelete: () => void Pe(a.projectId, a.name),
       }),
-      (0, $.jsxs)(`div`, {
-        className: `pb-safe flex min-w-0 shrink-0 gap-1 overflow-x-auto border-t border-line bg-panel px-2 py-1`,
-        children: [
-          C.lang === `nava`
-            ? (0, $.jsx)(`button`, {
-                type: `button`,
-                className: `h-10 shrink-0 rounded-lab border border-lime/30 bg-lime/10 px-3 text-sm text-lime`,
-                title: `خط‌ها با | فشرده می‌شوند؛ متن و توضیحات حفظ می‌شوند`,
-                onClick: () => y(Ue(C.content)),
-                children: `Pack |`,
-              })
-            : null,
-          [
-            ...(C.lang === `nava`
-              ? Aw
-              : C.lang === `mix`
-                ? kw
-                : C.lang === `farsi`
-                  ? c
-                  : C.lang === `english`
-                    ? l
-                    : C.lang === `binary`
-                      ? at
-                      : []),
-            ...jw,
-          ].map((e) =>
-            (0, $.jsx)(
-              `button`,
-              {
-                type: `button`,
-                className: `h-10 shrink-0 rounded-lab bg-panel-2 px-3 text-sm text-paper ${/[\u0600-\u06FF]/.test(e.label) ? `font-sans` : `min-w-11 font-mono`}`,
-                onClick: () => {
-                  e.label === `Tab` ? YC() : `move` in e && e.move ? XC(e.move) : e.insert && JC(e.insert);
-                },
-                children: e.label,
-              },
-              `${C.lang}-${e.label}`,
-            ),
-          ),
-        ],
-      }),
-      (0, $.jsx)(Je, { target: dt, onClose: () => pt(null) }),
-    ],
+    onAddAttachments: en,
+    onOpenFiles: nn,
+    onRun: () => {
+      (jt(!0), A());
+    },
+    onStop: an,
+    onUndo: () => ZC(`undo`),
+    onRedo: () => ZC(`redo`),
+    onExport: () => pt(ye(Ce(x.getState()))),
+    onSaveHtml: () => void sn(),
+    onCopy: () => void cn(),
+    copied: Ct,
+    onClear: ze,
+    onSelectProject: g,
+    onRemoveProject: Fe,
+    onNewProject: Ne,
+    onNewPack: (text) => {
+      let t = nt(text);
+      t && tn(t);
+    },
+    onSelectFile: on,
+    onRemoveFile: Se,
+    onNewFile: xe,
+    onRecovery: () => window.CodePadRecovery?.open(),
+    onStudio: () => import(`./studio.js`).then((m) => m.open(`projects`)),
+    onHub: () => import(`./hub.js`).then((m) => m.open()),
+    onInstall: async () => {
+      try {
+        let e = await cpInstallActive();
+        We([b(`sys`, `«${e.name}» در برنامه‌ها نصب شد.`)]);
+      } catch (e) {
+        We([b(`err`, `نصب نشد: ${e instanceof Error ? e.message : e}`)]);
+      }
+    },
+    dialogs: UI.h(Je, { target: dt, onClose: () => pt(null) }),
   });
 }
+async function cpInstallActive() {
+  return Fe(Ce(x.getState()));
+}
 function Rw() {
-  return (0, $.jsx)(Lw, {});
+  let theme = ze();
+  return (
+    (0, w.useEffect)(() => {
+      Promise.resolve(ze.persist.rehydrate()).then(() => We(ze.getState()));
+    }, []),
+    (0, w.useEffect)(() => We(theme), [theme.text, theme.bg, theme.accent, theme.image, theme.dim, theme.fontSize]),
+    (0, $.jsx)(Lw, { theme })
+  );
 }
 export { Rw as component };
+
