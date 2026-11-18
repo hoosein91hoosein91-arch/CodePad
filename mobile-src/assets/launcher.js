@@ -3121,7 +3121,7 @@ function jn({ api: e, hostname: t, devMode: n, setDevMode: r, onClose: i, accent
     ),
   );
 }
-var Mn = '3.7.0',
+var Mn = '3.7.1',
   $ = null;
 function Nn(e = 880, t = 140) {
   try {
