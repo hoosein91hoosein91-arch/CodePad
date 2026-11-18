@@ -3500,6 +3500,7 @@ function In() {
       UI.h(Be, { to: `/`, className: `ui-dock-btn` }, UI.h(UI.Icon, { n: `code` }), `ویرایشگر`),
       UI.h(`button`, { type: `button`, className: `ui-dock-btn`, "aria-current": `page` }, UI.h(UI.Icon, { n: `grid` }), `برنامه‌ها`),
       UI.h(`button`, { type: `button`, className: `ui-dock-btn`, "data-testid": `dock-hub`, onClick: () => window.CodePadHub?.open() }, UI.h(UI.Icon, { n: `spark` }), `هاب`),
+      UI.h(`button`, { type: `button`, className: `ui-dock-btn`, "data-studio-launch": "", "aria-label": `بازکردن کارگاه CodePad Studio`, onClick: () => window.CodePadStudio?.open(`projects`) }, UI.h(UI.Icon, { n: `tool` }), `استودیو`),
       UI.h(`button`, { type: `button`, className: `ui-dock-btn`, onClick: () => v(`settings`) }, UI.h(UI.Icon, { n: `sliders` }), `ظاهر`),
     ),
     E ? UI.h(`div`, { role: `status`, className: `ui-root ui-toast` }, E) : null,

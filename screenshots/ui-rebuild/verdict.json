@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "checks": [
+    "editor renders at 360, 412, 800 and 1280 widths with a working tablet grid",
+    "all palettes keep the code black; appearance persists after reload",
+    "real Python runs with Persian input and output",
+    "simulated keyboard viewport keeps input visible and hides the bottom dock",
+    "file switching and the real HTML preview work",
+    "both export forms expose their options through the shared sheet",
+    "all eleven Studio destinations render",
+    "ZIP import, real lesson preview and Turtle output work with the new shell",
+    "hub views render; nested dialogs trap focus and Escape closes only the top layer",
+    "snapshot and full backup remain usable after the UI rebuild",
+    "Cyber Lab layers above the hub; music and report windows render",
+    "launcher renders with the shared design system"
+  ],
+  "errors": []
+}

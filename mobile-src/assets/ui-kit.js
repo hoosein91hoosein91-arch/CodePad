@@ -461,6 +461,7 @@ export function makeKit(React) {
         h('button', { type: 'button', className: 'ui-dock-btn', 'aria-current': 'page' }, h(Icon, { n: 'code' }), 'ویرایشگر'),
         h(p.Link, { to: '/launcher', className: 'ui-dock-btn' }, h(Icon, { n: 'grid' }), 'برنامه‌ها'),
         h('button', { type: 'button', className: 'ui-dock-btn', onClick: p.onHub }, h(Icon, { n: 'spark' }), 'هاب'),
+        h('button', { type: 'button', className: 'ui-dock-btn', 'data-studio-launch': '', 'aria-label': 'بازکردن کارگاه CodePad Studio', onClick: p.onStudio }, h(Icon, { n: 'tool' }), 'استودیو'),
         h('button', { type: 'button', className: 'ui-dock-btn', onClick: () => setLook(true) }, h(Icon, { n: 'sliders' }), 'ظاهر'),
       ),
       drawer ? h(Overlay, { kind: 'drawer', title: 'پروژه و فایل‌ها', onClose: () => { setDrawer(false); setAdding(null); } }, filesPanel) : null,
