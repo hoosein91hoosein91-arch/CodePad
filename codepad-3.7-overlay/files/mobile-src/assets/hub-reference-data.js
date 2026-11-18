@@ -4,6 +4,7 @@
 export const REFERENCE_CATEGORIES = [
   ["all", "همه"], ["basics", "نحو پایه"], ["strings", "رشته‌ها"], ["collections", "لیست/دیکشنری"],
   ["builtins", "توابع پرکاربرد"], ["files", "فایل و استثنا"], ["stdlib", "کتابخانهٔ استاندارد"], ["errors", "خطاهای رایج"],
+  ["algorithms", "الگوریتم‌های پایه"], ["io", "ورودی/خروجی"],
 ];
 
 export const REFERENCE_ITEMS = [
@@ -98,4 +99,30 @@ export const REFERENCE_ITEMS = [
     code: 'a, b = 10, 0\ntry:\n    print(a / b)\nexcept ZeroDivisionError as e:\n    print("خطا:", e)\nprint("راه‌حل: قبل از تقسیم مخرج را بررسی کن ->", a / b if b != 0 else "تقسیم‌ناپذیر")' },
   { id: "ref-err-attr", cat: "errors", title: "AttributeError", desc: "استفاده از متدی که روی آن نوع وجود ندارد",
     code: 'num = 42\ntry:\n    num.append(1)  # append فقط برای list است، نه int\nexcept AttributeError as e:\n    print("خطا:", e)\nprint("راه‌حل: نوع واقعی را با type() چک کن ->", type(num))' },
+
+  // ───────── الگوریتم‌های پایه ─────────
+  { id: "ref-algo-recursion", cat: "algorithms", title: "بازگشت (Recursion): فاکتوریل و فیبوناچی", desc: "تابعی که خودش را صدا می‌زند؛ همیشه یک شرط پایان لازم دارد",
+    code: 'def factorial(n):\n    if n <= 1:          # شرط پایان؛ بدون آن بازگشت بی‌نهایت می‌شود\n        return 1\n    return n * factorial(n - 1)\n\ndef fib(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n\n    memo[n] = fib(n - 1, memo) + fib(n - 2, memo)  # memoization: جلوگیری از محاسبهٔ تکراری\n    return memo[n]\n\nprint(factorial(6))\nprint([fib(n) for n in range(10)])' },
+  { id: "ref-algo-linear", cat: "algorithms", title: "جست‌وجوی خطی (Linear Search)", desc: "پیمایش یک‌به‌یک لیست؛ O(n)، روی هر لیستی کار می‌کند",
+    code: 'def linear_search(items, target):\n    for i, x in enumerate(items):\n        if x == target:\n            return i\n    return -1\n\ndata = [8, 3, 19, 4, 11]\nprint(linear_search(data, 19))\nprint(linear_search(data, 100))' },
+  { id: "ref-algo-binary", cat: "algorithms", title: "جست‌وجوی دودویی (Binary Search)", desc: "O(log n) ولی فقط روی لیست مرتب‌شده کار می‌کند",
+    code: 'def binary_search(sorted_items, target):\n    lo, hi = 0, len(sorted_items) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if sorted_items[mid] == target:\n            return mid\n        if sorted_items[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\ndata = sorted([8, 3, 19, 4, 11, 42, 7])\nprint(data)\nprint(binary_search(data, 19))' },
+  { id: "ref-algo-bubble", cat: "algorithms", title: "مرتب‌سازی حبابی (Bubble Sort)", desc: "ساده ولی کند (O(n²))؛ خوب برای یادگیری منطق مرتب‌سازی",
+    code: 'def bubble_sort(items):\n    arr = items.copy()\n    n = len(arr)\n    for i in range(n):\n        swapped = False\n        for j in range(n - i - 1):\n            if arr[j] > arr[j + 1]:\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n                swapped = True\n        if not swapped:  # اگر هیچ جابه‌جایی نشد، لیست مرتب است؛ زودتر تمام کن\n            break\n    return arr\n\nprint(bubble_sort([5, 2, 9, 1, 5, 6]))' },
+  { id: "ref-algo-palindrome", cat: "algorithms", title: "بررسی پالیندروم", desc: "آیا رشته از هر دو طرف یکسان خوانده می‌شود؟",
+    code: 'def is_palindrome(s):\n    cleaned = "".join(ch.lower() for ch in s if ch.isalnum())\n    return cleaned == cleaned[::-1]\n\nfor word in ["Able was I ere I saw Elba", "python", "سارا"]:\n    print(word, "->", is_palindrome(word))' },
+  { id: "ref-algo-fizzbuzz", cat: "algorithms", title: "FizzBuzz", desc: "تمرین کلاسیک شرط‌گذاری با باقی‌ماندهٔ تقسیم",
+    code: 'for n in range(1, 21):\n    if n % 15 == 0:\n        print("FizzBuzz")\n    elif n % 3 == 0:\n        print("Fizz")\n    elif n % 5 == 0:\n        print("Buzz")\n    else:\n        print(n)' },
+
+  // ───────── ورودی/خروجی ─────────
+  { id: "ref-io-input", cat: "io", title: "گرفتن ورودی با input()", desc: "همیشه رشته برمی‌گرداند؛ برای عدد باید تبدیل کنی",
+    code: 'name = input("اسمت چیه؟ ")\nage_text = input("چند سالته؟ ")\nage = int(age_text)\nprint(f"سلام {name}! سال بعد {age + 1} ساله می‌شوی.")\n# نکته: در CodePad به‌جای پنجرهٔ سؤال، از «جواب‌های آماده» پایین ویرایشگر خوانده می‌شود.' },
+  { id: "ref-io-print", cat: "io", title: "گزینه‌های print(): sep و end", desc: "کنترل جداکننده و پایان خط",
+    code: 'print("a", "b", "c", sep=" | ")\nprint("بدون خط جدید: ", end="")\nprint("ادامهٔ همون خط")\nprint(1, 2, 3, sep=", ", end=".\\n")' },
+  { id: "ref-io-align", cat: "io", title: "تراز و عرض ستون در چاپ جدول", desc: "f-string با عرض ثابت برای چاپ منظم",
+    code: 'rows = [("علی", 85), ("سارا", 92), ("رضا", 7)]\nfor name, score in rows:\n    print(f"{name:<10}{score:>5}")  # چپ‌چین ۱۰ کاراکتر، راست‌چین ۵ کاراکتر' },
+  { id: "ref-io-argv", cat: "io", title: "آرگومان خط‌فرمان با sys.argv", desc: "خواندن آرگومان‌هایی که هنگام اجرا داده می‌شوند",
+    code: 'import sys\nprint("نام اسکریپت:", sys.argv[0])\nprint("تعداد آرگومان‌ها:", len(sys.argv) - 1)\nif len(sys.argv) > 1:\n    print("آرگومان‌ها:", sys.argv[1:])\nelse:\n    print("آرگومانی داده نشده؛ در Studio ← ترمینال ← «تنظیم اجرای پروژه» قابل تنظیم است.")' },
+  { id: "ref-io-fstring-num", cat: "io", title: "فرمت‌دهی عدد در خروجی", desc: "درصد، علمی، مبنای دودویی/هگزادسیمال",
+    code: 'ratio = 0.4567\nbig = 1234567\nprint(f"{ratio:.1%}")      # درصد با یک رقم اعشار\nprint(f"{big:.2e}")        # نماد علمی\nprint(f"{255:b}", f"{255:x}")  # دودویی و هگزادسیمال' },
 ];

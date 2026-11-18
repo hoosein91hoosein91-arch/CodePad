@@ -4,6 +4,8 @@ import { viewSecurity, addNote, CVE_RE } from "./hub-security.js";
 import { viewConfidential } from "./hub-confidential.js";
 import { viewAcademy } from "./hub-academy.js";
 import { viewReference } from "./hub-reference.js";
+import { isFavorite, toggleFavorite, favoriteCount } from "./hub-favorites.js";
+import { viewStats } from "./hub-stats.js";
 
 const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { /* حافظه در دسترس نیست */ } return null; };
 const h = (tag, attrs = {}, ...kids) => {
@@ -104,9 +106,9 @@ function clickRun(tries = 0) {
 }
 const sampleById = (id) => HUB_SAMPLES.find((s) => s.id === id);
 
-let root, body, tabs, current = "home", state = { cat: "all", q: "", news: null, newsFilter: "all", newsBusy: false };
+let root, body, tabs, current = "home", state = { cat: "all", q: "", news: null, newsFilter: "all", newsBusy: false, favOnly: false };
 
-const TABS = [["home", "خانه"], ["python", "پایتون"], ["reference", "📚 مرجع"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["security", "امنیت"], ["academy", "🎓 آکادمی"], ["confidential", "🔒 محرمانه"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
+const TABS = [["home", "خانه"], ["stats", "📊 آمار من"], ["python", "پایتون"], ["reference", "📚 مرجع"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["security", "امنیت"], ["academy", "🎓 آکادمی"], ["confidential", "🔒 محرمانه"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
 const lvl = (n) => "●".repeat(n) + "○".repeat(Math.max(0, 3 - n));
 const day = () => Math.floor(Date.now() / 864e5);
 const openUrl = (url) => { try { if (window.CodePadStudio?.openBrowser) return window.CodePadStudio.openBrowser(url); } catch { /* ادامه */ } window.open(url, "_blank", "noopener"); };
@@ -114,9 +116,14 @@ const ago = (t) => { if (!t) return ""; const m = Math.max(1, Math.round((Date.n
 
 const card = (icon, title, text, onclick, cls = "") => h("button", { type: "button", class: "hb-card " + cls, onclick }, h("span", { class: "hb-ico", "aria-hidden": "true" }, icon), h("b", {}, title), h("small", {}, text));
 
+function favStar(kind, id, onToggle) {
+  const b = h("button", { type: "button", class: "hb-fav" + (isFavorite(kind, id) ? " on" : ""), "aria-label": "موردعلاقه", title: "موردعلاقه", onclick: () => { const on = toggleFavorite(kind, id); b.classList.toggle("on", on); b.textContent = on ? "⭐" : "☆"; onToggle?.(on); } }, isFavorite(kind, id) ? "⭐" : "☆");
+  return b;
+}
+
 function sampleCard(s) {
   return h("article", { class: "hb-sample", "data-cat": s.cat },
-    h("div", { class: "hb-st" }, h("b", {}, s.title), h("span", { class: "hb-lvl", title: "سطح" }, lvl(s.level))),
+    h("div", { class: "hb-st" }, h("b", {}, s.title), h("span", { class: "hb-st-r" }, favStar("py", s.id), h("span", { class: "hb-lvl", title: "سطح" }, lvl(s.level)))),
     h("p", {}, s.desc),
     h("div", { class: "hb-row" },
       h("button", { type: "button", class: "hb-btn pri", onclick: () => importSample(s, { run: true }) }, "▶ اجرا"),
@@ -130,6 +137,7 @@ function viewHome() {
   return h("div", { class: "hb-view" },
     h("div", { class: "hb-hero" }, h("div", { class: "hb-logo", "aria-hidden": "true" }, "{ }"), h("div", {}, h("h2", {}, "به CodePad خوش آمدی"), h("p", {}, "کدنویسی، بازی سه‌بعدی، تحلیل امنیتی و موزیک؛ همه آفلاین و در یک جا."))),
     h("div", { class: "hb-grid" },
+      card("📊", "آمار من", "پیشرفت آکادمی، CTF و موردعلاقه‌ها", () => show("stats")),
       card("🐍", "پایتون", `${HUB_SAMPLES.filter((s) => s.ext === "py").length} برنامهٔ آماده برای اجرا`, () => show("python")),
       card("📚", "مرجع پایتون", "سینتکس، کتابخانهٔ استاندارد و خطاهای رایج", () => show("reference")),
       card("🧊", "سه‌بعدی", "مینی‌کرافت، فیزیک، تیراندازی با Python", () => { state.cat = "3d"; show("python"); }),
@@ -144,14 +152,17 @@ function viewPython() {
   const list = h("div", { class: "hb-list" });
   const render = () => {
     list.replaceChildren();
-    const items = filterSamples(HUB_SAMPLES, state);
-    if (!items.length) list.append(h("p", { class: "hb-empty" }, "چیزی پیدا نشد."));
+    let items = filterSamples(HUB_SAMPLES, state);
+    if (state.favOnly) items = items.filter((s) => isFavorite("py", s.id));
+    if (!items.length) list.append(h("p", { class: "hb-empty" }, state.favOnly ? "هنوز نمونه‌ای را موردعلاقه نکرده‌ای؛ روی ☆ کنار هر نمونه بزن." : "چیزی پیدا نشد."));
     for (const s of items) list.append(sampleCard(s));
     count.textContent = `${items.length} نمونه`;
+    favBtn.textContent = `⭐ موردعلاقه‌ها (${favoriteCount("py")})`;
   };
   const count = h("span", { class: "hb-count" });
   const search = h("input", { type: "search", dir: "auto", placeholder: "جست‌وجو…", "aria-label": "جست‌وجو", value: state.q });
   search.addEventListener("input", () => { state.q = search.value; render(); });
+  const favBtn = h("button", { type: "button", class: "hb-btn", "aria-pressed": String(state.favOnly), onclick: () => { state.favOnly = !state.favOnly; favBtn.setAttribute("aria-pressed", String(state.favOnly)); render(); } }, `⭐ موردعلاقه‌ها (${favoriteCount("py")})`);
   const chips = h("div", { class: "hb-chips", role: "group", "aria-label": "دسته" }, CATEGORIES.map(([id, label]) => {
     const b = h("button", { type: "button", "aria-pressed": String(state.cat === id), onclick: () => { state.cat = id; [...chips.children].forEach((c) => c.setAttribute("aria-pressed", String(c === b))); render(); } }, label);
     return b;
@@ -159,7 +170,7 @@ function viewPython() {
   render();
   return h("div", { class: "hb-view" },
     h("p", { class: "hb-lead" }, "هر نمونه به‌صورت پروژهٔ تازه در ویرایشگر باز می‌شود؛ می‌توانی تغییرش بدهی. نمونه‌های ‏سه‌بعدی با Python کار می‌کنند و روی موبایل هم اجرا می‌شوند."),
-    h("div", { class: "hb-bar" }, search, count), chips, list);
+    h("div", { class: "hb-bar" }, search, count), h("div", { class: "hb-row" }, favBtn), chips, list);
 }
 
 function viewDiag() {
@@ -242,7 +253,7 @@ function viewTools() {
 
 let secView = null;
 const viewSec = () => { secView = viewSecurity({ h, importSample, sampleById, openUrl, card, show, close }); return secView.el; };
-const VIEWS = { home: viewHome, python: viewPython, reference: () => viewReference({ h, importSample }), "3d": viewLibs, security: viewSec, academy: () => viewAcademy({ h }), confidential: () => viewConfidential({ h }), news: viewNews, tools: viewTools };
+const VIEWS = { home: viewHome, stats: () => viewStats({ h, show }), python: viewPython, reference: () => viewReference({ h, importSample }), "3d": viewLibs, security: viewSec, academy: () => viewAcademy({ h }), confidential: () => viewConfidential({ h }), news: viewNews, tools: viewTools };
 function paint() {
   if (!root) return;
   body.replaceChildren(VIEWS[current]());

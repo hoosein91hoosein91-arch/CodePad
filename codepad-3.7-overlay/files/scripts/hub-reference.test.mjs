@@ -29,7 +29,8 @@ test("every reference entry actually runs with real python3 and exits cleanly", 
   for (const it of REFERENCE_ITEMS) {
     const f = join(dir, it.id + ".py");
     writeFileSync(f, it.code, "utf8");
-    const r = spawnSync(py, [f], { cwd: dir, encoding: "utf8", timeout: 10000 });
+    const input = it.code.includes("input(") ? "سارا\n25\n" : undefined;
+    const r = spawnSync(py, [f], { cwd: dir, encoding: "utf8", timeout: 10000, input });
     assert.equal(r.status, 0, `${it.id} (${it.title}) failed:\n${r.stderr}`);
   }
 });

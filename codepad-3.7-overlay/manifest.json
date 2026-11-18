@@ -73,29 +73,37 @@
    "base": null,
    "new": "881aad9e7b981ed74ad252da3d7eb430c14338c5b06edbe2c6eeab6a3b5cac1c"
   },
+  "mobile-src/assets/hub-favorites.js": {
+   "base": null,
+   "new": "f712cdb3f9080359fa16be763e6dcd0bc70aadacf3453b2bec5606c330fc5149"
+  },
   "mobile-src/assets/hub-forensics.js": {
    "base": null,
    "new": "5f157bd6fc5fc21ed611399b2aa5140c82087900fac47ef6867b205b89cd053d"
   },
   "mobile-src/assets/hub-reference-data.js": {
    "base": null,
-   "new": "cc9fed4030555a89f73f04fb8bcbf61f47703956c1204885cfd3da104600bd6d"
+   "new": "c647695f567ec3ce3da05873c1deb71f3d7d81c9ffa1ec1ab8a3f158ae9fbcae"
   },
   "mobile-src/assets/hub-reference.js": {
    "base": null,
-   "new": "db5eb2e2d6f393a1f3a8a7d391a590580f51e14b3f698e7b0833d3509e8444f1"
+   "new": "f488756215959793c0d0236df86831d8b67e93f9f45ff854cc441689a0aa0c60"
   },
   "mobile-src/assets/hub-security.js": {
    "base": null,
    "new": "332ebe38ccba1a4f08a1398d628cd49a5468a330fb467316f8147cebe0b0aea6"
   },
+  "mobile-src/assets/hub-stats.js": {
+   "base": null,
+   "new": "b1d929c8abe72e2f4916093867a9c7a8e14d7988497da7826f12bdf3ab8be83b"
+  },
   "mobile-src/assets/hub.css": {
    "base": null,
-   "new": "035c98bd4ca33b53252b804314df69defcaabf48eb9e7ad75fd84500ee87caf3"
+   "new": "71d2d419d5af4271323f7759fb543b6738fb3426ba5614bc393b0c08253b30e1"
   },
   "mobile-src/assets/hub.js": {
    "base": null,
-   "new": "b461f3e79af9b7f8eae453a976bf05b4f137780169489e5d52a1d0817f12eec4"
+   "new": "58a84a2fc8cc47f6a4da9a995f584a85759e9a7d3c3eb2f262284aab066d11d0"
   },
   "mobile-src/assets/launcher.js": {
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
@@ -155,7 +163,7 @@
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
-   "new": "405c3c3caa848848a95800d73b17c358e6a552191b6abfa08fa6e9ee8884b61e"
+   "new": "2b291f5eafd3623e44f57a6c5a0c56fc10c3511027c7c5b7e44383281d620d97"
   },
   "public/background/codepad3d.py": {
    "base": null,
@@ -413,6 +421,10 @@
    "base": null,
    "new": "0630868fe3e4e8b4c3efe169601ac9f77285be70abf2bfa9bdae15ba861fd78a"
   },
+  "scripts/hub-favorites.test.mjs": {
+   "base": null,
+   "new": "39e322a2b6dfec77518f7bf72cd2313dd1d51eb1f759e5117a184844de638e19"
+  },
   "scripts/hub-forensics.test.mjs": {
    "base": null,
    "new": "5cd2530a9bf8bcee42fb8f37ce1a4f2319dc3269653bd910ac9c2cf06d184f74"
@@ -423,7 +435,7 @@
   },
   "scripts/hub-reference.test.mjs": {
    "base": null,
-   "new": "db96cf134aa3a328d9cb68b77af6002a6e46fa2dd7114a2359ebbfe8f41e6a34"
+   "new": "313990d08943ae1e8f4e0954a49268aa9930c82006ff6f0c12669cac6472afd1"
   },
   "scripts/hub.test.mjs": {
    "base": null,
