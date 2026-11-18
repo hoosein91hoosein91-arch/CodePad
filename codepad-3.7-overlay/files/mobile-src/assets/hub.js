@@ -1,6 +1,7 @@
 // CodePad Hub: یک نقطهٔ ورود مرتب برای همه‌چیز. ویرایشگر کار خودش را می‌کند؛ Studio، Cyber، موزیک، اخبار و نمونه‌ها اینجا هستند.
 import { HUB_SAMPLES } from "./hub-data.js";
 import { viewSecurity, addNote, CVE_RE } from "./hub-security.js";
+import { viewConfidential } from "./hub-confidential.js";
 
 const LS = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { /* حافظه در دسترس نیست */ } return null; };
 const h = (tag, attrs = {}, ...kids) => {
@@ -48,6 +49,7 @@ export const NEWS_SOURCES = [
 const NEWS_KEY = "codepad-hub-news-v1";
 
 export async function fetchNews({ sources = NEWS_SOURCES, fetcher = (typeof fetch === "function" ? fetch : null), timeoutMs = 9000 } = {}) {
+  if (globalThis.CodePadConfidential?.isEnabled()) return { items: [], errors: ["اخبار در حالت محرمانه غیرفعال است."] };
   const items = [], errors = [];
   await Promise.all(sources.map(async (s) => {
     const ctl = typeof AbortController === "function" ? new AbortController() : null;
@@ -102,7 +104,7 @@ const sampleById = (id) => HUB_SAMPLES.find((s) => s.id === id);
 
 let root, body, tabs, current = "home", state = { cat: "all", q: "", news: null, newsFilter: "all", newsBusy: false };
 
-const TABS = [["home", "خانه"], ["python", "پایتون"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["security", "امنیت"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
+const TABS = [["home", "خانه"], ["python", "پایتون"], ["3d", "سه‌بعدی و کتابخانه‌ها"], ["security", "امنیت"], ["confidential", "🔒 محرمانه"], ["news", "اخبار هک"], ["tools", "ابزارها"]];
 const lvl = (n) => "●".repeat(n) + "○".repeat(Math.max(0, 3 - n));
 const day = () => Math.floor(Date.now() / 864e5);
 const openUrl = (url) => { try { if (window.CodePadStudio?.openBrowser) return window.CodePadStudio.openBrowser(url); } catch { /* ادامه */ } window.open(url, "_blank", "noopener"); };
@@ -237,7 +239,7 @@ function viewTools() {
 
 let secView = null;
 const viewSec = () => { secView = viewSecurity({ h, importSample, sampleById, openUrl, card, show, close }); return secView.el; };
-const VIEWS = { home: viewHome, python: viewPython, "3d": viewLibs, security: viewSec, news: viewNews, tools: viewTools };
+const VIEWS = { home: viewHome, python: viewPython, "3d": viewLibs, security: viewSec, confidential: () => viewConfidential({ h }), news: viewNews, tools: viewTools };
 function paint() {
   if (!root) return;
   body.replaceChildren(VIEWS[current]());

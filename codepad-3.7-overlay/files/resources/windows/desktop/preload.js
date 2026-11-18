@@ -12,6 +12,10 @@ const call = async (name, ...args) => {
 contextBridge.exposeInMainWorld('cpDesktop', {
   platform: 'desktop',
   os: process.platform,
+  confidential: {
+    set: (enabled) => call('confidential:set', !!enabled),
+    get: () => call('confidential:get'),
+  },
   system: {
     info: () => call('sys:info'),
     location: () => call('sys:location'),

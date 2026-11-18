@@ -185,6 +185,7 @@ export const stripThinking = (text) => text.replace(/<think>[\s\S]*?<\/think>/gi
 export async function askCustom(cfg, prompt, opts = {}) {
   if (!String(prompt ?? "").trim()) throw new Error("متن درخواست خالی است.");
   const { url, init } = buildRequest(cfg, prompt, opts.system, opts.messages ?? null);
+  (opts.guardUrl ?? globalThis.CodePadConfidential?.guardUrl)?.(url, "اتصال AI");
   const go = opts.fetcher ?? ((u, i) => fetch(u, i));
   const ctl = new AbortController();
   const timeoutMs = Math.max(5, Math.min(600, Number(cfg.timeoutSec) || 120)) * 1000;

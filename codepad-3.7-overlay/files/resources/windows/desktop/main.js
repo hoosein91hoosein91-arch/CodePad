@@ -133,6 +133,11 @@ function ensureMapView() {
   wc.on('did-fail-load', (_e, code, description, _url, isMainFrame) => { if (isMainFrame && code !== -3) sendMapStatus({ state: 'error', id: mapId, error: description }); });
   return mapView;
 }
+// حالت محرمانه: پرچم سمت فرایند اصلی (Electron main)، نه فقط صفحه — چون نمایشگر نقشه و اجرای بومی پایتون/پوسته از
+// بیرونِ CSP صفحه اجرا می‌شوند و فقط از اینجا واقعاً قابل‌بستن‌اند. صفحه با IPC `confidential:set` آن را هم‌گام می‌کند.
+let confidentialMode = false;
+function refuseIfConfidential(label) { if (confidentialMode) throw new Error(`${label} در حالت محرمانه غیرفعال است.`); }
+
 let system = null;
 function registerSystemIpc() {
   system = createSystem({ userData: app.getPath('userData'), resourcesPath: process.resourcesPath, hostDir: path.join(__dirname, 'pyhost') });
@@ -142,18 +147,20 @@ function registerSystemIpc() {
     try { return await fn(...args); } catch (error) { return { __error: String((error && error.message) || error) }; }
   });
   const emit = (message) => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('py:event', message); };
+  handle('confidential:set', (enabled) => { confidentialMode = !!enabled; return confidentialMode; });
+  handle('confidential:get', () => confidentialMode);
   handle('sys:info', () => system.info());
   handle('sys:location', () => system.location());
   handle('sys:apps', () => system.apps());
   handle('sys:openapp', (name) => system.openApp(name));
-  handle('shell:run', (command, options) => system.shellRun(command, options || {}));
+  handle('shell:run', (command, options) => { refuseIfConfidential('ترمینال'); return system.shellRun(command, options || {}); });
   handle('shell:kill', () => system.shellKill());
-  handle('shell:external', (cwd) => system.shellExternal(cwd));
-  handle('py:start', (options) => system.pythonStart(options, emit));
+  handle('shell:external', (cwd) => { refuseIfConfidential('ترمینال'); return system.shellExternal(cwd); });
+  handle('py:start', (options) => { refuseIfConfidential('اجرای پایتون بومی'); return system.pythonStart(options, emit); });
   handle('py:input', (options) => system.pythonInput(options));
   handle('py:stop', () => system.pythonStop());
   handle('py:status', () => system.pythonStatus());
-  handle('py:exec', (options) => system.pythonExec(options));
+  handle('py:exec', (options) => { refuseIfConfidential('اجرای پایتون بومی'); return system.pythonExec(options); });
   handle('py:setpath', (p) => system.setPythonPath(p));
   // reports: a public folder next to the user's own documents (not the private app data)
   const reportsDir = () => process.env.CODEPAD_REPORTS_DIR || path.join(app.getPath('documents') || path.join(os.homedir(), 'Documents'), 'CodePad', 'Reports');
@@ -175,7 +182,7 @@ function registerIpc() {
   });
   ipcMain.handle('map:list', (e) => (trusted(e) ? Object.entries(MAPS).map(([id, m]) => ({ id, name: m.name })) : []));
   ipcMain.handle('map:show', (e, id, rect) => {
-    if (!trusted(e) || !mainWindow || !mapUrl(id)) return false;
+    if (!trusted(e) || confidentialMode || !mainWindow || !mapUrl(id)) return false;
     const r = rect && ['x', 'y', 'width', 'height'].every((k) => Number.isFinite(rect[k])) ? rect : null;
     if (!r || r.width < 20 || r.height < 20) return false;
     const view = ensureMapView();
@@ -187,7 +194,7 @@ function registerIpc() {
   });
   ipcMain.handle('map:hide', (e) => { if (!trusted(e)) return false; if (mapView) mapView.setVisible(false); return true; });
   ipcMain.handle('map:reload', (e) => { if (trusted(e) && mapView && mapId) mapView.webContents.loadURL(mapUrl(mapId)).catch(() => {}); return true; });
-  ipcMain.handle('map:external', (e, id) => { const url = trusted(e) && MAPS[id] && MAPS[id].url; if (url) shell.openExternal(url); return !!url; });
+  ipcMain.handle('map:external', (e, id) => { const url = trusted(e) && !confidentialMode && MAPS[id] && MAPS[id].url; if (url) shell.openExternal(url); return !!url; });
 }
 
 // ── window state (size/position/fullscreen) ──

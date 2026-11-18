@@ -34,13 +34,15 @@ async function desktopCall(plugin,method,args){
  }
  throw Error('این قابلیت در نسخهٔ دسکتاپ پشتیبانی نمی‌شود.');
 }
+const CONFIDENTIAL_GATED=new Set(['CodePadSystem.openBrowser','TermuxBridge.runCommand','TermuxBridge.openTermux']);
 export async function nativeCall(plugin,method,args={}){
+ if(CONFIDENTIAL_GATED.has(plugin+'.'+method))globalThis.CodePadConfidential?.guard('ترمینال/مرورگر ('+plugin+'.'+method+')');
  if(isDesktop())return desktopCall(plugin,method,args);
  if(!isAndroid())throw Error('این قابلیت به نسخهٔ نصب‌شدهٔ Android نیاز دارد.');
  const cap=globalThis.Capacitor;if(cap.Plugins?.[plugin]?.[method])return cap.Plugins[plugin][method](args);
  const module=await import('./main.js');return module.a(plugin)[method](args);
 }
-export async function openBrowser(input){const url=browserURL(input);if(isAndroid())return nativeCall('CodePadSystem','openBrowser',{url});const tab=window.open(url,'_blank');if(!tab)throw Error('مرورگر تب را مسدود کرد؛ اجازهٔ بازشدن تب بده.');try{tab.opener=null;}catch{}return {opened:true,url};}
+export async function openBrowser(input){const url=browserURL(input);globalThis.CodePadConfidential?.guard('مرورگر');if(isAndroid())return nativeCall('CodePadSystem','openBrowser',{url});const tab=window.open(url,'_blank');if(!tab)throw Error('مرورگر تب را مسدود کرد؛ اجازهٔ بازشدن تب بده.');try{tab.opener=null;}catch{}return {opened:true,url};}
 export async function projectSnapshot(){const rt=await runtime(),state=rt.pt.getState(),p=rt.dt(state);return structuredClone(p);}
 export async function textHash(text){const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');}
 export async function readProjectFile(name,projectId){const rt=await runtime(),p=rt.pt.getState().projects.find(p=>p.id===projectId);if(!p)throw Error('پروژه دیگر موجود نیست.');const f=p.files.find(f=>f.name===name);if(!f)throw Error('فایل پیدا نشد.');return {name:f.name,content:f.content,hash:await textHash(f.content)};}

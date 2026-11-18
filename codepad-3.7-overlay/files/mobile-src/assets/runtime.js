@@ -30506,6 +30506,7 @@ async function saveProjectApk(e, t, n) {
   );
 }
 async function saveExportFile(e, t, n, r = new AbortController().signal) {
+  window.CodePadConfidential?.guard(`خروجی‌گرفتن (${e})`);
   if (Capacitor.isNativePlatform()) {
     if (!Capacitor.isPluginAvailable(`ApkExport`))
       throw Error(`پل ذخیرهٔ خروجی در این نصب موجود نیست. نسخهٔ کامل CodePad را نصب کن.`);

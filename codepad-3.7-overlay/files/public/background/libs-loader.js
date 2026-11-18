@@ -1,9 +1,16 @@
 /* CodePad offline libraries for HTML apps.
  *   <script src="lib:three"></script>   <script src="lib:p5"></script>   <script src="lib:matter"></script>   <script src="lib:chart"></script>
  * The preview/launcher frames have no network, so the bundled library is inlined into the page right before it is shown.
- * Works for every iframe whose srcdoc is set by the editor preview, the launcher and the Python 3-D viewer. */
+ * Works for every iframe whose srcdoc is set by the editor preview, the launcher and the Python 3-D viewer.
+ * Same choke point also carries حالت محرمانه (Confidential Mode): when it is on, every one of those iframes gets a
+ * strict Content-Security-Policy (no network at all) prepended before it is ever shown, regardless of its sandbox
+ * attribute or what the code inside tries. See mobile-src/assets/confidential.js. */
 (function () {
   if (window.CodePadLibs) return;
+  var CONFIDENTIAL_KEY = 'codepad-confidential-v1';
+  var LOCKDOWN_CSP = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\' \'unsafe-eval\' blob: data:; style-src \'unsafe-inline\'; img-src data: blob:; media-src data: blob:; font-src data:; connect-src \'none\'; frame-src \'none\'; form-action \'none\'; base-uri \'none\'">';
+  function confidentialOn() { try { return !!JSON.parse(localStorage.getItem(CONFIDENTIAL_KEY) || 'null').enabled; } catch (e) { return false; } }
+  function lockdown(html) { return confidentialOn() ? LOCKDOWN_CSP + String(html) : html; }
   var LIBS = {
     three: { file: 'libs/three.min.js', global: 'THREE', name: 'three.js r162 (+OrbitControls, PointerLockControls; WebGL 1 and 2)' },
     p5: { file: 'libs/p5.min.js', global: 'p5', name: 'p5.js 1.11' },
@@ -33,11 +40,12 @@
   var LOADING = '<!doctype html><meta charset="utf-8"><body style="margin:0;background:#06100c;color:#7dffb8;font:14px system-ui;display:grid;place-items:center;height:100vh">Loading libraries…</body>';
   // returns the html to put in srcdoc now; if libraries are not in memory yet a placeholder is shown and the real page is set when they arrive
   function expand(html, apply) {
-    if (typeof html !== 'string' || html.indexOf('lib:') < 0) return html;
+    if (typeof html !== 'string') return html;
+    if (html.indexOf('lib:') < 0) return lockdown(html);
     var keys = needed(html);
-    if (!keys.length) return html;
-    if (keys.every(function (k) { return cache[k] !== undefined; })) return expandNow(html);
-    Promise.all(keys.map(load)).then(function () { apply(expandNow(html)); });
+    if (!keys.length) return lockdown(html);
+    if (keys.every(function (k) { return cache[k] !== undefined; })) return lockdown(expandNow(html));
+    Promise.all(keys.map(load)).then(function () { apply(lockdown(expandNow(html))); });
     return LOADING;
   }
   var desc = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc');

@@ -20,6 +20,7 @@ export function reportFileName(name, now = new Date()) {
 }
 
 export async function saveReport({ name, bytes, mime }) {
+  globalThis.CodePadConfidential?.guard("ذخیرهٔ گزارش");
   const fileName = reportFileName(name);
   const d = globalThis.cpDesktop;
   if (d?.files?.save) { const r = await d.files.save(fileName, toB64(bytes)); return { where: "folder", path: r.path, dir: r.dir, name: r.name }; }
@@ -30,6 +31,7 @@ export async function saveReport({ name, bytes, mime }) {
 }
 
 export async function shareReport({ name, bytes, mime, title }) {
+  globalThis.CodePadConfidential?.guard("اشتراک گزارش");
   const text = isText(mime, name) ? new TextDecoder().decode(bytes) : null;
   if (isAndroid() && text !== null && cap().nativePromise && cap().isPluginAvailable?.("CodePadSystem")) {
     try { await cap().nativePromise("CodePadSystem", "shareText", { text: text.slice(0, 200000), subject: title || name }); return { ok: true, how: "android" }; } catch (e) { /* ادامه با روش‌های دیگر */ }

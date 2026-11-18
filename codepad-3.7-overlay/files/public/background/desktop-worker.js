@@ -65,6 +65,7 @@
         const mode = localStorage.getItem('codepad-python-engine') || 'auto';
         const copy = { ...payload, assets: (payload.assets || []).map(({ buf, ...rest }) => (this.assets.has(rest.name) ? { ...rest, b64: this.assets.get(rest.name) } : rest)) };
         const native = !payload.packageCommand && window.CodePadPythonRouting && window.CodePadPythonRouting(copy, mode);
+        if (native && window.CodePadConfidential?.isEnabled()) throw new Error('اجرای پایتون واقعی (بومی) در حالت محرمانه غیرفعال است؛ فقط پایتون داخل مرورگر (بدون سوکت واقعی) مجاز است.');
         if (native) {
           this.active = 'native';
           await desktop.start({ channel: this.channel, payload: JSON.stringify(copy) });

@@ -28,6 +28,7 @@ const fmt = (t) => (Number.isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.fl
 
 /** ایستگاه‌های رادیو از radio-browser.info (جامعه‌محور و رایگان). فقط https، چون برنامه یک زمینهٔ امن است. */
 export async function fetchStations(tag, { bases = API_BASES, fetcher = fetch, allowHttp = false, timeoutMs = 8000 } = {}) {
+  if (globalThis.CodePadConfidential?.isEnabled()) throw new Error("رادیو در حالت محرمانه غیرفعال است.");
   let lastError = "";
   for (const base of bases) {
     const ctl = new AbortController();
