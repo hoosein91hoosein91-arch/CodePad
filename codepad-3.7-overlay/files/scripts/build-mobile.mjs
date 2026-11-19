@@ -30,7 +30,7 @@ if (process.argv.includes('--offline')) {
   syncNavaModels();
   syncNavaModels('export-player-src/assets/standalone-DSlJSeP3.js');
 }
-execFileSync(process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), ['scripts/build-export-templates.py'], { stdio: 'inherit' });
+execFileSync(process.env.CODEPAD_PYTHON || process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3'), ['scripts/build-export-templates.py'], { stdio: 'inherit' });
 const out = resolve(root, 'dist/client');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });

@@ -1,3 +1,4 @@
+import { makeKit, applyUiTheme } from "./ui-kit.js";
 import {
   A as e,
   At as t,
@@ -206,6 +207,7 @@ var He = G(`arrow-right`, [
     [`rect`, { width: `8`, height: `8`, x: `13`, y: `13`, rx: `2`, key: `1cgmvn` }],
   ]),
   K = ze(Ve(), 1);
+const UI = makeKit(K);
 function st(e, t, n = `text/plain`) {
   let r = URL.createObjectURL(new Blob([t], { type: `${n};charset=utf-8` })),
     i = document.createElement(`a`);
@@ -238,120 +240,82 @@ function ut({ app: e, onOpenChange: t, accent: n, devMode: r, pages: i, onEditCo
       e && (c(e.name), u(e.icon), f(e.iconColor ?? lt[0]), m(e.iconImage ?? ``), g(e.page ?? 0));
     }, [e]),
     e
-      ? (0, q.jsxs)(_e, {
-          title: `شخصی‌سازی برنامه`,
-          icon: (0, q.jsx)(Xe, { className: `size-5`, style: { color: n } }),
-          open: !!e,
-          onOpenChange: t,
-          testId: `customize-sheet`,
-          children: [
-            (0, q.jsxs)(`div`, {
-              className: `flex items-center gap-4`,
-              children: [
-                (0, q.jsx)(`div`, {
-                  className: `grid size-20 shrink-0 place-items-center overflow-hidden rounded-[22px] border text-3xl`,
-                  style: { backgroundColor: d, borderColor: `${n}55`, boxShadow: `0 0 22px ${n}33` },
-                  children: p
-                    ? (0, q.jsx)(`img`, { src: p, alt: ``, className: `size-full object-cover` })
-                    : l,
+      ? UI.h(
+          UI.Sheet,
+          { title: `شخصی‌سازی برنامه`, open: !0, onOpenChange: t, testId: `customize-sheet` },
+          UI.h(
+            `div`,
+            { style: { display: `flex`, alignItems: `center`, gap: 16 } },
+            UI.h(UI.AppIcon, { app: { icon: l, iconColor: d, iconImage: p }, size: 80, radius: 22 }),
+            UI.h(
+              `div`,
+              { className: `ui-stack ui-fill` },
+              UI.h(
+                `label`,
+                { className: `ui-btn ui-btn--line` },
+                UI.h(UI.Icon, { n: `image` }),
+                `انتخاب عکس آیکن`,
+                UI.h(`input`, {
+                  type: `file`,
+                  accept: `image/*`,
+                  "aria-label": `عکس آیکن`,
+                  className: `ui-sr`,
+                  onChange: async (ev) => {
+                    let f2 = ev.target.files?.[0];
+                    ((ev.target.value = ``), f2 && m(await ct(f2, 256)));
+                  },
                 }),
-                (0, q.jsxs)(`div`, {
-                  className: `flex flex-1 flex-col gap-2`,
-                  children: [
-                    (0, q.jsxs)(`label`, {
-                      className: `flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-white/10 px-3 py-2.5 text-sm`,
-                      children: [
-                        (0, q.jsx)(qe, { className: `size-4` }),
-                        `انتخاب عکس آیکن`,
-                        (0, q.jsx)(`input`, {
-                          type: `file`,
-                          accept: `image/*`,
-                          "aria-label": `عکس آیکن`,
-                          className: `hidden`,
-                          onChange: async (e) => {
-                            let t = e.target.files?.[0];
-                            ((e.target.value = ``), t && m(await ct(t, 256)));
-                          },
-                        }),
-                      ],
-                    }),
-                    p
-                      ? (0, q.jsx)(`button`, {
-                          type: `button`,
-                          className: `text-xs text-white/50`,
-                          onClick: () => m(``),
-                          children: `حذف عکس (برگشت به ایموجی)`,
-                        })
-                      : null,
-                  ],
+              ),
+              p ? UI.h(UI.Btn, { kind: `quiet`, onClick: () => m(``) }, `حذف عکس (برگشت به نماد)`) : null,
+            ),
+          ),
+          UI.h(UI.Fld, { label: `نام برنامه` }, UI.h(UI.Input, { value: s, onChange: (ev) => c(ev.target.value) })),
+          UI.h(
+            UI.Fld,
+            { label: `نماد یا ایموجی` },
+            UI.h(UI.Input, { value: l, style: { fontSize: 22 }, onChange: (ev) => u([...ev.target.value].slice(0, 3).join(``)) }),
+          ),
+          UI.h(
+            UI.Fld,
+            { label: `رنگ زمینهٔ آیکن` },
+            UI.h(
+              `div`,
+              { className: `ui-actions`, role: `group` },
+              lt.map((x2) =>
+                UI.h(`button`, {
+                  key: x2,
+                  type: `button`,
+                  "aria-label": `زمینهٔ ${x2}`,
+                  "aria-pressed": d === x2,
+                  className: `ui-btn`,
+                  style: { background: x2, minWidth: 44, boxShadow: d === x2 ? `inset 0 0 0 2px var(--ui-primary)` : `inset 0 0 0 1px var(--ui-line)` },
+                  onClick: () => f(x2),
                 }),
-              ],
-            }),
-            (0, q.jsxs)(`label`, {
-              className: `text-xs text-white/55`,
-              children: [
-                `نام برنامه`,
-                (0, q.jsx)(`input`, { className: `${z} mt-2`, value: s, onChange: (e) => c(e.target.value) }),
-              ],
-            }),
-            (0, q.jsxs)(`label`, {
-              className: `text-xs text-white/55`,
-              children: [
-                `نماد یا ایموجی`,
-                (0, q.jsx)(`input`, {
-                  className: `${z} mt-2 text-xl`,
-                  value: l,
-                  onChange: (e) => u([...e.target.value].slice(0, 3).join(``)),
-                }),
-              ],
-            }),
-            (0, q.jsxs)(`div`, {
-              className: `flex flex-wrap items-center gap-2`,
-              children: [
-                lt.map((e) =>
-                  (0, q.jsx)(
-                    `button`,
-                    {
-                      type: `button`,
-                      "aria-label": `زمینهٔ ${e}`,
-                      className: `size-8 rounded-lg border ${d === e ? `border-white` : `border-white/15`}`,
-                      style: { background: e },
-                      onClick: () => f(e),
-                    },
-                    e,
-                  ),
+              ),
+              UI.h(`input`, {
+                type: `color`,
+                "aria-label": `رنگ دلخواه`,
+                value: d.length === 7 ? d : `#000000`,
+                style: { width: 44, height: 48, border: 0, background: `transparent` },
+                onChange: (ev) => f(ev.target.value),
+              }),
+            ),
+          ),
+          i > 1
+            ? UI.h(
+                UI.Fld,
+                { label: `صفحهٔ خانه` },
+                UI.h(
+                  UI.Sel,
+                  { "aria-label": `صفحهٔ خانه`, "data-testid": `app-page-select`, value: h, onChange: (ev) => g(Number(ev.target.value)) },
+                  Array.from({ length: i }, (x2, k2) => UI.h(`option`, { key: k2, value: k2 }, `صفحهٔ ${k2 + 1}`)),
                 ),
-                (0, q.jsx)(`input`, {
-                  type: `color`,
-                  "aria-label": `رنگ زمینهٔ آیکن`,
-                  className: `size-8 rounded-lg border-0 bg-transparent`,
-                  value: d,
-                  onChange: (e) => f(e.target.value),
-                }),
-              ],
-            }),
-            i > 1
-              ? (0, q.jsxs)(`label`, {
-                  className: `text-xs text-white/55`,
-                  children: [
-                    `صفحهٔ خانه`,
-                    (0, q.jsx)(`select`, {
-                      "aria-label": `صفحهٔ خانه`,
-                      "data-testid": `app-page-select`,
-                      className: `${z} mt-2`,
-                      value: h,
-                      onChange: (e) => g(Number(e.target.value)),
-                      children: Array.from({ length: i }, (e, t) =>
-                        (0, q.jsx)(`option`, { value: t, children: `صفحهٔ ${t + 1}` }, t),
-                      ),
-                    }),
-                  ],
-                })
-              : null,
-            (0, q.jsx)(`button`, {
-              type: `button`,
-              className: H,
-              style: { background: n },
+              )
+            : null,
+          UI.h(
+            UI.Btn,
+            {
+              kind: `primary`,
               onClick: () => {
                 (B.getState().patch(e.id, {
                   name: s.trim() || e.name,
@@ -362,33 +326,17 @@ function ut({ app: e, onOpenChange: t, accent: n, devMode: r, pages: i, onEditCo
                 }),
                   t(!1));
               },
-              children: `ذخیرهٔ تغییرات`,
-            }),
-            (0, q.jsxs)(`div`, {
-              className: `grid grid-cols-2 gap-2`,
-              children: [
-                (0, q.jsxs)(`button`, {
-                  type: `button`,
-                  className: `${j} flex items-center justify-center gap-2`,
-                  onClick: () => a(e),
-                  children: [(0, q.jsx)(Ue, { className: `size-4` }), `ویرایش کد`],
-                }),
-                (0, q.jsxs)(`button`, {
-                  type: `button`,
-                  className: `${j} flex items-center justify-center gap-2 text-rose-200`,
-                  onClick: () => o(e),
-                  children: [(0, q.jsx)(Te, { className: `size-4` }), `حذف برنامه`],
-                }),
-              ],
-            }),
-            r
-              ? null
-              : (0, q.jsx)(`p`, {
-                  className: `text-[11px] text-white/40`,
-                  children: `برای تغییر کد پوسته و امکانات پیشرفتهٔ لانچر، «حالت توسعه‌دهنده» را در شخصی‌سازی روشن کن.`,
-                }),
-          ],
-        })
+            },
+            `ذخیرهٔ تغییرات`,
+          ),
+          UI.h(
+            `div`,
+            { className: `ui-actions` },
+            UI.h(UI.Btn, { kind: `line`, icon: `code`, onClick: () => a(e) }, `ویرایش کد`),
+            UI.h(UI.Btn, { kind: `danger`, icon: `trash`, onClick: () => o(e) }, `حذف برنامه`),
+          ),
+          r ? null : UI.h(`p`, { className: `ui-caption` }, `برای تغییر کد پوسته و امکانات پیشرفتهٔ لانچر، «حالت توسعه‌دهنده» را در بخش ظاهر روشن کن.`),
+        )
       : null
   );
 }
@@ -465,124 +413,77 @@ function dt({ app: e, onOpenChange: t, accent: i, gemini: a }) {
         y(!1);
       }
     };
-  return (0, q.jsxs)(_e, {
-    title: `کد ${e.name}`,
-    icon: (0, q.jsx)(Ue, { className: `size-5`, style: { color: i } }),
-    open: !!e,
-    onOpenChange: t,
-    testId: `editor-sheet`,
-    children: [
-      (0, q.jsx)(`div`, {
-        className: `flex gap-2`,
-        children: (0, q.jsxs)(`select`, {
+  return UI.h(
+    UI.Sheet,
+    { title: `کد ${e.name}`, open: !0, onOpenChange: t, testId: `editor-sheet` },
+    UI.h(
+      UI.Fld,
+      { label: `فایل` },
+      UI.h(
+        UI.Sel,
+        {
+          mono: !0,
           "aria-label": `فایل`,
-          className: `${z} font-mono`,
-          dir: `ltr`,
           value: c,
-          onChange: (e) => {
-            (l(e.target.value), d(b.files.find((t) => t.name === e.target.value)?.content ?? ``), p(``));
+          onChange: (ev) => {
+            (l(ev.target.value), d(b.files.find((t) => t.name === ev.target.value)?.content ?? ``), p(``));
           },
-          children: [
-            b.files.map((e) => (0, q.jsx)(`option`, { children: e.name }, e.name)),
-            b.files.some((e) => e.name === c) ? null : (0, q.jsx)(`option`, { children: c }),
-          ],
-        }),
-      }),
-      (0, q.jsxs)(`div`, {
-        className: `flex gap-2`,
-        children: [
-          (0, q.jsx)(`input`, {
-            className: `${z} font-mono`,
-            dir: `ltr`,
-            placeholder: `new-file.css`,
-            value: m,
-            onChange: (e) => h(e.target.value),
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            "aria-label": `فایل تازه`,
-            className: `${j} shrink-0`,
-            onClick: () => {
-              let e = m.trim();
-              e && (l(e), d(``), h(``));
-            },
-            children: (0, q.jsx)(ae, { className: `size-4` }),
-          }),
-        ],
-      }),
-      (0, q.jsx)(`textarea`, {
-        "aria-label": `کد برنامه`,
-        dir: `ltr`,
-        spellCheck: !1,
-        className: `${U} min-h-[42dvh]`,
-        value: u,
-        onChange: (e) => d(e.target.value),
-      }),
-      R(c) === `nava`
-        ? (0, q.jsx)(`button`, {
-            type: `button`,
-            className: j,
-            onClick: () => d(ie(u)),
-            children: `مخفف‌کردن کد نوا`,
-          })
-        : null,
-      (0, q.jsxs)(`div`, {
-        className: `grid grid-cols-3 gap-2`,
-        children: [
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `${j} flex items-center justify-center gap-1`,
-            onClick: x,
-            children: [(0, q.jsx)(be, { className: `size-4` }), `بررسی`],
-          }),
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            disabled: g || !codepadAI.aiReady(a),
-            title: codepadAI.aiReady(a) ? `` : `اول هوش مصنوعی را وصل کن`,
-            className: `${j} flex items-center justify-center gap-1 disabled:opacity-40`,
-            onClick: () => void C(),
-            children: [(0, q.jsx)(rt, { className: `size-4` }), g ? `…` : `Gemini`],
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            className: H,
-            style: { background: i },
-            onClick: S,
-            children: `ذخیره`,
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`button`, {
-        type: `button`,
-        "data-testid": `export-editor-pack`,
-        disabled: v,
-        className: `${j} flex items-center justify-center gap-2 disabled:opacity-40`,
-        onClick: () => void w(),
-        children: [(0, q.jsx)(Se, { className: `size-4` }), v ? `در حال ساخت…` : `خروجی برنامه (.jibpack)`],
-      }),
-      (0, q.jsxs)(`button`, {
-        type: `button`,
-        className: `${H} flex items-center justify-center gap-2`,
-        style: { background: i },
-        onClick: () => {
-          let e = b.files.some((e) => e.name === c)
-            ? b.files.map((e) => (e.name === c ? { ...e, content: u } : e))
-            : [...b.files, { name: c, content: u }];
-          s(W({ ...b, files: e }));
         },
-        children: [(0, q.jsx)(Se, { className: `size-4` }), `خروجی APK یا PC`],
+        b.files.map((x2) => UI.h(`option`, { key: x2.name }, x2.name)),
+        b.files.some((x2) => x2.name === c) ? null : UI.h(`option`, null, c),
+      ),
+    ),
+    UI.h(
+      `div`,
+      { className: `ui-actions` },
+      UI.h(UI.Input, { mono: !0, style: { flex: 1 }, placeholder: `new-file.css`, "aria-label": `نام فایل تازه`, value: m, onChange: (ev) => h(ev.target.value) }),
+      UI.h(UI.Btn, {
+        kind: `line`,
+        icon: `plus`,
+        "aria-label": `فایل تازه`,
+        onClick: () => {
+          let x2 = m.trim();
+          x2 && (l(x2), d(``), h(``));
+        },
       }),
-      (0, q.jsx)(De, { target: o, onClose: () => s(null), accent: i }),
-      f
-        ? (0, q.jsx)(`pre`, {
-            dir: `auto`,
-            className: `whitespace-pre-wrap rounded-xl border border-white/10 bg-black/40 p-3 text-xs leading-6`,
-            style: { color: i },
-            children: f,
-          })
-        : null,
-    ],
-  });
+    ),
+    UI.h(UI.Area, { mono: !0, "aria-label": `کد برنامه`, style: { minHeight: `42dvh` }, value: u, onChange: (ev) => d(ev.target.value) }),
+    R(c) === `nava` ? UI.h(UI.Btn, { kind: `line`, onClick: () => d(ie(u)) }, `مخفف‌کردن کد نوا`) : null,
+    UI.h(
+      `div`,
+      { className: `ui-actions` },
+      UI.h(UI.Btn, { kind: `line`, icon: `shield`, onClick: x }, `بررسی`),
+      UI.h(
+        UI.Btn,
+        {
+          kind: `line`,
+          icon: `spark`,
+          disabled: g || !codepadAI.aiReady(a),
+          title: codepadAI.aiReady(a) ? `` : `اول هوش مصنوعی را وصل کن`,
+          onClick: () => void C(),
+        },
+        g ? `…` : `هوش مصنوعی`,
+      ),
+      UI.h(UI.Btn, { kind: `primary`, onClick: S }, `ذخیره`),
+    ),
+    UI.h(UI.Btn, { kind: `line`, icon: `save`, "data-testid": `export-editor-pack`, disabled: v, onClick: () => void w() }, v ? `در حال ساخت…` : `خروجی برنامه (.jibpack)`),
+    UI.h(
+      UI.Btn,
+      {
+        kind: `primary`,
+        icon: `save`,
+        onClick: () => {
+          let x2 = b.files.some((z2) => z2.name === c)
+            ? b.files.map((z2) => (z2.name === c ? { ...z2, content: u } : z2))
+            : [...b.files, { name: c, content: u }];
+          s(W({ ...b, files: x2 }));
+        },
+      },
+      `خروجی APK یا PC`,
+    ),
+    UI.h(De, { target: o, onClose: () => s(null), accent: i }),
+    f ? UI.h(`pre`, { dir: `auto`, className: `ui-code-block`, style: { whiteSpace: `pre-wrap` } }, f) : null,
+  );
 }
 var ft = `<!doctype html>
 <html lang="fa" dir="rtl">
@@ -620,185 +521,108 @@ function mt({ open: e, onOpenChange: t, accent: n, onInstalled: r }) {
     let i = await _(n);
     (p(`«${i.name}» نصب شد.` + (n.problems.length ? ` مشکل: ${n.problems.join(`، `)}` : ``)), r(i, t));
   };
-  return (0, q.jsxs)(_e, {
-    title: `افزودن برنامه`,
-    icon: (0, q.jsx)(ae, { className: `size-5`, style: { color: n } }),
-    open: e,
-    onOpenChange: t,
-    testId: `install-sheet`,
-    children: [
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2`,
-        children: [
-          (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `نمونه‌های آماده` }),
-          (0, q.jsx)(`div`, {
-            className: `grid gap-2`,
-            children: le.map((e) =>
-              (0, q.jsxs)(
-                `button`,
-                {
-                  type: `button`,
-                  className: `flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 p-3 text-start`,
-                  onClick: () => void m(e.text, !1).catch((e) => p(String(e))),
-                  children: [
-                    (0, q.jsx)(`span`, {
-                      className: `grid size-9 shrink-0 place-items-center rounded-xl text-xs font-bold`,
-                      style: {
-                        background:
-                          e.group === `security` ? `${n}22` : e.group === `nava` ? `${n}33` : `#ffffff14`,
-                        color: n,
-                      },
-                      children: e.group === `security` ? `SEC` : e.group === `nava` ? `NAVA` : `APP`,
-                    }),
-                    (0, q.jsxs)(`span`, {
-                      className: `min-w-0`,
-                      children: [
-                        (0, q.jsx)(`span`, { className: `block text-sm`, children: e.title }),
-                        (0, q.jsx)(`span`, {
-                          className: `block truncate text-[11px] text-white/45`,
-                          children: e.detail,
-                        }),
-                      ],
-                    }),
-                  ],
+  return UI.h(
+    UI.Sheet,
+    { title: `افزودن برنامه`, open: e, onOpenChange: t, testId: `install-sheet` },
+    UI.h(
+      UI.Section,
+      { title: `نمونه‌های آماده` },
+      UI.h(
+        `div`,
+        { className: `ui-list` },
+        le.map((x2) =>
+          UI.h(UI.Row, {
+            key: x2.id,
+            ext: x2.group === `security` ? `SEC` : x2.group === `nava` ? `NAVA` : `APP`,
+            title: x2.title,
+            detail: x2.detail,
+            onClick: () => void m(x2.text, !1).catch((er) => p(String(er))),
+          }),
+        ),
+      ),
+    ),
+    UI.h(
+      UI.Section,
+      { title: `ساخت سریع برنامه` },
+      o === `nava`
+        ? UI.h(
+            `div`,
+            { className: `ui-actions` },
+            UI.h(
+              UI.Sel,
+              {
+                "aria-label": `نمونهٔ آمادهٔ نوا`,
+                defaultValue: ``,
+                style: { flex: 1 },
+                onChange: (ev) => {
+                  let x2 = ye.find((z2) => z2.id === ev.target.value);
+                  x2 && (l(x2.code), a(x2.title));
                 },
-                e.id,
-              ),
+              },
+              UI.h(`option`, { value: ``, disabled: !0 }, `نمونهٔ یک‌خطی…`),
+              ye.map((x2) => UI.h(`option`, { key: x2.id, value: x2.id }, x2.title)),
             ),
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2 border-t border-white/10 pt-4`,
-        children: [
-          (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `ساخت سریع برنامه` }),
-          (0, q.jsx)(`div`, {
-            className: `grid grid-cols-2 gap-2`,
-            role: `group`,
-            "aria-label": `زبان برنامهٔ تازه`,
-            children: [`html`].map((e) =>
-              (0, q.jsx)(
-                `button`,
-                {
-                  type: `button`,
-                  "aria-pressed": o === e,
-                  className: `h-9 rounded-xl text-xs font-bold ${o === e ? `text-black` : `bg-white/10 text-white/70`}`,
-                  style: o === e ? { background: n } : void 0,
-                  onClick: () => {
-                    (s(e), l(e === `nava` ? pt : ft));
-                  },
-                  children: e === `nava` ? `نوا (فارسی، ساده)` : `HTML`,
-                },
-                e,
-              ),
-            ),
-          }),
-          o === `nava`
-            ? (0, q.jsxs)(`div`, {
-                className: `grid grid-cols-2 gap-2`,
-                children: [
-                  (0, q.jsxs)(`select`, {
-                    "aria-label": `نمونهٔ آمادهٔ نوا`,
-                    className: z,
-                    defaultValue: ``,
-                    onChange: (e) => {
-                      let t = ye.find((t) => t.id === e.target.value);
-                      t && (l(t.code), a(t.title));
-                    },
-                    children: [
-                      (0, q.jsx)(`option`, { value: ``, disabled: !0, children: `نمونهٔ یک‌خطی…` }),
-                      ye.map((e) => (0, q.jsx)(`option`, { value: e.id, children: e.title }, e.id)),
-                    ],
-                  }),
-                  (0, q.jsx)(`button`, {
-                    type: `button`,
-                    className: j,
-                    title: `دستورها مخفف می‌شوند؛ متن‌ها حفظ می‌شوند`,
-                    onClick: () => l(ie(c)),
-                    children: `مخفف‌کردن کد`,
-                  }),
-                ],
-              })
-            : null,
-          (0, q.jsx)(`input`, {
-            className: z,
-            "aria-label": `نام برنامهٔ تازه`,
-            value: i,
-            onChange: (e) => a(e.target.value),
-          }),
-          (0, q.jsx)(`textarea`, {
-            dir: o === `nava` ? `rtl` : `ltr`,
-            spellCheck: !1,
-            "aria-label": `کد برنامهٔ تازه`,
-            className: `${U} h-40`,
-            value: c,
-            onChange: (e) => l(e.target.value),
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            className: `${H} w-full`,
-            style: { background: n },
-            onClick: () => {
-              let e = {
-                id: `app-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`,
-                name: i.trim() || `برنامهٔ تازه`,
-                icon: `✦`,
-                files: [{ name: o === `nava` ? `main.nava` : `index.html`, content: c }],
-                installedAt: Date.now(),
-              };
-              (B.getState().put(e), r(e, !0));
-            },
-            children: `ساخت و اجرا`,
-          }),
-          (0, q.jsx)(`p`, {
-            className: `text-[11px] text-white/40`,
-            children: `برای برنامه‌های چندزبانه (پایتون، mix، عکس‌ها) در ویرایشگر پروژه بساز و با دکمهٔ «لانچر» نصبش کن.`,
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2 border-t border-white/10 pt-4`,
-        children: [
-          (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `نصب فایل .jibpack` }),
-          (0, q.jsx)(`input`, {
-            type: `file`,
-            accept: `.jibpack,.txt,text/plain`,
-            "aria-label": `فایل jibpack`,
-            className: `text-xs text-white/65 file:me-3 file:rounded-xl file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-white`,
-            onChange: async (e) => {
-              let t = e.target.files?.[0];
-              ((e.target.value = ``), t && (await m(await t.text(), !0).catch((e) => p(String(e)))));
-            },
-          }),
-          (0, q.jsx)(`input`, {
-            className: z,
-            dir: `ltr`,
-            placeholder: `https://…/app.jibpack`,
-            value: u,
-            onChange: (e) => d(e.target.value),
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            className: `${j} w-full`,
-            onClick: async () => {
-              try {
-                p(`در حال دانلود…`);
-                let e = await fetch(u);
-                if (!e.ok) throw Error(`HTTP ${e.status}`);
-                await m(await e.text(), !0);
-              } catch (e) {
-                p(
-                  `دانلود نشد (${e instanceof Error ? e.message : e}). اگر سایت اجازه نمی‌دهد، فایل را دانلود و از «انتخاب فایل» نصب کن.`,
-                );
-              }
-            },
-            children: `دانلود و نصب`,
-          }),
-        ],
-      }),
-      f ? (0, q.jsx)(`p`, { className: `text-sm`, style: { color: n }, children: f }) : null,
-    ],
-  });
+            UI.h(UI.Btn, { kind: `line`, title: `دستورها مخفف می‌شوند؛ متن‌ها حفظ می‌شوند`, onClick: () => l(ie(c)) }, `مخفف‌کردن کد`),
+          )
+        : null,
+      UI.h(UI.Fld, { label: `نام برنامه` }, UI.h(UI.Input, { "aria-label": `نام برنامهٔ تازه`, value: i, onChange: (ev) => a(ev.target.value) })),
+      UI.h(UI.Fld, { label: `کد برنامه (HTML)` }, UI.h(UI.Area, { mono: o !== `nava`, dir: o === `nava` ? `rtl` : `ltr`, "aria-label": `کد برنامهٔ تازه`, style: { minHeight: 160 }, value: c, onChange: (ev) => l(ev.target.value) })),
+      UI.h(
+        UI.Btn,
+        {
+          kind: `primary`,
+          icon: `play`,
+          onClick: () => {
+            let x2 = {
+              id: `app-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`,
+              name: i.trim() || `برنامهٔ تازه`,
+              icon: `✦`,
+              files: [{ name: o === `nava` ? `main.nava` : `index.html`, content: c }],
+              installedAt: Date.now(),
+            };
+            (B.getState().put(x2), r(x2, !0));
+          },
+        },
+        `ساخت و اجرا`,
+      ),
+      UI.h(`p`, { className: `ui-caption` }, `برای برنامه‌های چندزبانه (پایتون، mix، عکس‌ها) در ویرایشگر پروژه بساز و از منوی «نصب پروژهٔ فعال در برنامه‌ها» نصبش کن.`),
+    ),
+    UI.h(
+      UI.Section,
+      { title: `نصب فایل .jibpack` },
+      UI.h(UI.Fld, { label: `انتخاب فایل` }, UI.h(`input`, {
+        type: `file`,
+        accept: `.jibpack,.txt,text/plain`,
+        "aria-label": `فایل jibpack`,
+        className: `ui-input`,
+        style: { paddingBlock: 10 },
+        onChange: async (ev) => {
+          let x2 = ev.target.files?.[0];
+          ((ev.target.value = ``), x2 && (await m(await x2.text(), !0).catch((er) => p(String(er)))));
+        },
+      })),
+      UI.h(UI.Fld, { label: `یا از آدرس` }, UI.h(UI.Input, { mono: !0, placeholder: `https://…/app.jibpack`, value: u, onChange: (ev) => d(ev.target.value) })),
+      UI.h(
+        UI.Btn,
+        {
+          kind: `line`,
+          icon: `open`,
+          onClick: async () => {
+            try {
+              p(`در حال دانلود…`);
+              let x2 = await fetch(u);
+              if (!x2.ok) throw Error(`HTTP ${x2.status}`);
+              await m(await x2.text(), !0);
+            } catch (er) {
+              p(`دانلود نشد (${er instanceof Error ? er.message : er}). اگر سایت اجازه نمی‌دهد، فایل را دانلود و از «انتخاب فایل» نصب کن.`);
+            }
+          },
+        },
+        `دانلود و نصب`,
+      ),
+    ),
+    f ? UI.h(UI.Note, { tone: /نشد|نیست|مشکل|خطا/.test(f) ? `err` : `ok` }, f) : null,
+  );
 }
 function ht({
   name: e,
@@ -816,70 +640,51 @@ function ht({
     (0, K.useEffect)(() => {
       (l(!1), (u.current = null));
     }, [a]),
-    (0, q.jsxs)(q.Fragment, {
-      children: [
-        (0, q.jsx)(`button`, {
-          type: `button`,
-          className: `jibos-chrome-reveal`,
-          hidden: c,
-          "aria-label": `نمایش ابزارهای برنامه`,
-          "aria-expanded": c,
-          "aria-controls": `jibos-app-toolbar`,
-          title: `برای نمایش ابزارها، لمس کن یا به پایین بکش`,
-          onClick: () => l(!0),
-          onPointerDown: (e) => {
-            ((u.current = { id: e.pointerId, y: e.clientY }), e.currentTarget.setPointerCapture(e.pointerId));
+    UI.h(
+      K.Fragment,
+      null,
+      UI.h(`button`, {
+        type: `button`,
+        className: `ui-reveal`,
+        hidden: c,
+        "aria-label": `نمایش نوار برنامه`,
+        "aria-expanded": c,
+        "aria-controls": `ui-app-bar`,
+        title: `برای نمایش ابزارها لمس کن یا به پایین بکش`,
+        onClick: () => l(!0),
+        onPointerDown: (ev) => {
+          ((u.current = { id: ev.pointerId, y: ev.clientY }), ev.currentTarget.setPointerCapture(ev.pointerId));
+        },
+        onPointerMove: (ev) => {
+          u.current?.id === ev.pointerId && ev.clientY - u.current.y > 20 && l(!0);
+        },
+        onPointerUp: () => {
+          u.current = null;
+        },
+        onPointerCancel: () => {
+          u.current = null;
+        },
+      }),
+      UI.h(
+        `header`,
+        { id: `ui-app-bar`, "data-testid": `app-toolbar`, hidden: !c, className: `ui-wbar` },
+        UI.h(UI.Btn, { kind: `tool`, "aria-label": `بازگشت به برنامه‌ها`, onClick: o }, UI.h(UI.Icon, { n: `back` })),
+        UI.h(UI.AppIcon, { app: { icon: t, iconImage: n, iconColor: r }, size: 32, radius: 8 }),
+        UI.h(`strong`, { className: `ui-fill`, style: { overflow: `hidden`, textOverflow: `ellipsis`, whiteSpace: `nowrap` } }, e),
+        UI.h(
+          UI.Btn,
+          {
+            kind: `tool`,
+            "aria-label": `اجرای دوباره`,
+            onClick: () => {
+              (l(!1), s());
+            },
           },
-          onPointerMove: (e) => {
-            u.current?.id === e.pointerId && e.clientY - u.current.y > 20 && l(!0);
-          },
-          onPointerUp: () => {
-            u.current = null;
-          },
-          onPointerCancel: () => {
-            u.current = null;
-          },
-        }),
-        (0, q.jsxs)(`header`, {
-          id: `jibos-app-toolbar`,
-          "data-testid": `app-toolbar`,
-          hidden: !c,
-          className: `jibos-app-toolbar`,
-          style: { borderColor: `${i}33` },
-          children: [
-            (0, q.jsx)(`button`, {
-              type: `button`,
-              className: `grid size-10 shrink-0 place-items-center rounded-full hover:bg-white/10`,
-              "aria-label": `بازگشت به خانه`,
-              onClick: o,
-              children: (0, q.jsx)(He, { className: `size-5` }),
-            }),
-            (0, q.jsx)(`span`, {
-              className: `grid size-7 shrink-0 place-items-center overflow-hidden rounded-lg text-sm`,
-              style: { background: r ?? `#06150d` },
-              children: n ? (0, q.jsx)(`img`, { src: n, alt: ``, className: `size-full object-cover` }) : t,
-            }),
-            (0, q.jsx)(`span`, { className: `min-w-0 flex-1 truncate text-sm font-semibold`, children: e }),
-            (0, q.jsx)(`button`, {
-              type: `button`,
-              className: `grid size-10 shrink-0 place-items-center rounded-full text-white/60 hover:bg-white/10`,
-              "aria-label": `اجرای دوباره`,
-              onClick: () => {
-                (l(!1), s());
-              },
-              children: (0, q.jsx)(Qe, { className: `size-4` }),
-            }),
-            (0, q.jsx)(`button`, {
-              type: `button`,
-              className: `grid size-10 shrink-0 place-items-center rounded-full text-white/60 hover:bg-white/10`,
-              "aria-label": `مخفی‌کردن ابزارهای برنامه`,
-              onClick: () => l(!1),
-              children: (0, q.jsx)(he, { className: `size-5` }),
-            }),
-          ],
-        }),
-      ],
-    })
+          UI.h(UI.Icon, { n: `refresh` }),
+        ),
+        UI.h(UI.Btn, { kind: `tool`, "aria-label": `مخفی‌کردن نوار برنامه`, onClick: () => l(!1) }, UI.h(UI.Icon, { n: `up` })),
+      ),
+    )
   );
 }
 var gt = {
@@ -1067,72 +872,47 @@ function vt({ app: e, host: t, accent: n, onClose: r }) {
         }
       );
     }, [e, m, u]),
-    (0, q.jsxs)(`div`, {
-      role: `dialog`,
-      "data-state": `open`,
-      "aria-label": e.name,
-      "data-testid": `app-window`,
-      className: `jibos-window fixed inset-0 z-30 flex flex-col bg-[#020604] ${c ? `jibos-window-out` : ``}`,
-      children: [
-        (0, q.jsx)(ht, {
-          name: e.name,
-          icon: e.icon,
-          iconImage: e.iconImage,
-          iconColor: e.iconColor,
-          accent: n,
-          resetKey: e.id,
-          onClose: g,
-          onReload: () => d((e) => e + 1),
-        }),
-        a.kind === `busy`
-          ? (0, q.jsx)(`div`, {
-              className: `grid flex-1 place-items-center font-mono text-sm`,
-              style: { color: n },
-              children: (0, q.jsx)(`span`, { className: `jibos-caret`, children: `در حال اجرا` }),
-            })
-          : null,
-        a.kind === `web`
-          ? (0, q.jsx)(
-              `iframe`,
-              {
-                ref: p,
-                title: e.name,
-                className: `min-h-0 flex-1 bg-white`,
-                sandbox: `allow-scripts allow-modals allow-forms allow-pointer-lock`,
-                allow: `autoplay; fullscreen`,
-                srcDoc: a.doc,
-              },
-              u,
-            )
-          : null,
-        a.kind === `page`
-          ? (0, q.jsx)(`iframe`, {
+    UI.h(
+      `div`,
+      {
+        role: `dialog`,
+        "aria-modal": `true`,
+        "aria-label": e.name,
+        "data-testid": `app-window`,
+        className: `ui-root ui-window` + (c ? ` ui-window-out` : ``),
+      },
+      UI.h(ht, {
+        name: e.name,
+        icon: e.icon,
+        iconImage: e.iconImage,
+        iconColor: e.iconColor,
+        accent: n,
+        resetKey: e.id,
+        onClose: g,
+        onReload: () => d((z2) => z2 + 1),
+      }),
+      a.kind === `busy`
+        ? UI.h(`div`, { className: `ui-state`, style: { flex: 1, justifyContent: `center` } }, UI.h(`div`, { className: `ui-spin`, "aria-hidden": `true` }), UI.h(`strong`, null, `در حال اجرا`))
+        : null,
+      a.kind === `web`
+        ? UI.h(
+            `iframe`,
+            {
+              key: u,
+              ref: p,
               title: e.name,
-              className: `min-h-0 flex-1`,
-              sandbox: `allow-same-origin`,
+              className: `ui-frame`,
+              sandbox: `allow-scripts allow-modals allow-forms allow-pointer-lock`,
+              allow: `autoplay; fullscreen`,
               srcDoc: a.doc,
-            })
-          : null,
-        a.kind === `text`
-          ? (0, q.jsxs)(`pre`, {
-              dir: `auto`,
-              className: `min-h-0 flex-1 overflow-auto whitespace-pre-wrap bg-black p-4 font-mono text-[13px] leading-6`,
-              style: { color: n },
-              children: [
-                a.out,
-                a.err
-                  ? (0, q.jsx)(`span`, {
-                      className: `text-rose-400`,
-                      children:
-                        `
-` + a.err,
-                    })
-                  : null,
-              ],
-            })
-          : null,
-      ],
-    })
+            },
+          )
+        : null,
+      a.kind === `page` ? UI.h(`iframe`, { title: e.name, className: `ui-frame`, sandbox: `allow-same-origin`, srcDoc: a.doc }) : null,
+      a.kind === `text`
+        ? UI.h(`pre`, { dir: `auto`, className: `ui-code-out` }, a.out, a.err ? UI.h(`span`, { className: `is-err` }, `\n` + a.err) : null)
+        : null,
+    )
   );
 }
 var yt = `https://duckduckgo.com/`;
@@ -1349,279 +1129,108 @@ function It({
         g(`کپی ممکن نشد.`);
       }
     };
-  return (0, q.jsxs)(_e, {
-    title: `حالت توسعه‌دهنده`,
-    icon: (0, q.jsx)(tt, { className: `size-5`, style: { color: r.accent } }),
-    open: t,
-    onOpenChange: n,
-    testId: `dev-sheet`,
-    children: [
-      (0, q.jsx)(`div`, {
-        className: `rounded-2xl border border-amber-300/25 bg-amber-300/5 p-3 text-xs leading-6 text-amber-100/90`,
-        children: `این حالت کنترل کامل «داخل لانچر» را باز می‌کند: ویرایش کد برنامه‌های نصب‌شده، پیکربندی JSON، CSS و اسکریپت راه‌اندازی، مدیریت همهٔ برنامه‌ها و فرمان‌های بیشتر برای آن‌ها. دسترسی سیستمی (root) به اندروید نمی‌دهد؛ یک برنامهٔ معمولی نمی‌تواند گوشی را روت کند.`,
-      }),
-      (0, q.jsxs)(`label`, {
-        className: `flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-3 text-sm`,
-        children: [
-          (0, q.jsx)(`span`, { className: `font-semibold`, children: `حالت توسعه‌دهنده روشن` }),
-          (0, q.jsx)(`input`, {
-            type: `checkbox`,
-            "aria-label": `حالت توسعه‌دهنده`,
-            className: `size-5`,
-            style: { accentColor: r.accent },
-            checked: r.devMode,
-            onChange: (e) => i({ ...r, devMode: e.target.checked }),
-          }),
-        ],
-      }),
-      r.devMode
-        ? (0, q.jsxs)(q.Fragment, {
-            children: [
-              (0, q.jsxs)(`button`, {
-                type: `button`,
-                className: `${j} flex items-center justify-center gap-2`,
-                onClick: s,
-                children: [(0, q.jsx)(ue, { className: `size-4` }), `باز کردن کنسول توسعه‌دهنده`],
-              }),
-              (0, q.jsxs)(`section`, {
-                className: `space-y-2`,
-                children: [
-                  (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `پیکربندی لانچر (JSON)` }),
-                  (0, q.jsx)(`textarea`, {
-                    "aria-label": `پیکربندی JSON`,
-                    dir: `ltr`,
-                    spellCheck: !1,
-                    className: `${U} h-52`,
-                    value: l,
-                    onChange: (e) => u(e.target.value),
-                  }),
-                  (0, q.jsxs)(`div`, {
-                    className: `grid grid-cols-2 gap-2`,
-                    children: [
-                      (0, q.jsx)(`button`, {
-                        type: `button`,
-                        className: H,
-                        style: { background: r.accent },
-                        onClick: y,
-                        children: `اعمال پیکربندی`,
-                      }),
-                      (0, q.jsx)(`button`, {
-                        type: `button`,
-                        className: j,
-                        onClick: () => u(Ft({ ...Dt, devMode: !0 })),
-                        children: `مقادیر پیش‌فرض`,
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              (0, q.jsxs)(`section`, {
-                className: `space-y-2`,
-                children: [
-                  (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `CSS سفارشی لانچر` }),
-                  (0, q.jsx)(`textarea`, {
-                    "aria-label": `CSS سفارشی`,
-                    dir: `ltr`,
-                    spellCheck: !1,
-                    placeholder: `.jibos-icon { border-radius: 50% !important; }
-.jibos-clock { letter-spacing: .2em; }`,
-                    className: `${U} h-28`,
-                    value: d,
-                    onChange: (e) => f(e.target.value),
-                  }),
-                  (0, q.jsx)(`button`, {
-                    type: `button`,
-                    className: `${j} w-full`,
-                    onClick: () => {
-                      (i({ ...r, customCss: d }), g(`CSS اعمال شد.`));
-                    },
-                    children: `اعمال CSS`,
-                  }),
-                ],
-              }),
-              (0, q.jsxs)(`section`, {
-                className: `space-y-2`,
-                children: [
-                  (0, q.jsx)(`h3`, {
-                    className: `text-sm font-bold`,
-                    children: `اسکریپت راه‌اندازی لانچر (JavaScript)`,
-                  }),
-                  (0, q.jsxs)(`p`, {
-                    className: `text-[11px] leading-5 text-white/50`,
-                    children: [
-                      `هر بار که لانچر باز می‌شود اجرا می‌شود و به شیء `,
-                      (0, q.jsx)(`code`, { dir: `ltr`, children: `api` }),
-                      ` دسترسی دارد: apps()، launch(name)، prefs()، setPrefs(`,
-                      `{…}`,
-                      `)، toast(msg)، beep(hz, ms)، install(name, html)، uninstall(name)، gemini(prompt). اگر چیزی خراب شد، لانچر را با `,
-                      (0, q.jsx)(`code`, { dir: `ltr`, children: `/launcher?safe=1` }),
-                      ` باز کن تا CSS و اسکریپت اجرا نشوند.`,
-                    ],
-                  }),
-                  (0, q.jsx)(`textarea`, {
-                    "aria-label": `اسکریپت راه‌اندازی`,
-                    dir: `ltr`,
-                    spellCheck: !1,
-                    placeholder: `api.toast("خوش آمدی، " + api.prefs().hostname);
-api.beep(660, 120);`,
-                    className: `${U} h-28`,
-                    value: p,
-                    onChange: (e) => m(e.target.value),
-                  }),
-                  (0, q.jsxs)(`div`, {
-                    className: `grid grid-cols-2 gap-2`,
-                    children: [
-                      (0, q.jsx)(`button`, {
-                        type: `button`,
-                        className: j,
-                        onClick: () => {
-                          (i({ ...r, bootScript: p }),
-                            g(`اسکریپت ذخیره شد؛ از دفعهٔ بعد خودکار اجرا می‌شود.`));
-                        },
-                        children: `ذخیره`,
-                      }),
-                      (0, q.jsxs)(`button`, {
-                        type: `button`,
-                        className: `${j} flex items-center justify-center gap-2`,
-                        onClick: async () => v(await a(p)),
-                        children: [(0, q.jsx)(fe, { className: `size-4` }), `اجرای الان`],
-                      }),
-                    ],
-                  }),
-                  _
-                    ? (0, q.jsx)(`pre`, {
-                        dir: `ltr`,
-                        "data-testid": `dev-script-out`,
-                        className: `max-h-40 overflow-auto whitespace-pre-wrap rounded-xl bg-black/60 p-2 font-mono text-[11px] text-white/80`,
-                        children: _,
-                      })
-                    : null,
-                ],
-              }),
-              (0, q.jsxs)(`section`, {
-                className: `space-y-2`,
-                children: [
-                  (0, q.jsxs)(`h3`, {
-                    className: `text-sm font-bold`,
-                    children: [`همهٔ برنامه‌ها (`, c.length, `)`],
-                  }),
-                  c.map((t) =>
-                    (0, q.jsxs)(
-                      `div`,
-                      {
-                        className: `flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 p-2 text-sm`,
-                        children: [
-                          (0, q.jsx)(`span`, {
-                            className: `grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/10`,
-                            children: t.iconImage
-                              ? (0, q.jsx)(`img`, {
-                                  src: t.iconImage,
-                                  alt: ``,
-                                  className: `size-full object-cover`,
-                                })
-                              : t.icon,
-                          }),
-                          (0, q.jsxs)(`span`, {
-                            className: `min-w-0 flex-1 truncate`,
-                            children: [
-                              t.name,
-                              (0, q.jsxs)(`span`, {
-                                className: `ms-2 text-[10px] text-white/40`,
-                                children: [t.files.length, ` فایل`],
-                              }),
-                            ],
-                          }),
-                          (0, q.jsx)(`button`, {
-                            type: `button`,
-                            "aria-label": `ویرایش کد ${t.name}`,
-                            className: `grid size-8 place-items-center rounded-lg bg-white/10`,
-                            onClick: () => o(t),
-                            children: (0, q.jsx)(Ue, { className: `size-4` }),
-                          }),
-                          (0, q.jsx)(`button`, {
-                            type: `button`,
-                            "aria-label": `خروجی ${t.name}`,
-                            className: `grid size-8 place-items-center rounded-lg bg-white/10`,
-                            onClick: async () => st(`${t.name}.jibpack`, await C(t)),
-                            children: (0, q.jsx)(Se, { className: `size-4` }),
-                          }),
-                          (0, q.jsx)(`button`, {
-                            type: `button`,
-                            "aria-label": `کپی بستهٔ ${t.name}`,
-                            className: `grid size-8 place-items-center rounded-lg bg-white/10`,
-                            onClick: async () => S(await C(t), `بستهٔ «${t.name}»`),
-                            children: (0, q.jsx)(We, { className: `size-4` }),
-                          }),
-                          (0, q.jsx)(`button`, {
-                            type: `button`,
-                            "aria-label": `حذف ${t.name}`,
-                            className: `grid size-8 place-items-center rounded-lg bg-rose-600/80`,
-                            onClick: () => window.confirm(`«${t.name}» حذف شود؟`) && void e(t.id),
-                            children: (0, q.jsx)(Te, { className: `size-4` }),
-                          }),
-                        ],
-                      },
-                      t.id,
-                    ),
-                  ),
-                ],
-              }),
-              (0, q.jsxs)(`section`, {
-                className: `space-y-2`,
-                children: [
-                  (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `پشتیبان کامل لانچر` }),
-                  (0, q.jsxs)(`div`, {
-                    className: `grid grid-cols-3 gap-2`,
-                    children: [
-                      (0, q.jsxs)(`button`, {
-                        type: `button`,
-                        className: `${j} flex items-center justify-center gap-1`,
-                        onClick: () => st(`jibos-backup.json`, b(), `application/json`),
-                        children: [(0, q.jsx)(Se, { className: `size-4` }), `فایل`],
-                      }),
-                      (0, q.jsxs)(`button`, {
-                        type: `button`,
-                        className: `${j} flex items-center justify-center gap-1`,
-                        onClick: () => S(b(), `پشتیبان`),
-                        children: [(0, q.jsx)(We, { className: `size-4` }), `کپی`],
-                      }),
-                      (0, q.jsxs)(`label`, {
-                        className: `${j} flex cursor-pointer items-center justify-center gap-1`,
-                        children: [
-                          (0, q.jsx)(at, { className: `size-4` }),
-                          `بازگردانی`,
-                          (0, q.jsx)(`input`, {
-                            type: `file`,
-                            accept: `.json,application/json`,
-                            className: `hidden`,
-                            onChange: (e) => {
-                              let t = e.target.files?.[0];
-                              (t && x(t), (e.target.value = ``));
-                            },
-                          }),
-                        ],
-                      }),
-                    ],
-                  }),
-                  (0, q.jsx)(`button`, {
-                    type: `button`,
-                    className: `${j} w-full text-rose-200`,
-                    onClick: () =>
-                      window.confirm(`همهٔ تنظیمات ظاهری لانچر به حالت اول برگردد؟`) &&
-                      i({ ...Dt, devMode: !0 }),
-                    children: `بازنشانی تنظیمات لانچر`,
-                  }),
-                ],
-              }),
-            ],
-          })
-        : (0, q.jsx)(`p`, {
-            className: `text-xs leading-6 text-white/55`,
-            children: `برای باز شدن ابزارها روشنش کن (یا در کنسول بنویس dev on، یا ۷ بار روی «نسخهٔ JibOS» در تنظیمات بزن).`,
-          }),
-      h ? (0, q.jsx)(`p`, { className: `text-xs leading-5`, style: { color: r.accent }, children: h }) : null,
-    ],
-  });
+  return UI.h(
+    UI.Sheet,
+    { title: `حالت توسعه‌دهنده`, open: t, onOpenChange: n, testId: `dev-sheet` },
+    UI.h(UI.Note, { tone: `warn` }, `این حالت کنترل کامل «داخل برنامه‌ها» را باز می‌کند: ویرایش کد برنامه‌های نصب‌شده، پیکربندی JSON، CSS و اسکریپت راه‌اندازی، مدیریت همهٔ برنامه‌ها و فرمان‌های بیشتر برای آن‌ها. دسترسی سیستمی (root) به اندروید نمی‌دهد؛ یک برنامهٔ معمولی نمی‌تواند گوشی را روت کند.`),
+    UI.h(UI.Sw, { id: `dev-on`, label: `حالت توسعه‌دهنده روشن`, checked: r.devMode, onChange: (v2) => i({ ...r, devMode: v2 }) }),
+    r.devMode
+      ? UI.h(
+          K.Fragment,
+          null,
+          UI.h(UI.Btn, { kind: `line`, icon: `term`, onClick: s }, `باز کردن کنسول توسعه‌دهنده`),
+          UI.h(
+            UI.Section,
+            { title: `پیکربندی لانچر (JSON)` },
+            UI.h(UI.Area, { mono: !0, "aria-label": `پیکربندی JSON`, style: { minHeight: 200 }, value: l, onChange: (ev) => u(ev.target.value) }),
+            UI.h(
+              `div`,
+              { className: `ui-actions` },
+              UI.h(UI.Btn, { kind: `primary`, onClick: y }, `اعمال پیکربندی`),
+              UI.h(UI.Btn, { kind: `line`, onClick: () => u(Ft({ ...Dt, devMode: !0 })) }, `مقادیر پیش‌فرض`),
+            ),
+          ),
+          UI.h(
+            UI.Section,
+            { title: `CSS سفارشی لانچر` },
+            UI.h(UI.Area, {
+              mono: !0,
+              "aria-label": `CSS سفارشی`,
+              placeholder: `.ui-apptile { border-radius: 24px; }`,
+              value: d,
+              onChange: (ev) => f(ev.target.value),
+            }),
+            UI.h(UI.Btn, { kind: `line`, onClick: () => { (i({ ...r, customCss: d }), g(`CSS اعمال شد.`)); } }, `اعمال CSS`),
+          ),
+          UI.h(
+            UI.Section,
+            { title: `اسکریپت راه‌اندازی لانچر (JavaScript)` },
+            UI.h(
+              `p`,
+              { className: `ui-caption` },
+              `هر بار که برنامه‌ها باز می‌شود اجرا می‌شود و به شیء `,
+              UI.h(`code`, { dir: `ltr` }, `api`),
+              ` دسترسی دارد: apps()، launch(name)، prefs()، setPrefs({…})، toast(msg)، beep(hz, ms)، install(name, html)، uninstall(name)، gemini(prompt). اگر چیزی خراب شد، صفحه را با `,
+              UI.h(`code`, { dir: `ltr` }, `/launcher?safe=1`),
+              ` باز کن تا CSS و اسکریپت اجرا نشوند.`,
+            ),
+            UI.h(UI.Area, {
+              mono: !0,
+              "aria-label": `اسکریپت راه‌اندازی`,
+              placeholder: `api.toast("خوش آمدی، " + api.prefs().hostname);\napi.beep(660, 120);`,
+              value: p,
+              onChange: (ev) => m(ev.target.value),
+            }),
+            UI.h(
+              `div`,
+              { className: `ui-actions` },
+              UI.h(UI.Btn, { kind: `line`, onClick: () => { (i({ ...r, bootScript: p }), g(`اسکریپت ذخیره شد؛ از دفعهٔ بعد خودکار اجرا می‌شود.`)); } }, `ذخیره`),
+              UI.h(UI.Btn, { kind: `line`, icon: `play`, onClick: async () => v(await a(p)) }, `اجرای الان`),
+            ),
+            _ ? UI.h(`pre`, { dir: `ltr`, "data-testid": `dev-script-out`, className: `ui-code-block`, style: { maxHeight: 160 } }, _) : null,
+          ),
+          UI.h(
+            UI.Section,
+            { title: `همهٔ برنامه‌ها (${c.length})` },
+            UI.h(
+              `div`,
+              { className: `ui-list` },
+              c.map((t2) =>
+                UI.h(
+                  `div`,
+                  { key: t2.id, className: `ui-row` },
+                  UI.h(UI.AppIcon, { app: t2, size: 36, radius: 10 }),
+                  UI.h(`span`, { className: `ui-row-main` }, UI.h(`strong`, null, t2.name), UI.h(`span`, null, `${t2.files.length} فایل`)),
+                  UI.h(UI.Btn, { kind: `tool`, "aria-label": `ویرایش کد ${t2.name}`, onClick: () => o(t2) }, UI.h(UI.Icon, { n: `code` })),
+                  UI.h(UI.Btn, { kind: `tool`, "aria-label": `خروجی ${t2.name}`, onClick: async () => st(`${t2.name}.jibpack`, await C(t2)) }, UI.h(UI.Icon, { n: `save` })),
+                  UI.h(UI.Btn, { kind: `tool`, "aria-label": `کپی بستهٔ ${t2.name}`, onClick: async () => S(await C(t2), `بستهٔ «${t2.name}»`) }, UI.h(UI.Icon, { n: `copy` })),
+                  UI.h(UI.Btn, { kind: `tool`, "aria-label": `حذف ${t2.name}`, style: { color: `var(--ui-error)` }, onClick: () => window.confirm(`«${t2.name}» حذف شود؟`) && void e(t2.id) }, UI.h(UI.Icon, { n: `trash` })),
+                ),
+              ),
+            ),
+          ),
+          UI.h(
+            UI.Section,
+            { title: `پشتیبان کامل` },
+            UI.h(
+              `div`,
+              { className: `ui-actions` },
+              UI.h(UI.Btn, { kind: `line`, icon: `save`, onClick: () => st(`jibos-backup.json`, b(), `application/json`) }, `فایل`),
+              UI.h(UI.Btn, { kind: `line`, icon: `copy`, onClick: () => S(b(), `پشتیبان`) }, `کپی`),
+              UI.h(
+                `label`,
+                { className: `ui-btn ui-btn--line` },
+                UI.h(UI.Icon, { n: `open` }),
+                `بازگردانی`,
+                UI.h(`input`, { type: `file`, accept: `.json,application/json`, className: `ui-sr`, onChange: (ev) => { let x2 = ev.target.files?.[0]; (x2 && x(x2), (ev.target.value = ``)); } }),
+              ),
+            ),
+            UI.h(UI.Btn, { kind: `danger`, onClick: () => window.confirm(`همهٔ تنظیمات ظاهری لانچر به حالت اول برگردد؟`) && i({ ...Dt, devMode: !0 }) }, `بازنشانی تنظیمات لانچر`),
+          ),
+        )
+      : UI.h(`p`, { className: `ui-caption` }, `برای باز شدن ابزارها روشنش کن (یا در کنسول بنویس dev on، یا ۷ بار روی «نسخه» در بخش ظاهر بزن).`),
+    h ? UI.h(UI.Note, { tone: /نامعتبر|نشد|ممکن/.test(h) ? `err` : `ok` }, h) : null,
+  );
 }
 var Lt = `codepad.agent.undo.v1`,
   Rt = (e) => JSON.stringify([e.name, e.entryFile ?? ``, e.files]);
@@ -2432,379 +2041,146 @@ function tn({ settings: e, accent: t, open: n, page: r }) {
     V = M.current?.workspace.files ?? [],
     de = V.find((e) => e.name === te) ?? V[0],
     pe = ee >= 0 ? Zt() : null;
-  return (0, q.jsxs)(`div`, {
-    className: `agent-panel flex min-w-0 flex-col gap-4`,
-    "data-testid": `gemini-agent-panel`,
-    children: [
-      (0, q.jsxs)(`div`, {
-        className: `agent-surface flex gap-3 p-4`,
-        children: [
-          (0, q.jsx)(ot, { className: `mt-1 size-5 shrink-0`, style: { color: t } }),
-          (0, q.jsxs)(`div`, {
-            children: [
-              (0, q.jsx)(`h3`, { className: `font-semibold`, children: `از درخواست تا برنامه` }),
-              (0, q.jsx)(`p`, {
-                className: `mt-1 text-xs leading-5 text-mist`,
-                children: `هدف را انتخاب کن و اجازه‌های لازم را بده. جمنای فایل‌ها را ویرایش می‌کند، نتیجهٔ اجرا را می‌بیند و برنامه را در کدپد نصب می‌کند.`,
-              }),
-            ],
-          }),
-        ],
+  return UI.h(
+    `div`,
+    { className: `ui-stack`, "data-testid": `gemini-agent-panel` },
+    UI.h(
+      `div`,
+      { className: `ui-card ui-stack` },
+      UI.h(`h3`, { className: `ui-h2`, style: { margin: 0 } }, `از درخواست تا برنامه`),
+      UI.h(`p`, { className: `ui-caption`, style: { margin: 0 } }, `هدف را انتخاب کن و اجازه‌های لازم را بده. دستیار فایل‌ها را ویرایش می‌کند، نتیجهٔ اجرا را می‌بیند و برنامه را در کدپد نصب می‌کند.`),
+    ),
+    UI.h(
+      UI.Fld,
+      { label: `برنامهٔ هدف` },
+      UI.h(
+        UI.Sel,
+        { "aria-label": `برنامهٔ هدف ایجنت`, value: a, disabled: h, onChange: (ev) => { (R(), o(ev.target.value)); } },
+        UI.h(`option`, { value: `new` }, `ساخت برنامهٔ تازه`),
+        i.map((x2) => UI.h(`option`, { key: x2.id, value: x2.id }, `ویرایش · `, x2.name)),
+      ),
+    ),
+    a === `new`
+      ? UI.h(UI.Fld, { label: `نام برنامه` }, UI.h(UI.Input, { "aria-label": `نام برنامهٔ ایجنت`, value: s, disabled: h || !!M.current, maxLength: 60, onChange: (ev) => c(ev.target.value) }))
+      : null,
+    UI.h(
+      UI.Details,
+      { title: `دسترسی‌های این کار · ${Object.values(d).filter(Boolean).length}`, icon: `shield`, open: ne, onToggle: ie },
+      Object.keys(Ht).map((k2) =>
+        UI.h(UI.Sw, { key: k2, id: `perm-${k2}`, label: Ht[k2], checked: d[k2], disabled: h, onChange: (v2) => f((n2) => ({ ...n2, [k2]: v2 })) }),
+      ),
+      UI.h(UI.Sw, { id: `perm-confirm`, label: `پیش از هر اقدام از من بپرس`, checked: p, disabled: h, onChange: (v2) => m(v2) }),
+      UI.h(`p`, { className: `ui-caption` }, p ? `قبل از ویرایش، اجرا، دستور کنسول و نصب، جزئیات را می‌بینی و تأیید می‌کنی.` : `با زدن شروع، دسترسی‌های انتخاب‌شده را تا پایان این کار خودکار می‌دهی. هر لحظه می‌توانی متوقفش کنی.`),
+      d.run ? UI.h(UI.Note, { tone: `warn` }, `اجازهٔ اجرا، کد تولیدشده را واقعاً اجرا می‌کند. کد Python به امکانات محیط پایتون دسترسی دارد؛ پیش از تأیید، کد پیش‌نویس را ببین.`) : null,
+    ),
+    UI.h(
+      UI.Fld,
+      { label: `کاری که می‌خواهی انجام دهد` },
+      UI.h(UI.Area, {
+        "aria-label": `درخواست ایجنت`,
+        style: { minHeight: 112 },
+        value: l,
+        disabled: h,
+        maxLength: 16e3,
+        onChange: (ev) => u(ev.target.value),
+        placeholder: a === `new` ? `یک ماشین حساب بساز، اجرا کن و در برنامه‌ها نصب کن.` : `ظاهر این برنامه را بهتر کن، اشکال‌ها را رفع کن و نسخهٔ جدیدش را نصب کن.`,
       }),
-      (0, q.jsxs)(`label`, {
-        className: `text-xs text-mist`,
-        children: [
-          `برنامهٔ هدف`,
-          (0, q.jsxs)(`select`, {
-            "aria-label": `برنامهٔ هدف ایجنت`,
-            className: `${z} mt-2`,
-            value: a,
-            disabled: h,
-            onChange: (e) => {
-              (R(), o(e.target.value));
-            },
-            children: [
-              (0, q.jsx)(`option`, { value: `new`, children: `ساخت برنامهٔ تازه` }),
-              i.map((e) => (0, q.jsxs)(`option`, { value: e.id, children: [`ویرایش · `, e.name] }, e.id)),
-            ],
-          }),
-        ],
-      }),
-      a === `new`
-        ? (0, q.jsxs)(`label`, {
-            className: `text-xs text-mist`,
-            children: [
-              `نام برنامه`,
-              (0, q.jsx)(`input`, {
-                "aria-label": `نام برنامهٔ ایجنت`,
-                className: `${z} mt-2`,
-                value: s,
-                disabled: h || !!M.current,
-                maxLength: 60,
-                onChange: (e) => c(e.target.value),
-              }),
-            ],
-          })
-        : null,
-      (0, q.jsxs)(`details`, {
-        className: `agent-surface p-3`,
-        open: ne,
-        onToggle: (e) => ie(e.currentTarget.open),
-        children: [
-          (0, q.jsxs)(`summary`, {
-            className: `flex min-h-11 cursor-pointer items-center justify-between gap-2 text-sm`,
-            children: [
-              (0, q.jsxs)(`span`, {
-                className: `flex items-center gap-2`,
-                children: [
-                  (0, q.jsx)(be, { className: `size-4` }),
-                  `دسترسی‌های این کار · `,
-                  Object.values(d).filter(Boolean).length,
-                ],
-              }),
-              (0, q.jsx)(ce, { className: `size-4` }),
-            ],
-          }),
-          (0, q.jsx)(`div`, {
-            className: `mt-2 grid gap-1`,
-            children: Object.keys(Ht).map((e) =>
-              (0, q.jsxs)(
-                `label`,
-                {
-                  className: `flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm`,
-                  children: [
-                    (0, q.jsx)(`input`, {
-                      type: `checkbox`,
-                      "aria-label": Ht[e],
-                      checked: d[e],
-                      disabled: h,
-                      style: { accentColor: t },
-                      onChange: (t) => f((n) => ({ ...n, [e]: t.target.checked })),
-                      className: `size-4 shrink-0`,
-                    }),
-                    Ht[e],
-                  ],
-                },
-                e,
-              ),
+    ),
+    UI.h(
+      `div`,
+      { className: `ui-actions` },
+      UI.h(UI.Btn, { kind: `primary`, icon: `play`, className: `ui-fill`, disabled: h || !codepadAI.aiReady(e), onClick: () => void le() }, M.current ? `ادامهٔ کار با پیش‌نویس` : `شروع ایجنت`),
+      h
+        ? UI.h(UI.Btn, { kind: `line`, icon: `stop`, onClick: L }, `توقف`)
+        : UI.h(UI.Btn, { kind: `line`, icon: `refresh`, "aria-label": `شروع با نسخهٔ فعلی`, onClick: R }),
+    ),
+    x.length || T || C.length
+      ? UI.h(
+          `div`,
+          { className: `ui-card ui-stack`, "data-testid": `agent-activity` },
+          UI.h(
+            `div`,
+            { style: { display: `flex`, justifyContent: `space-between`, gap: 8 } },
+            UI.h(`strong`, null, `گزارش کار`),
+            UI.h(`span`, { className: `ui-caption`, "aria-live": `polite` }, T ? `منتظر اجازهٔ تو` : h ? `در حال کار…` : `پایان این درخواست`),
+          ),
+          UI.h(
+            `div`,
+            { ref: P, className: `ui-stack`, style: { maxHeight: 288, overflowY: `auto`, gap: 8 } },
+            x.map((e2, t2) =>
+              e2.kind === `result`
+                ? UI.h(
+                    `details`,
+                    { key: t2, className: `ui-caption` },
+                    UI.h(`summary`, { style: { minHeight: 32, cursor: `pointer`, color: e2.ok ? `var(--ui-muted)` : `var(--ui-error)` } }, e2.ok ? `نتیجهٔ ابزار` : e2.text),
+                    UI.h(`pre`, { dir: `auto`, className: `ui-code-block`, style: { whiteSpace: `pre-wrap` } }, e2.text),
+                  )
+                : UI.h(`p`, { key: t2, style: { margin: 0, fontSize: 14, color: e2.kind === `step` ? `var(--ui-muted)` : `var(--ui-text)` } }, e2.text),
             ),
-          }),
-          (0, q.jsxs)(`label`, {
-            className: `mt-2 flex min-h-11 cursor-pointer items-center gap-3 border-t border-line pt-2 text-sm`,
-            children: [
-              (0, q.jsx)(`input`, {
-                type: `checkbox`,
-                "aria-label": `تأیید هر اقدام`,
-                className: `size-4 shrink-0`,
-                style: { accentColor: t },
-                checked: p,
-                disabled: h,
-                onChange: (e) => m(e.target.checked),
-              }),
-              `پیش از هر اقدام از من بپرس`,
-            ],
-          }),
-          (0, q.jsx)(`p`, {
-            className: `mt-2 text-xs leading-5 text-mist`,
-            children: p
-              ? `قبل از ویرایش، اجرا، دستور کنسول و نصب، جزئیات را می‌بینی و تأیید می‌کنی.`
-              : `با زدن شروع، دسترسی‌های انتخاب‌شده را تا پایان این کار خودکار می‌دهی. هر لحظه می‌توانی متوقفش کنی.`,
-          }),
-          d.run
-            ? (0, q.jsx)(`p`, {
-                className: `mt-2 text-xs leading-5 text-mist`,
-                children: `اجازهٔ اجرا، کد تولیدشده را واقعاً اجرا می‌کند. کد Python به امکانات محیط پایتون دسترسی دارد؛ پیش از تأیید، کد پیش‌نویس را ببین.`,
-              })
+          ),
+          C.length
+            ? UI.h(
+                `details`,
+                null,
+                UI.h(`summary`, { style: { minHeight: 44, cursor: `pointer` } }, `کنسول ایجنت · ${C.length} خط`),
+                UI.h(`pre`, { "data-testid": `agent-console`, dir: `ltr`, className: `ui-code-block`, style: { whiteSpace: `pre-wrap`, maxHeight: 192 } }, C.join(`\n`)),
+              )
             : null,
-        ],
-      }),
-      (0, q.jsxs)(`label`, {
-        className: `text-xs text-mist`,
-        children: [
-          `کاری که می‌خواهی انجام دهد`,
-          (0, q.jsx)(`textarea`, {
-            "aria-label": `درخواست ایجنت`,
-            className: `${z} mt-2 min-h-28 resize-y`,
-            value: l,
-            disabled: h,
-            maxLength: 16e3,
-            onChange: (e) => u(e.target.value),
-            placeholder:
-              a === `new`
-                ? `یک ماشین حساب بساز، اجرا کن و در لانچر نصب کن.`
-                : `ظاهر این برنامه را بهتر کن، اشکال‌ها را رفع کن و نسخهٔ جدیدش را نصب کن.`,
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`div`, {
-        className: `flex gap-2`,
-        children: [
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `${H} flex flex-1 items-center justify-center gap-2`,
-            style: { background: t },
-            disabled: h || !codepadAI.aiReady(e),
-            onClick: () => void le(),
-            children: [
-              (0, q.jsx)(fe, { className: `size-4` }),
-              M.current ? `ادامهٔ کار با پیش‌نویس` : `شروع ایجنت`,
-            ],
-          }),
-          h
-            ? (0, q.jsx)(`button`, {
-                type: `button`,
-                className: `${j} min-h-11`,
-                onClick: L,
-                children: (0, q.jsxs)(`span`, {
-                  className: `flex items-center gap-2`,
-                  children: [(0, q.jsx)(re, { className: `size-4` }), `توقف`],
-                }),
-              })
-            : (0, q.jsx)(`button`, {
-                type: `button`,
-                className: `${j} min-h-11`,
-                onClick: R,
-                "aria-label": `شروع با نسخهٔ فعلی`,
-                children: (0, q.jsx)(Ze, { className: `size-4` }),
-              }),
-        ],
-      }),
-      x.length || T || C.length
-        ? (0, q.jsxs)(`div`, {
-            className: `agent-surface overflow-hidden`,
-            "data-testid": `agent-activity`,
-            children: [
-              (0, q.jsxs)(`div`, {
-                className: `flex items-center justify-between border-b border-line p-3`,
-                children: [
-                  (0, q.jsx)(`span`, { className: `text-sm font-semibold`, children: `گزارش کار` }),
-                  (0, q.jsx)(`span`, {
-                    className: `text-xs text-mist`,
-                    "aria-live": `polite`,
-                    children: T ? `منتظر اجازهٔ تو` : h ? `در حال کار…` : `پایان این درخواست`,
-                  }),
-                ],
-              }),
-              (0, q.jsx)(`div`, {
-                ref: P,
-                className: `max-h-72 space-y-2 overflow-y-auto p-3`,
-                children: x.map((e, t) =>
-                  e.kind === `result`
-                    ? (0, q.jsxs)(
-                        `details`,
-                        {
-                          className: `text-xs`,
-                          children: [
-                            (0, q.jsx)(`summary`, {
-                              className: `min-h-8 cursor-pointer ${e.ok ? `text-mist` : `text-coral`}`,
-                              children: e.ok ? `نتیجهٔ ابزار` : e.text,
-                            }),
-                            (0, q.jsx)(`pre`, {
-                              dir: `auto`,
-                              className: `mt-1 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-5`,
-                              children: e.text,
-                            }),
-                          ],
-                        },
-                        t,
-                      )
-                    : (0, q.jsx)(
-                        `p`,
-                        {
-                          className: `text-xs leading-5 ${e.kind === `step` ? `text-mist` : `text-paper`}`,
-                          children: e.text,
-                        },
-                        t,
-                      ),
-                ),
-              }),
-              C.length
-                ? (0, q.jsxs)(`details`, {
-                    className: `border-t border-line p-3`,
-                    children: [
-                      (0, q.jsxs)(`summary`, {
-                        className: `flex min-h-11 cursor-pointer items-center gap-2 text-xs`,
-                        children: [
-                          (0, q.jsx)(ue, { className: `size-4` }),
-                          `کنسول ایجنت · `,
-                          C.length,
-                          ` خط`,
-                        ],
-                      }),
-                      (0, q.jsx)(`pre`, {
-                        "data-testid": `agent-console`,
-                        dir: `ltr`,
-                        className: `max-h-48 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-5`,
-                        children: C.join(`
-`),
-                      }),
-                    ],
-                  })
-                : null,
-            ],
-          })
-        : null,
-      T
-        ? (0, q.jsxs)(`div`, {
-            ref: F,
-            className: `agent-review agent-surface p-4`,
-            "data-testid": `agent-review`,
-            children: [
-              (0, q.jsxs)(`h4`, {
-                className: `flex items-center gap-2 text-sm font-bold`,
-                children: [(0, q.jsx)(be, { className: `size-4` }), `اجازهٔ `, T.title],
-              }),
-              (0, q.jsxs)(`p`, {
-                className: `mt-2 text-xs text-mist`,
-                children: [`فقط برای هدف انتخاب‌شده · `, M.current?.workspace.name],
-              }),
-              (0, q.jsx)(`pre`, {
-                dir: `auto`,
-                className: `my-3 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ink p-3 font-mono text-xs leading-5`,
-                children: T.detail || T.title,
-              }),
-              (0, q.jsxs)(`div`, {
-                className: `grid grid-cols-2 gap-2`,
-                children: [
-                  (0, q.jsxs)(`button`, {
-                    type: `button`,
-                    className: `${H} flex items-center justify-center gap-2`,
-                    style: { background: t },
-                    onClick: () => N.current?.(!0),
-                    children: [(0, q.jsx)(se, { className: `size-4` }), `اجازه می‌دهم`],
-                  }),
-                  (0, q.jsx)(`button`, {
-                    type: `button`,
-                    className: `${j} min-h-11`,
-                    onClick: () => N.current?.(!1),
-                    children: `رد این اقدام`,
-                  }),
-                ],
-              }),
-            ],
-          })
-        : null,
-      _
-        ? (0, q.jsx)(`p`, {
-            ref: oe,
-            role: `status`,
-            className: `text-xs leading-5 text-paper`,
-            "data-testid": `agent-status`,
-            children: _,
-          })
-        : null,
-      y
-        ? (0, q.jsx)(`div`, {
-            className: `agent-surface whitespace-pre-wrap break-words p-4 text-sm leading-6`,
-            "data-testid": `agent-answer`,
-            children: y,
-          })
-        : null,
-      V.length
-        ? (0, q.jsxs)(`div`, {
-            className: `agent-surface p-3`,
-            children: [
-              (0, q.jsxs)(`button`, {
-                type: `button`,
-                className: `flex min-h-11 w-full items-center justify-between gap-2 text-sm`,
-                onClick: () => k(!O),
-                children: [
-                  (0, q.jsxs)(`span`, {
-                    className: `flex items-center gap-2`,
-                    children: [(0, q.jsx)(I, { className: `size-4` }), `پیش‌نویس · `, V.length, ` فایل`],
-                  }),
-                  (0, q.jsx)(ce, { className: `size-4` }),
-                ],
-              }),
-              O
-                ? (0, q.jsxs)(q.Fragment, {
-                    children: [
-                      (0, q.jsx)(`select`, {
-                        "aria-label": `فایل پیش‌نویس`,
-                        className: `${z} my-2 font-mono`,
-                        dir: `ltr`,
-                        value: de?.name ?? ``,
-                        onChange: (e) => A(e.target.value),
-                        children: V.map((e) => (0, q.jsx)(`option`, { children: e.name }, e.name)),
-                      }),
-                      (0, q.jsx)(`textarea`, {
-                        "aria-label": `کد پیش‌نویس`,
-                        readOnly: !0,
-                        dir: `ltr`,
-                        className: `${z} min-h-48 font-mono text-xs`,
-                        value: de?.content ?? ``,
-                      }),
-                    ],
-                  })
-                : null,
-            ],
-          })
-        : null,
-      pe
-        ? (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `${j} flex min-h-11 items-center justify-center gap-2`,
+        )
+      : null,
+    T
+      ? UI.h(
+          `div`,
+          { ref: F, className: `ui-card ui-stack`, "data-testid": `agent-review`, style: { boxShadow: `inset 0 0 0 2px var(--ui-warm)` } },
+          UI.h(`h4`, { className: `ui-label`, style: { margin: 0 } }, `اجازهٔ `, T.title),
+          UI.h(`p`, { className: `ui-caption`, style: { margin: 0 } }, `فقط برای هدف انتخاب‌شده · `, M.current?.workspace.name),
+          UI.h(`pre`, { dir: `auto`, className: `ui-code-block`, style: { whiteSpace: `pre-wrap`, maxHeight: 256 } }, T.detail || T.title),
+          UI.h(
+            `div`,
+            { className: `ui-actions` },
+            UI.h(UI.Btn, { kind: `primary`, icon: `check`, onClick: () => N.current?.(!0) }, `اجازه می‌دهم`),
+            UI.h(UI.Btn, { kind: `line`, onClick: () => N.current?.(!1) }, `رد این اقدام`),
+          ),
+        )
+      : null,
+    _ ? UI.h(`p`, { ref: oe, role: `status`, "data-testid": `agent-status`, style: { margin: 0, fontSize: 14 } }, _) : null,
+    y ? UI.h(`div`, { className: `ui-card`, "data-testid": `agent-answer`, style: { whiteSpace: `pre-wrap`, overflowWrap: `anywhere` } }, y) : null,
+    V.length
+      ? UI.h(
+          `div`,
+          { className: `ui-card ui-stack` },
+          UI.h(UI.Btn, { kind: `quiet`, icon: O ? `up` : `down`, onClick: () => k(!O) }, `پیش‌نویس · ${V.length} فایل`),
+          O
+            ? UI.h(
+                K.Fragment,
+                null,
+                UI.h(UI.Sel, { mono: !0, "aria-label": `فایل پیش‌نویس`, value: de?.name ?? ``, onChange: (ev) => A(ev.target.value) }, V.map((x2) => UI.h(`option`, { key: x2.name }, x2.name))),
+                UI.h(UI.Area, { mono: !0, "aria-label": `کد پیش‌نویس`, readOnly: !0, style: { minHeight: 192, fontSize: 12 }, value: de?.content ?? `` }),
+              )
+            : null,
+        )
+      : null,
+    pe
+      ? UI.h(
+          UI.Btn,
+          {
+            kind: `line`,
+            icon: `undo`,
             disabled: h,
             onClick: () => {
               try {
-                let e = Qt();
-                (R(), v(e));
-              } catch (e) {
-                v(e instanceof Error ? e.message : String(e));
+                let x2 = Qt();
+                (R(), v(x2));
+              } catch (er) {
+                v(er instanceof Error ? er.message : String(er));
               }
             },
-            children: [
-              (0, q.jsx)(Ze, { className: `size-4` }),
-              pe.before ? `برگرداندن نسخهٔ قبلی «${pe.name}»` : `برداشتن برنامهٔ تازهٔ «${pe.name}»`,
-            ],
-          })
-        : null,
-      (0, q.jsx)(`p`, {
-        className: `text-xs leading-5 text-mist`,
-        children: `فایل‌های خوانده‌شده، درخواست و نتیجهٔ ابزارها به Google فرستاده می‌شوند. ایجنت ممکن است چند درخواست مصرف کند. پیش‌نویس تا بستن برنامه نگه داشته می‌شود؛ آخرین نسخهٔ قبلیِ نصب، روی گوشی ذخیره می‌شود. نصب کتابخانه با برگرداندن برنامه لغو نمی‌شود.`,
-      }),
-    ],
-  });
+          },
+          pe.before ? `برگرداندن نسخهٔ قبلی «${pe.name}»` : `برداشتن برنامهٔ تازهٔ «${pe.name}»`,
+        )
+      : null,
+    UI.h(`p`, { className: `ui-caption` }, `فایل‌های خوانده‌شده، درخواست و نتیجهٔ ابزارها به سرویس هوش مصنوعی انتخاب‌شده فرستاده می‌شوند. ایجنت ممکن است چند درخواست مصرف کند. پیش‌نویس تا بستن برنامه نگه داشته می‌شود؛ آخرین نسخهٔ قبلیِ نصب، روی گوشی ذخیره می‌شود. نصب کتابخانه با برگرداندن برنامه لغو نمی‌شود.`),
+  );
 }
 
 const AI_FIELD_LABELS = { url: `آدرس سرور (endpoint)`, model: `نام مدل (اختیاری)`, key: `کلید / توکن (اختیاری)`, headers: `سرآیندها (JSON)`, body: `قالب درخواست (JSON)`, responsePath: `مسیر متن در پاسخ (خالی = خودکار)` };
@@ -2815,32 +2191,13 @@ function CustomAiForm({ settings: aiSettings, setSettings: saveAi, accent: aiAcc
     aiSet = (patch) => setAiCfg((cur) => ({ ...cur, ...patch })),
     aiPresets = codepadAI.AI_PRESETS,
     aiField = (name, opts = {}) =>
-      (0, q.jsxs)(`label`, {
-        className: `text-xs text-white/60`,
-        children: [
-          AI_FIELD_LABELS[name],
-          opts.area
-            ? (0, q.jsx)(`textarea`, {
-                className: `${z} mt-2 min-h-20 resize-y font-mono text-[12px]`,
-                dir: `ltr`,
-                spellCheck: false,
-                "aria-label": AI_FIELD_LABELS[name],
-                value: aiCfg[name] ?? ``,
-                onChange: (e) => aiSet({ [name]: e.target.value }),
-              })
-            : (0, q.jsx)(`input`, {
-                className: `${z} mt-2 font-mono`,
-                dir: `ltr`,
-                type: name === `key` ? `password` : `text`,
-                autoComplete: `off`,
-                spellCheck: false,
-                placeholder: opts.placeholder,
-                "aria-label": AI_FIELD_LABELS[name],
-                value: aiCfg[name] ?? ``,
-                onChange: (e) => aiSet({ [name]: e.target.value }),
-              }),
-        ],
-      }),
+      UI.h(
+        UI.Fld,
+        { label: AI_FIELD_LABELS[name], key: name },
+        opts.area
+          ? UI.h(UI.Area, { mono: true, style: { minHeight: 80, fontSize: 12 }, "aria-label": AI_FIELD_LABELS[name], value: aiCfg[name] ?? ``, onChange: (e) => aiSet({ [name]: e.target.value }) })
+          : UI.h(UI.Input, { mono: true, type: name === `key` ? `password` : `text`, autoComplete: `off`, spellCheck: false, placeholder: opts.placeholder, "aria-label": AI_FIELD_LABELS[name], value: aiCfg[name] ?? ``, onChange: (e) => aiSet({ [name]: e.target.value }) }),
+      ),
     aiSave = () => {
       if (!codepadAI.isCustomReady(aiCfg)) return aiNotify(`آدرس باید کامل و با http:// یا https:// شروع شود.`), false;
       try {
@@ -2866,80 +2223,47 @@ function CustomAiForm({ settings: aiSettings, setSettings: saveAi, accent: aiAcc
       }
     };
   (0, K.useEffect)(() => () => aiAbort.current?.abort(), []);
-  return (0, q.jsxs)(`div`, {
-    className: `grid gap-3`,
-    "data-testid": `custom-ai-form`,
-    children: [
-      (0, q.jsx)(`p`, {
-        className: `text-xs leading-5 text-white/60`,
-        children: `هر سروری که یک درخواست HTTP بگیرد و متن برگرداند. تنظیمات و کلید فقط روی همین گوشی ذخیره می‌شوند. سرور باید از طرف گوشی در دسترس باشد و (برای اپ) هدر CORS بدهد.`,
-      }),
-      (0, q.jsxs)(`label`, {
-        className: `text-xs text-white/60`,
-        children: [
-          `قالب آماده`,
-          (0, q.jsxs)(`select`, {
-            className: `${z} mt-2`,
-            "aria-label": `قالب آماده`,
-            value: ``,
-            onChange: (e) => {
-              let preset = aiPresets[e.target.value];
-              if (!preset) return;
-              let known = Object.values(aiPresets).some((x) => x.url === aiCfg.url);
-              aiSet({ url: !aiCfg.url.trim() || known ? preset.url : aiCfg.url, headers: preset.headers, body: preset.body, responsePath: preset.responsePath });
-            },
-            children: [
-              (0, q.jsx)(`option`, { value: ``, children: `انتخاب کن تا فیلدها پر شوند…` }, `none`),
-              ...Object.entries(aiPresets).map(([id, p]) => (0, q.jsx)(`option`, { value: id, children: p.label }, id)),
-            ],
-          }),
-        ],
-      }),
-      aiField(`url`, { placeholder: `http://192.168.1.10:8000/v1/chat/completions` }),
-      aiField(`model`, { placeholder: `my-model` }),
-      aiField(`key`),
-      (0, q.jsxs)(`details`, {
-        className: `rounded-2xl border border-white/10 bg-white/[.03] p-3`,
-        children: [
-          (0, q.jsx)(`summary`, { className: `min-h-11 cursor-pointer text-sm`, children: `تنظیمات پیشرفتهٔ قالب درخواست و پاسخ` }),
-          (0, q.jsxs)(`div`, {
-            className: `mt-3 grid gap-3`,
-            children: [
-              aiField(`headers`, { area: true }),
-              aiField(`body`, { area: true }),
-              (0, q.jsx)(`p`, {
-                className: `text-[11px] leading-5 text-white/50`,
-                dir: `ltr`,
-                children: `Placeholders: {{prompt}} {{system}} {{model}} {{key}} {{messages}} (= [{role:"system"},{role:"user"}])`,
-              }),
-              aiField(`responsePath`, { placeholder: `choices.0.message.content` }),
-            ],
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`div`, {
-        className: `grid grid-cols-2 gap-2`,
-        children: [
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            className: H,
-            style: { background: aiAccent },
-            onClick: () => {
-              aiSave() && aiNotify(`ذخیره شد. دستیار از این به بعد از سرور خودت جواب می‌گیرد.`);
-            },
-            children: `ذخیرهٔ اتصال`,
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            disabled: aiBusy,
-            className: `${j} disabled:opacity-40`,
-            onClick: () => void aiTest(),
-            children: aiBusy ? `در حال آزمایش…` : `آزمایش اتصال`,
-          }),
-        ],
-      }),
-    ],
-  });
+  return UI.h(
+    `div`,
+    { className: `ui-stack`, "data-testid": `custom-ai-form` },
+    UI.h(`p`, { className: `ui-caption` }, `هر سروری که یک درخواست HTTP بگیرد و متن برگرداند. تنظیمات و کلید فقط روی همین گوشی ذخیره می‌شوند. سرور باید از طرف گوشی در دسترس باشد و (برای اپ) هدر CORS بدهد.`),
+    UI.h(
+      UI.Fld,
+      { label: `قالب آماده` },
+      UI.h(
+        UI.Sel,
+        {
+          "aria-label": `قالب آماده`,
+          value: ``,
+          onChange: (e) => {
+            let preset = aiPresets[e.target.value];
+            if (!preset) return;
+            let known = Object.values(aiPresets).some((x) => x.url === aiCfg.url);
+            aiSet({ url: !aiCfg.url.trim() || known ? preset.url : aiCfg.url, headers: preset.headers, body: preset.body, responsePath: preset.responsePath });
+          },
+        },
+        UI.h(`option`, { value: `` }, `انتخاب کن تا فیلدها پر شوند…`),
+        ...Object.entries(aiPresets).map(([id, p]) => UI.h(`option`, { key: id, value: id }, p.label)),
+      ),
+    ),
+    aiField(`url`, { placeholder: `http://192.168.1.10:8000/v1/chat/completions` }),
+    aiField(`model`, { placeholder: `my-model` }),
+    aiField(`key`),
+    UI.h(
+      UI.Details,
+      { title: `تنظیمات پیشرفتهٔ قالب درخواست و پاسخ` },
+      aiField(`headers`, { area: true }),
+      aiField(`body`, { area: true }),
+      UI.h(`p`, { className: `ui-caption ui-ltr`, dir: `ltr` }, `Placeholders: {{prompt}} {{system}} {{model}} {{key}} {{messages}} (= [{role:"system"},{role:"user"}])`),
+      aiField(`responsePath`, { placeholder: `choices.0.message.content` }),
+    ),
+    UI.h(
+      `div`,
+      { className: `ui-actions` },
+      UI.h(UI.Btn, { kind: `primary`, onClick: () => { aiSave() && aiNotify(`ذخیره شد. دستیار از این به بعد از سرور خودت جواب می‌گیرد.`); } }, `ذخیرهٔ اتصال`),
+      UI.h(UI.Btn, { kind: `line`, disabled: aiBusy, onClick: () => void aiTest() }, aiBusy ? `در حال آزمایش…` : `آزمایش اتصال`),
+    ),
+  );
 }
 function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, page: a }) {
   let [o, s] = (0, K.useState)(``),
@@ -2978,323 +2302,71 @@ function nn({ open: e, onOpenChange: t, settings: n, setSettings: r, accent: i, 
         _(!1);
       }
     };
-  return (0, q.jsxs)(_e, {
-    title: custom ? `هوش مصنوعی من · دستیار` : `جمنای · دستیار و ایجنت`,
-    icon: (0, q.jsx)(rt, { className: `size-5`, style: { color: i } }),
-    open: e,
-    onOpenChange: t,
-    testId: `gemini-sheet`,
-    children: [
-      (0, q.jsxs)(`div`, {
-        className: `flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 p-3 text-sm`,
-        "data-testid": `gemini-status`,
-        children: [
-          (0, q.jsx)(`span`, {
-            className: `size-2.5 rounded-full ${C ? `` : `bg-white/25`}`,
-            style: C ? { background: i, boxShadow: `0 0 10px ${i}` } : void 0,
-          }),
-          C
-            ? custom
-              ? (0, q.jsxs)(`span`, {
-                  children: [
-                    `وصل است · سرور خودم · `,
-                    (0, q.jsx)(`code`, { dir: `ltr`, className: `font-mono`, children: codepadAI.aiLabel(n) }),
-                    n.custom.model ? ` · ${n.custom.model}` : ``,
-                  ],
-                })
-              : (0, q.jsxs)(`span`, {
-                  children: [
-                    `وصل است · کلید `,
-                    (0, q.jsx)(`code`, { dir: `ltr`, className: `font-mono`, children: D(n.key) }),
-                    ` · `,
-                    n.model,
-                  ],
-                })
-            : (0, q.jsx)(`span`, {
-                className: `text-white/60`,
-                children: custom ? `وصل نیست — آدرس سرور هوش مصنوعی خودت را وارد و ذخیره کن.` : `وصل نیست — یک بار کلید API خودت را وارد کن.`,
-              }),
-        ],
-      }),
-      (0, q.jsxs)(`details`, {
-        className: `agent-surface p-3`,
-        open: !C,
-        children: [
-          (0, q.jsxs)(`summary`, {
-            className: `flex min-h-11 cursor-pointer items-center gap-2 text-sm`,
-            children: [(0, q.jsx)(Je, { className: `size-4` }), `تنظیم اتصال هوش مصنوعی`],
-          }),
-          (0, q.jsxs)(`div`, {
-            className: `mt-3 grid gap-3`,
-            children: [
-              (0, q.jsx)(`div`, {
-                className: `agent-surface grid grid-cols-2 gap-1 p-1`,
-                role: `tablist`,
-                "aria-label": `ارائه‌دهندهٔ هوش مصنوعی`,
-                children: [
-                  [`gemini`, `Gemini`],
-                  [`custom`, `سرور خودم`],
-                ].map(([id, label]) =>
-                  (0, q.jsx)(
-                    `button`,
-                    {
-                      type: `button`,
-                      role: `tab`,
-                      "aria-selected": (n.provider ?? `gemini`) === id,
-                      "data-testid": `ai-provider-${id}`,
-                      className: `min-h-11 rounded-xl text-sm font-semibold ${(n.provider ?? `gemini`) === id ? `bg-panel-2 text-paper` : `text-mist`}`,
-                      onClick: () => {
-                        (b.current?.abort(), y(``), r({ ...n, provider: id }));
-                      },
-                      children: label,
-                    },
-                    id,
-                  ),
-                ),
-              }),
-              custom ? (0, q.jsx)(CustomAiForm, { settings: n, setSettings: r, accent: i, setMessage: y }) : null,
-              ...(custom ? [] : [
-              (0, q.jsxs)(`div`, {
-                className: `flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3`,
-                children: [
-                  (0, q.jsx)(Je, { className: `mt-0.5 size-4 shrink-0`, style: { color: i } }),
-                  (0, q.jsx)(`p`, {
-                    className: `text-xs leading-5 text-white/60`,
-                    children: `کلید در حافظهٔ محلی گوشی، بدون رمزگذاری ذخیره می‌شود و برای اتصال مستقیم به Google استفاده می‌شود. هر کار با دکمهٔ تو شروع می‌شود؛ ایجنت سپس طبق اجازه‌هایی که داده‌ای ادامه می‌دهد.`,
-                  }),
-                ],
-              }),
-              (0, q.jsxs)(`label`, {
-                className: `text-xs text-white/60`,
-                children: [
-                  `کلید Gemini API`,
-                  (0, q.jsx)(`input`, {
-                    className: `${z} mt-2 font-mono`,
-                    dir: `ltr`,
-                    type: `password`,
-                    autoComplete: `off`,
-                    "aria-label": `کلید Gemini API`,
-                    placeholder: C ? D(n.key) : `AIza…`,
-                    value: o,
-                    onChange: (e) => s(e.target.value),
-                  }),
-                ],
-              }),
-              (0, q.jsxs)(`label`, {
-                className: `text-xs text-white/60`,
-                children: [
-                  `مدل`,
-                  (0, q.jsx)(`select`, {
-                    className: `${z} mt-2 font-mono`,
-                    dir: `ltr`,
-                    "aria-label": `مدل Gemini`,
-                    value: l,
-                    onChange: (e) => u(e.target.value),
-                    children: m.map((e) => (0, q.jsx)(`option`, { value: e, children: e }, e)),
-                  }),
-                ],
-              }),
-              (0, q.jsxs)(`div`, {
-                className: `grid grid-cols-2 gap-2`,
-                children: [
-                  (0, q.jsx)(`button`, {
-                    type: `button`,
-                    className: H,
-                    style: { background: i },
-                    onClick: w,
-                    children: `ذخیرهٔ اتصال`,
-                  }),
-                  (0, q.jsx)(`button`, {
-                    type: `button`,
-                    className: `${j} text-rose-200`,
-                    onClick: () => {
-                      (b.current?.abort(), r({ key: ``, model: l }), s(``), y(`کلید از این دستگاه پاک شد.`));
-                    },
-                    children: `قطع اتصال`,
-                  }),
-                ],
-              }),
-              ]),
-            ],
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`div`, {
-        className: `agent-surface grid grid-cols-2 gap-1 p-1`,
-        role: `tablist`,
-        "aria-label": `حالت جمنای`,
-        children: [
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            role: `tab`,
-            "aria-selected": x === `agent`,
-            className: `min-h-11 rounded-xl text-sm font-semibold ${x === `agent` ? `bg-panel-2 text-paper` : `text-mist`}`,
-            onClick: () => {
-              (b.current?.abort(), S(`agent`));
-            },
-            children: `ایجنت برنامه‌ساز`,
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            role: `tab`,
-            "aria-selected": x === `chat`,
-            className: `min-h-11 rounded-xl text-sm font-semibold ${x === `chat` ? `bg-panel-2 text-paper` : `text-mist`}`,
-            onClick: () => S(`chat`),
-            children: `گفت‌وگو`,
-          }),
-        ],
-      }),
-      (0, q.jsx)(`div`, {
-        hidden: x !== `agent`,
-        children: (0, q.jsx)(tn, { settings: n, accent: i, open: e && x === `agent` && C, page: a }),
-      }),
-      x === `chat`
-        ? (0, q.jsxs)(q.Fragment, {
-            children: [
-              (0, q.jsxs)(`label`, {
-                className: `text-xs text-white/60`,
-                children: [
-                  `درخواست`,
-                  (0, q.jsx)(`textarea`, {
-                    className: `${z} mt-2 min-h-24 resize-y`,
-                    "aria-label": `درخواست Gemini`,
-                    placeholder: `مثلاً: یک تابع پایتون بنویس که عدد اول بودن را بررسی کند — یا برای «ساخت برنامه»: یک ساعت شمارش معکوس نئونی`,
-                    value: d,
-                    onChange: (e) => f(e.target.value),
-                  }),
-                ],
-              }),
-              (0, q.jsx)(`div`, {
-                className: `grid gap-2`,
-                children: (0, q.jsxs)(`button`, {
-                  type: `button`,
-                  disabled: g,
-                  className: `${H} flex items-center justify-center gap-2`,
-                  style: { background: i },
-                  onClick: () => void T(),
-                  children: [(0, q.jsx)(et, { className: `size-4` }), g ? `در حال دریافت…` : `پرسیدن`],
-                }),
-              }),
-              p
-                ? (0, q.jsxs)(`div`, {
-                    className: `relative`,
-                    children: [
-                      (0, q.jsx)(`pre`, {
-                        dir: `auto`,
-                        className: `max-h-72 overflow-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/50 p-3 text-[13px] leading-6`,
-                        children: p,
-                      }),
-                      (0, q.jsx)(`button`, {
-                        type: `button`,
-                        "aria-label": `کپی پاسخ`,
-                        className: `absolute end-2 top-2 grid size-8 place-items-center rounded-lg bg-white/10`,
-                        onClick: () => void navigator.clipboard?.writeText(p),
-                        children: (0, q.jsx)(We, { className: `size-4` }),
-                      }),
-                    ],
-                  })
-                : null,
-            ],
-          })
-        : null,
-      v
-        ? (0, q.jsx)(`p`, {
-            className: `text-xs leading-5 text-amber-200`,
-            "data-testid": `gemini-message`,
-            children: v,
-          })
-        : null,
-      (0, q.jsx)(`p`, {
-        className: `text-xs leading-5 text-mist`,
-        children: custom ? `پرسش‌ها مستقیم از گوشی به سرور خودت می‌روند و جای دیگری نمی‌روند.` : `اینترنت لازم است؛ هزینه و سهمیه طبق حساب Google تو است.`,
-      }),
-    ],
-  });
-}
-var rn = `01アイウエオカキクケコサシスセソタチツテトナニヌネノ$#@%&*<>/\\{}[]=+-جیبکدابپتثجچحخدذرزسشصضطظعغفقکگلمنوهی`;
-function an({ color: e, paused: t, opacity: n = 0.55 }) {
-  let r = (0, K.useRef)(null);
-  return (
-    (0, K.useEffect)(() => {
-      let n = r.current,
-        i = n?.getContext(`2d`);
-      if (!n || !i) return;
-      let a = window.matchMedia?.(`(prefers-reduced-motion: reduce)`).matches,
-        o = 0,
-        s = 0,
-        c = [],
-        l = () => {
-          let e = Math.min(2, window.devicePixelRatio || 1);
-          ((n.width = Math.max(1, n.clientWidth * e)),
-            (n.height = Math.max(1, n.clientHeight * e)),
-            i.setTransform(e, 0, 0, e, 0, 0));
-          let t = Math.ceil(n.clientWidth / 14);
-          c = Array.from({ length: t }, () => Math.random() * -40);
-        },
-        u = () => {
-          let t = n.clientWidth,
-            r = n.clientHeight;
-          ((i.fillStyle = `rgba(0,0,0,0.09)`),
-            i.fillRect(0, 0, t, r),
-            (i.font = `14px ui-monospace, monospace`));
-          for (let t = 0; t < c.length; t++) {
-            let n = rn[(Math.random() * 80) | 0],
-              a = c[t] * 14;
-            ((i.fillStyle = Math.random() > 0.96 ? `#e9fff4` : e),
-              i.fillText(n, t * 14, a),
-              a > r && Math.random() > 0.975 && (c[t] = Math.random() * -20),
-              (c[t] += 1));
-          }
-        },
-        d = (e) => {
-          ((o = requestAnimationFrame(d)), !(e - s < 55) && ((s = e), u()));
-        },
-        f = a || t,
-        p = () => {
-          if ((l(), f)) {c=c.map(()=>Math.random()*Math.max(1,n.clientHeight/14));u();}
-        };
-      (p(), window.addEventListener(`resize`, p), f || (o = requestAnimationFrame(d)));
-      let m = () => {
-        (cancelAnimationFrame(o), !document.hidden && !f && (o = requestAnimationFrame(d)));
-      };
-      return (
-        document.addEventListener(`visibilitychange`, m),
-        () => {
-          (cancelAnimationFrame(o),
-            window.removeEventListener(`resize`, p),
-            document.removeEventListener(`visibilitychange`, m));
-        }
-      );
-    }, [e, t]),
-    (0, q.jsx)(`canvas`, {
-      ref: r,
-      "aria-hidden": `true`,
-      "data-testid": `matrix-rain`,
-      className: `pointer-events-none absolute inset-0 size-full`,
-      style: { opacity: n },
-    })
+  if (!e) return null;
+  return UI.h(
+    UI.Sheet,
+    { title: custom ? `دستیار · سرور خودم` : `دستیار · Gemini`, open: e, onOpenChange: t, testId: `gemini-sheet` },
+    UI.h(
+      `div`,
+      { className: `ui-card`, "data-testid": `gemini-status`, style: { display: `flex`, alignItems: `center`, gap: 12 } },
+      UI.h(`span`, { className: `ui-saved`, style: { background: C ? `var(--ui-ok)` : `var(--ui-line)`, margin: 0 } }),
+      C
+        ? custom
+          ? UI.h(`span`, null, `وصل است · سرور خودم · `, UI.h(`code`, { dir: `ltr`, className: `ui-ltr` }, codepadAI.aiLabel(n)), n.custom.model ? ` · ${n.custom.model}` : ``)
+          : UI.h(`span`, null, `وصل است · کلید `, UI.h(`code`, { dir: `ltr`, className: `ui-ltr` }, D(n.key)), ` · `, n.model)
+        : UI.h(`span`, { className: `ui-muted` }, custom ? `وصل نیست — آدرس سرور هوش مصنوعی خودت را وارد و ذخیره کن.` : `وصل نیست — یک بار کلید API خودت را وارد کن.`),
+    ),
+    UI.h(
+      UI.Details,
+      { title: `تنظیم اتصال هوش مصنوعی`, icon: `link`, open: !C },
+      UI.h(
+        `div`,
+        { className: `ui-sheet-bar`, role: `tablist`, "aria-label": `ارائه‌دهندهٔ هوش مصنوعی` },
+        [[`gemini`, `Gemini`], [`custom`, `سرور خودم`]].map(([id, label]) =>
+          UI.h(`button`, { key: id, type: `button`, role: `tab`, className: `ui-seg`, "data-testid": `ai-provider-${id}`, "aria-selected": (n.provider ?? `gemini`) === id, onClick: () => { (b.current?.abort(), y(``), r({ ...n, provider: id })); } }, label),
+        ),
+      ),
+      custom ? UI.h(CustomAiForm, { settings: n, setSettings: r, accent: i, setMessage: y }) : null,
+      ...(custom
+        ? []
+        : [
+            UI.h(UI.Note, { key: `n`, tone: `warn` }, `کلید در حافظهٔ محلی گوشی، بدون رمزگذاری ذخیره می‌شود و برای اتصال مستقیم به Google استفاده می‌شود. هر کار با دکمهٔ تو شروع می‌شود؛ ایجنت سپس طبق اجازه‌هایی که داده‌ای ادامه می‌دهد.`),
+            UI.h(UI.Fld, { key: `k`, label: `کلید Gemini API` }, UI.h(UI.Input, { mono: !0, type: `password`, autoComplete: `off`, "aria-label": `کلید Gemini API`, placeholder: C ? D(n.key) : `AIza…`, value: o, onChange: (ev) => s(ev.target.value) })),
+            UI.h(UI.Fld, { key: `m`, label: `مدل` }, UI.h(UI.Sel, { mono: !0, "aria-label": `مدل Gemini`, value: l, onChange: (ev) => u(ev.target.value) }, m.map((x2) => UI.h(`option`, { key: x2, value: x2 }, x2)))),
+            UI.h(
+              `div`,
+              { key: `b`, className: `ui-actions` },
+              UI.h(UI.Btn, { kind: `primary`, onClick: w }, `ذخیرهٔ اتصال`),
+              UI.h(UI.Btn, { kind: `danger`, onClick: () => { (b.current?.abort(), r({ key: ``, model: l }), s(``), y(`کلید از این دستگاه پاک شد.`)); } }, `قطع اتصال`),
+            ),
+          ]),
+    ),
+    UI.h(
+      `div`,
+      { className: `ui-sheet-bar`, role: `tablist`, "aria-label": `حالت دستیار` },
+      UI.h(`button`, { type: `button`, role: `tab`, className: `ui-seg`, "aria-selected": x === `agent`, onClick: () => { (b.current?.abort(), S(`agent`)); } }, `ایجنت برنامه‌ساز`),
+      UI.h(`button`, { type: `button`, role: `tab`, className: `ui-seg`, "aria-selected": x === `chat`, onClick: () => S(`chat`) }, `گفت‌وگو`),
+    ),
+    UI.h(`div`, { hidden: x !== `agent` }, UI.h(tn, { settings: n, accent: i, open: e && x === `agent` && C, page: a })),
+    x === `chat`
+      ? UI.h(
+          K.Fragment,
+          null,
+          UI.h(UI.Fld, { label: `درخواست` }, UI.h(UI.Area, { "aria-label": `درخواست دستیار`, style: { minHeight: 96 }, placeholder: `مثلاً: یک تابع پایتون بنویس که عدد اول بودن را بررسی کند — یا برای «ساخت برنامه»: یک ساعت شمارش معکوس`, value: d, onChange: (ev) => f(ev.target.value) })),
+          UI.h(UI.Btn, { kind: `primary`, icon: `spark`, disabled: g, onClick: () => void T() }, g ? `در حال دریافت…` : `پرسیدن`),
+          p
+            ? UI.h(
+                `div`,
+                { className: `ui-stack` },
+                UI.h(`pre`, { dir: `auto`, className: `ui-code-block`, style: { whiteSpace: `pre-wrap`, maxHeight: 288, direction: `auto` } }, p),
+                UI.h(UI.Btn, { kind: `line`, icon: `copy`, "aria-label": `کپی پاسخ`, onClick: () => void navigator.clipboard?.writeText(p) }, `کپی پاسخ`),
+              )
+            : null,
+        )
+      : null,
+    v ? UI.h(UI.Note, { "data-testid": `gemini-message`, tone: /نشد|وارد کن|اول|خطا|HTTP/.test(v) ? `err` : `ok` }, v) : null,
+    UI.h(`p`, { className: `ui-caption` }, custom ? `پرسش‌ها مستقیم از گوشی به سرور خودت می‌روند و جای دیگری نمی‌روند.` : `اینترنت لازم است؛ هزینه و سهمیه طبق حساب Google تو است.`),
   );
-}
-function on({ label: e, checked: t, onChange: n, hint: r }) {
-  return (0, q.jsxs)(`label`, {
-    className: `flex items-center justify-between gap-3 py-1 text-sm`,
-    children: [
-      (0, q.jsxs)(`span`, {
-        children: [
-          e,
-          r ? (0, q.jsx)(`span`, { className: `block text-[11px] text-white/40`, children: r }) : null,
-        ],
-      }),
-      (0, q.jsx)(`input`, {
-        type: `checkbox`,
-        "aria-label": e,
-        className: `size-5 shrink-0`,
-        style: { accentColor: `var(--launcher-accent)` },
-        checked: t,
-        onChange: (e) => n(e.target.checked),
-      }),
-    ],
-  });
 }
 function sn({
   open: e,
@@ -3310,327 +2382,130 @@ function sn({
 }) {
   let [u, d] = (0, K.useState)(``),
     f = (0, K.useRef)(0),
-    p = (e) => {
-      r({ ...n, ...e }) || d(`حافظهٔ محلی پر است؛ تصویر کوچک‌تری انتخاب کن.`);
+    theme = me(),
+    p = (x2) => {
+      r({ ...n, ...x2 }) || d(`حافظهٔ محلی پر است؛ تصویر کوچک‌تری انتخاب کن.`);
     };
-  return (0, q.jsxs)(_e, {
-    title: `شخصی‌سازی`,
-    icon: (0, q.jsx)(Ee, { className: `size-5`, style: { color: n.accent } }),
-    open: e,
-    onOpenChange: t,
-    testId: `settings-sheet`,
-    children: [
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2`,
-        children: [
-          (0, q.jsxs)(`h3`, {
-            className: `flex items-center gap-2 text-sm font-bold`,
-            children: [(0, q.jsx)(Ae, { className: `size-4`, style: { color: n.accent } }), `پوسته`],
-          }),
-          (0, q.jsx)(`div`, {
-            className: `grid grid-cols-2 gap-2`,
-            children: Et.map((e) =>
-              (0, q.jsx)(
-                `button`,
-                {
-                  type: `button`,
-                  "aria-label": `پوستهٔ ${e.name}`,
-                  className: `relative h-16 overflow-hidden rounded-xl border text-start text-xs font-semibold ${n.theme === e.id ? `ring-2` : `border-white/10`}`,
-                  style: {
-                    background: e.wallpaper,
-                    borderColor: n.theme === e.id ? e.accent : void 0,
-                    "--tw-ring-color": e.accent,
+  return (
+    (0, K.useEffect)(() => {
+      applyUiTheme(theme);
+    }, [theme.palette, theme.fontSize, theme.ligatures]),
+    e
+      ? UI.h(UI.Appearance, {
+          theme,
+          setTheme: (x2) => theme.set(x2),
+          resetTheme: () => theme.reset(),
+          onClose: () => t(!1),
+          extra: UI.h(
+            K.Fragment,
+            null,
+            UI.h(
+              UI.Section,
+              { title: `صفحهٔ برنامه‌ها` },
+              UI.h(
+                `label`,
+                { className: `ui-btn ui-btn--line` },
+                UI.h(UI.Icon, { n: `image` }),
+                `انتخاب عکس پس‌زمینه`,
+                UI.h(`input`, {
+                  type: `file`,
+                  accept: `image/*`,
+                  "aria-label": `عکس پس‌زمینه`,
+                  className: `ui-sr`,
+                  onChange: async (ev) => {
+                    let x2 = ev.target.files?.[0];
+                    if (((ev.target.value = ``), x2 && x2.type.startsWith(`image/`)))
+                      try {
+                        (p({ wallpaper: await ct(x2, 1400) }), d(`پس‌زمینه تنظیم شد.`));
+                      } catch {
+                        d(`این تصویر خوانده نشد.`);
+                      }
                   },
-                  onClick: () => p(Nt(n, e)),
-                  children: (0, q.jsx)(`span`, {
-                    className: `absolute bottom-2 start-2`,
-                    style: { color: e.accent, textShadow: `0 0 10px ${e.accent}` },
-                    children: e.name,
-                  }),
-                },
-                e.id,
+                }),
+              ),
+              n.wallpaper.startsWith(`data:`)
+                ? UI.h(
+                    K.Fragment,
+                    null,
+                    UI.h(`img`, { src: n.wallpaper, alt: `پس‌زمینهٔ فعلی`, style: { width: `100%`, height: 96, objectFit: `cover`, borderRadius: 12 } }),
+                    UI.h(UI.Btn, { kind: `quiet`, onClick: () => p({ wallpaper: Dt.wallpaper }) }, `حذف پس‌زمینه`),
+                  )
+                : null,
+              UI.h(UI.Sw, { id: `l-labels`, label: `نام زیر آیکن‌ها`, checked: n.labels, onChange: (v2) => p({ labels: v2 }) }),
+              UI.h(UI.Sw, { id: `l-term`, label: `دکمهٔ کنسول در برنامه‌ها`, checked: n.terminal, onChange: (v2) => p({ terminal: v2 }) }),
+              UI.h(
+                UI.Fld,
+                { label: `تعداد ستون`, id: `jibos-cols` },
+                UI.h(UI.Sel, { id: `jibos-cols`, value: n.columns, onChange: (ev) => p({ columns: Number(ev.target.value) }) }, [3, 4, 5, 6].map((x2) => UI.h(`option`, { key: x2, value: x2 }, `${x2} ستون`))),
+              ),
+              UI.h(
+                UI.Fld,
+                { label: `اندازهٔ آیکن: ${n.iconSize}px`, id: `l-isize` },
+                UI.h(`input`, { id: `l-isize`, className: `ui-range`, type: `range`, min: `44`, max: `84`, step: `2`, value: n.iconSize, onChange: (ev) => p({ iconSize: Number(ev.target.value) }) }),
+              ),
+              UI.h(
+                UI.Fld,
+                { label: `گردی آیکن: ${n.roundness}px`, id: `l-iround` },
+                UI.h(`input`, { id: `l-iround`, className: `ui-range`, type: `range`, min: `4`, max: `42`, step: `2`, value: n.roundness, onChange: (ev) => p({ roundness: Number(ev.target.value) }) }),
+              ),
+              UI.h(
+                UI.Fld,
+                { label: `تعداد صفحه‌های خانه`, id: `jibos-pages` },
+                UI.h(UI.Sel, { id: `jibos-pages`, "data-testid": `pages-count`, value: n.pages, onChange: (ev) => p({ pages: Number(ev.target.value) }) }, [1, 2, 3, 4, 5, 6, 7, 8, 9].map((x2) => UI.h(`option`, { key: x2, value: x2 }, `${x2} صفحه`))),
+              ),
+              UI.h(
+                UI.Fld,
+                { label: `نام دستگاه (در کنسول)`, id: `l-host` },
+                UI.h(UI.Input, { id: `l-host`, mono: !0, value: n.hostname, onChange: (ev) => p({ hostname: ev.target.value.replace(/[^\w.-]/g, ``).slice(0, 24) || `jibos` }) }),
               ),
             ),
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2 border-t border-white/10 pt-4`,
-        children: [
-          (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `پس‌زمینهٔ گوشی` }),
-          (0, q.jsx)(`div`, {
-            className: `grid grid-cols-4 gap-2`,
-            children: wt.map((e) =>
-              (0, q.jsx)(
-                `button`,
-                {
-                  type: `button`,
-                  "aria-label": `پس‌زمینهٔ ${e.name}`,
-                  title: e.name,
-                  className: `h-14 rounded-xl border ${n.wallpaper === e.value ? `border-white ring-2 ring-white/40` : `border-white/10`}`,
-                  style: { background: e.value },
-                  onClick: () => p({ wallpaper: e.value }),
-                },
-                e.name,
-              ),
-            ),
-          }),
-          (0, q.jsxs)(`label`, {
-            className: `flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/25 bg-white/5 text-sm`,
-            children: [
-              (0, q.jsx)(qe, { className: `size-4` }),
-              `انتخاب عکس از گوشی به‌عنوان پس‌زمینه`,
-              (0, q.jsx)(`input`, {
-                type: `file`,
-                accept: `image/*`,
-                "aria-label": `عکس پس‌زمینه`,
-                className: `hidden`,
-                onChange: async (e) => {
-                  let t = e.target.files?.[0];
-                  if (((e.target.value = ``), t && t.type.startsWith(`image/`)))
-                    try {
-                      (p({ wallpaper: await ct(t, 1400) }), d(`پس‌زمینه تنظیم شد.`));
-                    } catch {
-                      d(`این تصویر خوانده نشد.`);
-                    }
-                },
-              }),
-            ],
-          }),
-          n.wallpaper.startsWith(`data:`)
-            ? (0, q.jsx)(`img`, {
-                src: n.wallpaper,
-                alt: `پس‌زمینهٔ فعلی`,
-                className: `h-24 w-full rounded-xl object-cover opacity-80`,
-              })
-            : null,
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2 border-t border-white/10 pt-4`,
-        children: [
-          (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `رنگ تأکیدی` }),
-          (0, q.jsxs)(`div`, {
-            className: `flex flex-wrap items-center gap-2`,
-            children: [
-              Tt.map((e) =>
-                (0, q.jsx)(
-                  `button`,
-                  {
-                    type: `button`,
-                    "aria-label": `رنگ ${e}`,
-                    className: `size-8 rounded-full border ${n.accent === e ? `border-white ring-2 ring-white/50` : `border-white/15`}`,
-                    style: { background: e, boxShadow: `0 0 12px ${e}66` },
-                    onClick: () => p({ accent: e }),
-                  },
-                  e,
-                ),
-              ),
-              (0, q.jsx)(`input`, {
-                type: `color`,
-                "aria-label": `رنگ دلخواه`,
-                className: `size-8 rounded-full border-0 bg-transparent`,
-                value: n.accent.length === 7 ? n.accent : `#00ff9c`,
-                onChange: (e) => p({ accent: e.target.value }),
-              }),
-            ],
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2 border-t border-white/10 pt-4`,
-        children: [
-          (0, q.jsx)(`h3`, { className: `text-sm font-bold`, children: `جلوه‌ها و چیدمان` }),
-          (0, q.jsx)(on, {
-            label: `باران ماتریکس`,
-            hint: `پشت صفحهٔ خانه؛ وقتی برنامه باز است متوقف می‌شود`,
-            checked: n.matrix,
-            onChange: (e) => p({ matrix: e }),
-          }),
-          (0, q.jsx)(on, {
-            label: `خطوط اسکن (CRT)`,
-            checked: n.scanlines,
-            onChange: (e) => p({ scanlines: e }),
-          }),
-          (0, q.jsx)(on, { label: `شبکهٔ نئونی`, checked: n.grid, onChange: (e) => p({ grid: e }) }),
-          (0, q.jsx)(on, {
-            label: `فونت ترمینالی (monospace)`,
-            checked: n.mono,
-            onChange: (e) => p({ mono: e }),
-          }),
-          (0, q.jsx)(on, { label: `کارت‌های شیشه‌ای`, checked: n.glass, onChange: (e) => p({ glass: e }) }),
-          (0, q.jsx)(on, { label: `نام زیر آیکن‌ها`, checked: n.labels, onChange: (e) => p({ labels: e }) }),
-          (0, q.jsx)(on, {
-            label: `دکمهٔ کنسول در داک`,
-            checked: n.terminal,
-            onChange: (e) => p({ terminal: e }),
-          }),
-          (0, q.jsxs)(`div`, {
-            className: `flex items-center justify-between gap-3 text-xs text-white/70`,
-            children: [
-              (0, q.jsx)(`label`, { htmlFor: `jibos-cols`, children: `تعداد ستون` }),
-              (0, q.jsx)(`select`, {
-                id: `jibos-cols`,
-                className: `${z} w-28`,
-                value: n.columns,
-                onChange: (e) => p({ columns: Number(e.target.value) }),
-                children: [3, 4, 5, 6].map((e) =>
-                  (0, q.jsxs)(`option`, { value: e, children: [e, ` ستون`] }, e),
-                ),
-              }),
-            ],
-          }),
-          (0, q.jsxs)(`label`, {
-            className: `block text-xs text-white/70`,
-            children: [
-              `اندازهٔ آیکن: `,
-              n.iconSize,
-              `px`,
-              (0, q.jsx)(`input`, {
-                className: `mt-2 w-full`,
-                style: { accentColor: n.accent },
-                type: `range`,
-                min: `44`,
-                max: `84`,
-                step: `2`,
-                value: n.iconSize,
-                onChange: (e) => p({ iconSize: Number(e.target.value) }),
-              }),
-            ],
-          }),
-          (0, q.jsxs)(`label`, {
-            className: `block text-xs text-white/70`,
-            children: [
-              `گردی آیکن: `,
-              n.roundness,
-              `px`,
-              (0, q.jsx)(`input`, {
-                className: `mt-2 w-full`,
-                style: { accentColor: n.accent },
-                type: `range`,
-                min: `4`,
-                max: `42`,
-                step: `2`,
-                value: n.roundness,
-                onChange: (e) => p({ roundness: Number(e.target.value) }),
-              }),
-            ],
-          }),
-          (0, q.jsxs)(`label`, {
-            className: `block text-xs text-white/70`,
-            children: [
-              `نام دستگاه (در کنسول)`,
-              (0, q.jsx)(`input`, {
-                className: `${z} mt-2 font-mono`,
-                dir: `ltr`,
-                value: n.hostname,
-                onChange: (e) =>
-                  p({ hostname: e.target.value.replace(/[^\w.-]/g, ``).slice(0, 24) || `jibos` }),
-              }),
-            ],
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `space-y-2 border-t border-white/10 pt-4`,
-        children: [
-          (0, q.jsxs)(`h3`, {
-            className: `flex items-center gap-2 text-sm font-bold`,
-            children: [
-              (0, q.jsx)(P, { className: `size-4`, style: { color: n.accent } }),
-              `صفحه‌های خانه و پشتیبان`,
-            ],
-          }),
-          (0, q.jsxs)(`div`, {
-            className: `flex items-center justify-between gap-3 text-xs text-white/70`,
-            children: [
-              (0, q.jsx)(`label`, { htmlFor: `jibos-pages`, children: `تعداد صفحه‌های خانه` }),
-              (0, q.jsx)(`select`, {
-                id: `jibos-pages`,
-                "data-testid": `pages-count`,
-                className: `${z} w-28`,
-                value: n.pages,
-                onChange: (e) => p({ pages: Number(e.target.value) }),
-                children: [1, 2, 3, 4, 5, 6, 7, 8, 9].map((e) =>
-                  (0, q.jsxs)(`option`, { value: e, children: [e, ` صفحه`] }, e),
-                ),
-              }),
-            ],
-          }),
-          (0, q.jsx)(`p`, {
-            className: `text-[11px] text-white/40`,
-            children: `بین صفحه‌ها می‌توانی بکشی (swipe). پس‌زمینهٔ هر صفحه را در حالت «ویرایش» صفحهٔ خانه جدا کن.`,
-          }),
-          (0, q.jsxs)(`div`, {
-            className: `grid grid-cols-2 gap-2`,
-            children: [
-              (0, q.jsxs)(`button`, {
-                type: `button`,
-                "data-testid": `export-backup`,
-                className: `${j} flex items-center justify-center gap-2`,
-                onClick: c,
-                children: [(0, q.jsx)(Se, { className: `size-4` }), `خروجی پشتیبان`],
-              }),
-              (0, q.jsxs)(`label`, {
-                "data-testid": `import-backup`,
-                className: `${j} flex cursor-pointer items-center justify-center gap-2`,
-                children: [
-                  (0, q.jsx)(at, { className: `size-4` }),
+            UI.h(
+              UI.Section,
+              { title: `پشتیبان` },
+              UI.h(
+                `div`,
+                { className: `ui-actions` },
+                UI.h(UI.Btn, { kind: `line`, icon: `save`, "data-testid": `export-backup`, onClick: c }, `خروجی پشتیبان`),
+                UI.h(
+                  `label`,
+                  { className: `ui-btn ui-btn--line`, "data-testid": `import-backup` },
+                  UI.h(UI.Icon, { n: `open` }),
                   `بازگردانی`,
-                  (0, q.jsx)(`input`, {
-                    type: `file`,
-                    accept: `.jibos,.json,application/json`,
-                    "aria-label": `فایل پشتیبان`,
-                    className: `hidden`,
-                    onChange: (e) => {
-                      let t = e.target.files?.[0];
-                      ((e.target.value = ``), t && l(t));
-                    },
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `grid grid-cols-2 gap-2 border-t border-white/10 pt-4`,
-        children: [
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `${j} flex items-center justify-center gap-2`,
-            onClick: o,
-            children: [
-              (0, q.jsx)(rt, { className: `size-4`, style: { color: n.accent } }),
-              s ? `Gemini وصل است` : `اتصال Gemini`,
-            ],
-          }),
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `${j} flex items-center justify-center gap-2`,
-            onClick: a,
-            children: [(0, q.jsx)(tt, { className: `size-4` }), `حالت توسعه‌دهنده`],
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`button`, {
-        type: `button`,
-        className: `font-mono text-[11px] text-white/35`,
-        onClick: () => {
-          ((f.current += 1),
-            f.current >= 7
-              ? ((f.current = 0), p({ devMode: !0 }), d(`حالت توسعه‌دهنده روشن شد.`))
-              : f.current >= 4 && d(`${7 - f.current} ضربهٔ دیگر تا حالت توسعه‌دهنده…`));
-        },
-        children: [`JibOS `, i, ` · ۷ بار بزن`],
-      }),
-      u ? (0, q.jsx)(`p`, { className: `text-xs`, style: { color: n.accent }, children: u }) : null,
-      (0, q.jsx)(`p`, {
-        className: `text-[11px] leading-5 text-white/35`,
-        children: `همهٔ تنظیمات و عکس‌ها فقط روی همین دستگاه نگه داشته می‌شوند.`,
-      }),
-    ],
-  });
+                  UI.h(`input`, { type: `file`, accept: `.jibos,.json,application/json`, "aria-label": `فایل پشتیبان`, className: `ui-sr`, onChange: (ev) => { let x2 = ev.target.files?.[0]; ((ev.target.value = ``), x2 && l(x2)); } }),
+                ),
+              ),
+            ),
+            UI.h(
+              UI.Section,
+              { title: `ابزارها` },
+              UI.h(
+                `div`,
+                { className: `ui-actions` },
+                UI.h(UI.Btn, { kind: `line`, icon: `spark`, onClick: o }, s ? `هوش مصنوعی وصل است` : `اتصال هوش مصنوعی`),
+                UI.h(UI.Btn, { kind: `line`, icon: `tool`, onClick: a }, `حالت توسعه‌دهنده`),
+              ),
+            ),
+            UI.h(
+              `button`,
+              {
+                type: `button`,
+                className: `ui-caption ui-ltr`,
+                style: { minHeight: 44 },
+                onClick: () => {
+                  ((f.current += 1),
+                    f.current >= 7
+                      ? ((f.current = 0), p({ devMode: !0 }), d(`حالت توسعه‌دهنده روشن شد.`))
+                      : f.current >= 4 && d(`${7 - f.current} ضربهٔ دیگر تا حالت توسعه‌دهنده…`));
+                },
+              },
+              `CodePad ${i}`,
+            ),
+            u ? UI.h(UI.Note, { tone: /نشد|پر است/.test(u) ? `err` : `ok` }, u) : null,
+            UI.h(`p`, { className: `ui-caption` }, `همهٔ تنظیمات و عکس‌ها فقط روی همین دستگاه نگه داشته می‌شوند.`),
+          ),
+        })
+      : null
+  );
 }
 var cn = new TextEncoder();
 async function ln(e, t) {
@@ -4203,98 +3078,48 @@ function jn({ api: e, hostname: t, devMode: n, setDevMode: r, onClose: i, accent
             : e === `in`
               ? `text-white`
               : `text-white/85`;
-  return (0, q.jsxs)(`div`, {
-    className: `jibos-window fixed inset-0 z-30 flex flex-col bg-black pt-[env(safe-area-inset-top)] font-mono`,
-    "data-testid": `terminal`,
-    children: [
-      (0, q.jsxs)(`header`, {
-        className: `flex h-11 shrink-0 items-center gap-2 border-b px-2`,
-        style: { borderColor: `${a}44` },
-        children: [
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            className: `grid size-10 place-items-center rounded-full hover:bg-white/10`,
-            "aria-label": `بستن کنسول`,
-            onClick: i,
-            children: (0, q.jsx)(He, { className: `size-5` }),
-          }),
-          (0, q.jsxs)(`span`, { className: `text-sm`, style: { color: a }, children: [`console — `, u] }),
-        ],
-      }),
-      b
-        ? (0, q.jsx)(`div`, {
-            role: `status`,
-            dir: `auto`,
-            className: `shrink-0 border-b border-line bg-panel px-3 py-2 text-xs text-lime`,
-            children: b,
-          })
-        : null,
-      (0, q.jsxs)(`div`, {
-        ref: w,
-        dir: `ltr`,
-        className: `min-h-0 flex-1 overflow-auto p-3 text-[12.5px] leading-5`,
-        onClick: () => T.current?.focus(),
-        children: [
-          d.map((e, t) =>
-            (0, q.jsx)(
-              `div`,
-              {
-                dir: `auto`,
-                className: `whitespace-pre-wrap break-words ${A(e.tone)}`,
-                style: e.tone === `ok` ? { color: a } : void 0,
-                children: e.text || `\xA0`,
-              },
-              t,
-            ),
-          ),
-          (0, q.jsxs)(`div`, {
-            className: `flex items-center gap-2`,
-            children: [
-              (0, q.jsx)(`span`, { style: { color: a }, children: u }),
-              (0, q.jsx)(`input`, {
-                ref: T,
-                "aria-label": `فرمان کنسول`,
-                dir: `auto`,
-                autoCapitalize: `off`,
-                autoCorrect: `off`,
-                spellCheck: !1,
-                className: `min-w-0 flex-1 bg-transparent text-white outline-none`,
-                style: { caretColor: a },
-                value: p,
-                onChange: (e) => m(e.target.value),
-                onKeyDown: te,
-              }),
-            ],
-          }),
-        ],
-      }),
-      (0, q.jsx)(`div`, {
-        className: `flex shrink-0 gap-1.5 overflow-x-auto border-t border-white/10 p-2 pb-[max(.5rem,env(safe-area-inset-bottom))]`,
-        dir: `ltr`,
-        children: [
-          `help`,
-          `pip help`,
-          `pip list`,
-          `pip freeze`,
-          `ls /apps`,
-          `tree`,
-          `browser`,
-          n ? `dev off` : `dev on`,
-        ].map((e) =>
-          (0, q.jsx)(
-            `button`,
-            {
-              type: `button`,
-              className: `h-11 shrink-0 rounded-lab border border-line px-3 text-xs text-paper`,
-              onClick: () => void k(e),
-              children: e,
-            },
-            e,
-          ),
-        ),
-      }),
-    ],
-  });
+  return UI.h(
+    `div`,
+    { className: `ui-root ui-window`, "data-testid": `terminal` },
+    UI.h(
+      `header`,
+      { className: `ui-wbar` },
+      UI.h(UI.Btn, { kind: `tool`, "aria-label": `بستن کنسول`, onClick: i }, UI.h(UI.Icon, { n: `x` })),
+      UI.h(`strong`, { className: `ui-ltr` }, `console — `, u),
+    ),
+    b ? UI.h(`div`, { role: `status`, dir: `auto`, className: `ui-status` }, b) : null,
+    UI.h(
+      `div`,
+      { ref: w, dir: `ltr`, className: `ui-log`, onClick: () => T.current?.focus() },
+      d.map((e2, t2) =>
+        UI.h(`p`, { key: t2, dir: `auto`, className: e2.tone === `err` ? `is-err` : e2.tone === `ok` ? `is-sys` : e2.tone === `dim` ? `ui-muted` : e2.tone === `in` ? `is-cmd` : void 0 }, e2.text || `\xA0`),
+      ),
+      UI.h(
+        `div`,
+        { style: { display: `flex`, alignItems: `center`, gap: 8 } },
+        UI.h(`b`, { style: { color: `var(--ui-primary)` } }, u),
+        UI.h(`input`, {
+          ref: T,
+          "aria-label": `فرمان کنسول`,
+          dir: `auto`,
+          autoCapitalize: `off`,
+          autoCorrect: `off`,
+          spellCheck: !1,
+          style: { flex: 1, minWidth: 0, background: `transparent`, border: 0, outline: 0, font: `inherit`, color: `inherit` },
+          value: p,
+          onChange: (ev) => m(ev.target.value),
+          onKeyDown: te,
+        }),
+      ),
+    ),
+    UI.h(
+      `div`,
+      { className: `ui-keys`, role: `toolbar`, "aria-label": `فرمان‌های آماده` },
+      [`help`, `pip help`, `pip list`, `pip freeze`, `ls /apps`, `tree`, `browser`, n ? `dev off` : `dev on`].map((e2) =>
+        UI.h(`button`, { key: e2, type: `button`, className: `ui-key`, onClick: () => void k(e2) }, e2),
+      ),
+    ),
+  );
 }
 var Mn = '3.7.0',
   $ = null;
@@ -4350,57 +3175,25 @@ function Fn({ app: e, prefs: t, edit: n, onOpen: r, onLong: i }) {
     c = () => {
       (a.current && window.clearTimeout(a.current), (a.current = null));
     };
-  return (0, q.jsxs)(`div`, {
-    className: `relative flex min-w-0 flex-col items-center gap-1.5`,
-    children: [
-      (0, q.jsx)(`button`, {
-        type: `button`,
-        "data-testid": `app-icon`,
-        className: `jibos-icon relative grid place-items-center overflow-hidden text-2xl font-bold transition active:scale-90 ${n ? `jibos-wiggle` : ``}`,
-        style: {
-          width: t.iconSize,
-          height: t.iconSize,
-          borderRadius: t.roundness,
-          backgroundColor: e.iconColor ?? `rgba(2,16,9,.82)`,
-          border: `1px solid ${t.accent}40`,
-          boxShadow: `0 0 0 1px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.45), 0 0 16px ${t.accent}26, inset 0 1px 0 rgba(255,255,255,.1)`,
-        },
-        onPointerDown: s,
-        onPointerUp: c,
-        onPointerLeave: c,
-        onContextMenu: (e) => e.preventDefault(),
-        onClick: () => {
-          o.current || r();
-        },
-        "aria-label": `${n ? `شخصی‌سازی` : `اجرای`} ${e.name}`,
-        children: e.iconImage
-          ? (0, q.jsx)(`img`, {
-              src: e.iconImage,
-              alt: ``,
-              className: `size-full object-cover`,
-              draggable: !1,
-            })
-          : (0, q.jsxs)(q.Fragment, {
-              children: [
-                (0, q.jsx)(`span`, {
-                  className: `absolute inset-0 bg-gradient-to-br from-white/12 to-transparent`,
-                }),
-                (0, q.jsx)(`span`, {
-                  className: `relative`,
-                  style: { textShadow: `0 0 12px ${t.accent}88` },
-                  children: e.icon,
-                }),
-              ],
-            }),
-      }),
-      t.labels
-        ? (0, q.jsx)(`span`, {
-            className: `max-w-full truncate text-center text-[11px] font-medium text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,.9)]`,
-            children: e.name,
-          })
-        : null,
-    ],
-  });
+  return UI.h(
+    `button`,
+    {
+      type: `button`,
+      className: `ui-apptile`,
+      "data-testid": `app-icon`,
+      "data-edit": n ? `true` : void 0,
+      onPointerDown: s,
+      onPointerUp: c,
+      onPointerLeave: c,
+      onContextMenu: (e) => e.preventDefault(),
+      onClick: () => {
+        o.current || r();
+      },
+      "aria-label": `${n ? `شخصی‌سازی` : `اجرای`} ${e.name}`,
+    },
+    UI.h(UI.AppIcon, { app: e, size: t.iconSize, radius: Math.min(t.roundness, t.iconSize / 2) }),
+    t.labels ? UI.h(`span`, null, e.name) : null,
+  );
 }
 function In() {
   let t = B((e) => e.apps),
@@ -4420,7 +3213,6 @@ function In() {
     [A, ne] = (0, K.useState)(0),
     j = (0, K.useRef)(null),
     re = (0, K.useRef)(null),
-    ie = Pn(),
     M = (0, K.useRef)(n);
   M.current = n;
   let N = typeof window < `u` && new URLSearchParams(window.location.search).has(`safe`);
@@ -4431,8 +3223,6 @@ function In() {
       r(jt()),
       o(T()),
       te(!0));
-    let e = window.setInterval(() => O(new Date()), 15e3);
-    return () => window.clearInterval(e);
   }, []);
   let P = (0, K.useCallback)((e) => {
       let t = At(e);
@@ -4518,14 +3308,6 @@ function In() {
   }, [n.pages, A]);
   let he = (0, K.useCallback)((e) => {
       ne(e);
-      let t = j.current;
-      t && t.scrollTo({ left: e * t.clientWidth, behavior: `smooth` });
-    }, []),
-    ge = (0, K.useCallback)(() => {
-      let e = j.current;
-      if (!e) return;
-      let t = Math.round(e.scrollLeft / Math.max(1, e.clientWidth));
-      ne((e) => (e === t ? e : t));
     }, []),
     _e = (0, K.useCallback)(() => {
       let e = Math.min(9, n.pages + 1);
@@ -4591,434 +3373,204 @@ function In() {
     ),
     we = (0, K.useCallback)(() => {
       let e = [...M.current.pageWallpapers];
-      ((e[A] = ``), F({ pageWallpapers: e }), I(`پس‌زمینهٔ صفحهٔ ${A + 1} به حالت سراسری برگشت.`));
+      ((e[A] = ``), F({ pageWallpapers: e }), I(`پس‌زمینهٔ صفحهٔ ${A + 1} حذف شد.`));
     }, [A, F, I]),
-    U = n.pageWallpapers[A] || n.wallpaper || n.wallpaper,
-    Te = U.startsWith(`data:`),
-    W = n.accent,
-    Ee = {
-      "--launcher-accent": W,
-      backgroundImage: Te ? `linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.7)),url("${U}")` : U,
-      backgroundSize: `cover`,
-      backgroundPosition: `center`,
-    },
-    De = D.toLocaleTimeString(`fa-IR`, { hour: `2-digit`, minute: `2-digit` }),
-    Oe = n.glass ? `bg-black/35 backdrop-blur-xl` : `bg-black/75`,
-    ke = (e, t) =>
+    U = n.pageWallpapers[A] || (n.wallpaper && n.wallpaper.startsWith(`data:`) ? n.wallpaper : ``),
+    pageName = (e) => n.pageNames[e] || (e === 0 ? `خانه` : `صفحهٔ ${e + 1}`),
+    tiles = (e, t) =>
       e.length === 0
-        ? (0, q.jsxs)(`div`, {
-            className: `jibos-pop mx-auto mt-2 max-w-xs rounded-3xl border p-6 text-center ${Oe}`,
-            style: { borderColor: `${W}33` },
-            "data-testid": `empty-state`,
-            children: [
-              (0, q.jsx)(`div`, {
-                className: `mx-auto grid size-14 place-items-center rounded-2xl border font-mono text-xl`,
-                style: { borderColor: `${W}55`, color: W, boxShadow: `0 0 24px ${W}44` },
-                children: `>_`,
-              }),
-              (0, q.jsx)(`h3`, {
-                className: `mt-3 font-bold`,
-                children: z ? `برنامه‌ای پیدا نشد` : `این صفحه خالی است`,
-              }),
-              (0, q.jsx)(`p`, {
-                className: `mt-2 text-xs leading-6 text-white/60`,
-                children: z
-                  ? `نام دیگری را جست‌وجو کن.`
-                  : `یک نمونهٔ آماده نصب کن، با Gemini برنامه بساز، یا برنامه‌ها را از حالت ویرایش به این صفحه بیاور.`,
-              }),
-              t && !z
-                ? (0, q.jsx)(`button`, {
-                    type: `button`,
-                    className: `mt-4 h-10 rounded-xl px-4 text-sm font-bold text-black`,
-                    style: { background: W },
-                    onClick: () => v(`install`),
-                    children: `افزودن اولین برنامه`,
-                  })
-                : null,
-            ],
-          })
-        : (0, q.jsx)(`div`, {
-            className: `grid gap-y-5 pt-1`,
-            style: { gridTemplateColumns: `repeat(${n.columns}, minmax(0, 1fr))` },
-            children: e.map((e) =>
-              (0, q.jsx)(
-                Fn,
-                {
-                  app: e,
-                  prefs: n,
-                  edit: h,
-                  onOpen: () => (h ? f(e) : u(e)),
-                  onLong: () => {
-                    (g(!0), f(e));
-                  },
+        ? UI.h(
+            UI.State,
+            {
+              icon: `grid`,
+              title: z ? `برنامه‌ای پیدا نشد` : `این صفحه خالی است`,
+              text: z
+                ? `نام دیگری را جست‌وجو کن.`
+                : `یک نمونهٔ آماده نصب کن، با دستیار برنامه بساز یا برنامه‌ها را از حالت ویرایش به این صفحه بیاور.`,
+              action:
+                t && !z
+                  ? UI.h(UI.Btn, { kind: `primary`, icon: `plus`, onClick: () => v(`install`) }, `افزودن اولین برنامه`)
+                  : null,
+            },
+          )
+        : UI.h(
+            `div`,
+            { className: `ui-grid`, style: { gridTemplateColumns: `repeat(${n.columns}, minmax(0, 1fr))`, gap: 8 }, "data-testid": `page` },
+            e.map((e) =>
+              UI.h(Fn, {
+                key: e.id,
+                app: e,
+                prefs: n,
+                edit: h,
+                onOpen: () => (h ? f(e) : u(e)),
+                onLong: () => {
+                  (g(!0), f(e));
                 },
-                e.id,
-              ),
+              }),
             ),
-          });
-  return (0, q.jsxs)(`main`, {
-    "data-testid": `launcher`,
-    "data-theme": n.theme,
-    className: `jibos relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-black pt-[env(safe-area-inset-top)] text-white`,
-    style: Ee,
-    children: [
-      n.customCss && n.devMode && !N ? (0, q.jsx)(`style`, { children: n.customCss }) : null,
-      n.matrix ? (0, q.jsx)(an, { color: W, paused: !!c || y || !!x, opacity: Te ? 0.28 : 0.42 }) : null,
-      n.grid ? (0, q.jsx)(`div`, { className: `jibos-grid pointer-events-none absolute inset-0` }) : null,
-      n.scanlines
-        ? (0, q.jsx)(`div`, { className: `jibos-scan pointer-events-none absolute inset-0 z-20` })
+          );
+  let shown = z ? ue : pe(A);
+  return UI.h(
+    `main`,
+    {
+      "data-testid": `launcher`,
+      className: `ui-root ui-app`,
+      style: { height: `var(--ui-vh, 100dvh)`, backgroundImage: U ? `linear-gradient(rgba(10,11,16,.78), rgba(10,11,16,.9)), url("${U}")` : void 0, backgroundSize: `cover`, backgroundPosition: `center` },
+    },
+    n.customCss && n.devMode && !N ? UI.h(`style`, null, n.customCss) : null,
+    UI.h(
+      `header`,
+      { className: `ui-top`, style: { flexDirection: `column`, alignItems: `stretch`, gap: 8, padding: `12px 16px 8px` } },
+      UI.h(
+        `div`,
+        { style: { display: `flex`, alignItems: `center`, gap: 8 } },
+        UI.h(`h1`, { className: `ui-title ui-fill`, style: { margin: 0 } }, `برنامه‌ها`),
+        UI.h(
+          UI.Btn,
+          { kind: h ? `primary` : `line`, className: `ui-btn--pill`, onClick: () => g((e) => !e) },
+          h ? `تمام` : `ویرایش`,
+        ),
+      ),
+      UI.h(
+        `label`,
+        { className: `ui-input`, style: { display: `flex`, alignItems: `center`, gap: 8 } },
+        UI.h(UI.Icon, { n: `search`, size: 18 }),
+        UI.h(`input`, {
+          "aria-label": `جست‌وجوی برنامه‌ها`,
+          style: { flex: 1, minWidth: 0, background: `transparent`, border: 0, outline: 0 },
+          placeholder: `جست‌وجو در برنامه‌ها`,
+          value: C,
+          onChange: (e) => w(e.target.value),
+        }),
+        C
+          ? UI.h(`button`, { type: `button`, "aria-label": `پاک کردن جست‌وجو`, onClick: () => w(``), style: { display: `grid`, placeItems: `center`, minWidth: 32, minHeight: 32 } }, UI.h(UI.Icon, { n: `x`, size: 18 }))
+          : null,
+      ),
+    ),
+    UI.h(
+      `div`,
+      { className: `ui-chiprow`, style: { paddingBlock: 8 }, role: `group`, "aria-label": `ابزارها` },
+      UI.h(UI.Btn, { kind: `line`, className: `ui-btn--pill`, icon: `globe`, "data-testid": `dock-browser`, onClick: () => S({}) }, `مرورگر`),
+      n.terminal
+        ? UI.h(UI.Btn, { kind: `line`, className: `ui-btn--pill`, icon: `term`, "data-testid": `dock-terminal`, onClick: () => b(!0) }, `کنسول`)
         : null,
-      (0, q.jsxs)(`div`, {
-        className: `relative z-10 flex h-8 shrink-0 items-center justify-between px-5 font-mono text-[11px] text-white/85`,
-        children: [
-          (0, q.jsx)(`span`, { children: De }),
-          (0, q.jsxs)(`span`, {
-            className: `flex items-center gap-2`,
-            children: [
-              n.devMode
-                ? (0, q.jsx)(`span`, {
-                    className: `rounded px-1.5 py-px text-[9px] font-bold text-black`,
-                    style: { background: W },
-                    children: `DEV`,
-                  })
-                : null,
-              (0, q.jsx)(`span`, { className: `tracking-widest`, style: { color: W }, children: `▂▄▆█` }),
-              ie === null ? null : (0, q.jsxs)(`span`, { children: [ie.toLocaleString(`fa-IR`), `٪`] }),
-            ],
+      UI.h(UI.Btn, { kind: `line`, className: `ui-btn--pill`, icon: `spark`, "data-testid": `dock-gemini`, onClick: () => v(`gemini`) }, `دستیار`),
+    ),
+    z || n.pages < 2
+      ? null
+      : UI.h(
+          `div`,
+          { className: `ui-tabbar`, role: `tablist`, "aria-label": `صفحه‌های خانه` },
+          fe.map((e) =>
+            UI.h(`button`, { key: e, type: `button`, role: `tab`, "data-testid": `page-dot`, className: `ui-seg`, "aria-selected": e === A, onClick: () => he(e) }, pageName(e)),
+          ),
+        ),
+    h && !z
+      ? UI.h(
+          `div`,
+          { className: `ui-chiprow`, style: { paddingBlock: 8 } },
+          UI.h(UI.Btn, { kind: `quiet`, "data-testid": `rename-page`, onClick: ye }, `نام صفحه`),
+          A > 0 ? UI.h(UI.Btn, { kind: `quiet`, "data-testid": `remove-page`, onClick: H }, `حذف صفحه`) : null,
+          UI.h(UI.Btn, { kind: `quiet`, icon: `image`, "data-testid": `page-wallpaper`, onClick: () => re.current?.click() }, `پس‌زمینهٔ صفحه`),
+          n.pageWallpapers[A] ? UI.h(UI.Btn, { kind: `quiet`, onClick: we }, `حذف پس‌زمینه`) : null,
+          n.pages < 9 ? UI.h(UI.Btn, { kind: `quiet`, icon: `plus`, "data-testid": `add-page`, "aria-label": `افزودن صفحه`, onClick: _e }, `صفحهٔ تازه`) : null,
+          UI.h(`input`, {
+            ref: re,
+            type: `file`,
+            accept: `image/*`,
+            "aria-label": `عکس پس‌زمینهٔ صفحه`,
+            className: `ui-sr`,
+            onChange: (e) => {
+              let t = e.target.files?.[0];
+              ((e.target.value = ``), t && Ce(t));
+            },
           }),
-        ],
-      }),
-      (0, q.jsxs)(`section`, {
-        className: `jibos-clock relative z-10 shrink-0 px-6 pb-3 pt-4 text-center`,
-        children: [
-          (0, q.jsxs)(`p`, {
-            className: `font-mono text-[11px] tracking-[.3em] text-white/55`,
-            dir: `ltr`,
-            children: [n.hostname, `@jibos:~$ `, (0, q.jsx)(`span`, { className: `jibos-caret` })],
-          }),
-          (0, q.jsx)(`p`, {
-            className: `jibos-glow mt-1 text-6xl font-light tracking-tight ${n.mono ? `font-mono` : ``}`,
-            style: { color: W },
-            children: De,
-          }),
-          (0, q.jsx)(`p`, {
-            className: `mt-1 text-xs text-white/70`,
-            children: D.toLocaleDateString(`fa-IR`, { weekday: `long`, day: `numeric`, month: `long` }),
-          }),
-        ],
-      }),
-      (0, q.jsxs)(`div`, {
-        className: `relative z-10 mx-4 mb-3 flex shrink-0 items-center gap-2`,
-        children: [
-          (0, q.jsxs)(`label`, {
-            className: `flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl border px-3 ${Oe}`,
-            style: { borderColor: `${W}33` },
-            children: [
-              (0, q.jsx)($e, { className: `size-4 text-white/50` }),
-              (0, q.jsx)(`input`, {
-                "aria-label": `جست‌وجوی برنامه‌ها`,
-                className: `w-full bg-transparent text-sm outline-none placeholder:text-white/40`,
-                placeholder: `جست‌وجو…`,
-                value: C,
-                onChange: (e) => w(e.target.value),
-              }),
-              C
-                ? (0, q.jsx)(`button`, {
-                    type: `button`,
-                    "aria-label": `پاک کردن جست‌وجو`,
-                    onClick: () => w(``),
-                    children: (0, q.jsx)(ve, { className: `size-4 text-white/50` }),
-                  })
-                : null,
-            ],
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            className: `h-10 shrink-0 rounded-2xl px-3 text-xs ${h ? `font-bold text-black` : `border text-white/80 ${Oe}`}`,
-            style: h ? { background: W } : { borderColor: `${W}33` },
-            onClick: () => g((e) => !e),
-            children: h ? `تمام` : `ویرایش`,
-          }),
-        ],
-      }),
-      z
-        ? (0, q.jsx)(`div`, {
-            className: `relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-4`,
-            children: ke(ue, !1),
-          })
-        : (0, q.jsx)(`div`, {
-            ref: j,
-            "data-testid": `pages`,
-            dir: `ltr`,
-            onScroll: ge,
-            className: `jibos-pages relative z-10 flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden`,
-            children: fe.map((e) =>
-              (0, q.jsx)(
-                `div`,
-                {
-                  "data-testid": `page`,
-                  "data-page": e,
-                  dir: `rtl`,
-                  className: `h-full w-full shrink-0 snap-center overflow-y-auto px-4 pb-4`,
-                  children: ke(pe(e), e === 0),
-                },
-                e,
-              ),
-            ),
-          }),
-      z
-        ? null
-        : (0, q.jsxs)(`div`, {
-            className: `relative z-10 flex shrink-0 flex-wrap items-center justify-center gap-2 px-3 py-1.5`,
-            children: [
-              h
-                ? (0, q.jsxs)(q.Fragment, {
-                    children: [
-                      (0, q.jsx)(`button`, {
-                        type: `button`,
-                        className: `rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70`,
-                        onClick: ye,
-                        "data-testid": `rename-page`,
-                        children: `نام صفحه`,
-                      }),
-                      A > 0
-                        ? (0, q.jsx)(`button`, {
-                            type: `button`,
-                            className: `rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70`,
-                            onClick: H,
-                            "data-testid": `remove-page`,
-                            children: `حذف صفحه`,
-                          })
-                        : null,
-                      (0, q.jsxs)(`button`, {
-                        type: `button`,
-                        className: `rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70`,
-                        onClick: () => re.current?.click(),
-                        "data-testid": `page-wallpaper`,
-                        children: [(0, q.jsx)(qe, { className: `inline size-3` }), ` پس‌زمینهٔ صفحه`],
-                      }),
-                      n.pageWallpapers[A]
-                        ? (0, q.jsx)(`button`, {
-                            type: `button`,
-                            className: `rounded-full border border-white/15 px-2.5 py-1 text-[10px] text-white/70`,
-                            onClick: we,
-                            children: `سراسری`,
-                          })
-                        : null,
-                      (0, q.jsx)(`input`, {
-                        ref: re,
-                        type: `file`,
-                        accept: `image/*`,
-                        "aria-label": `عکس پس‌زمینهٔ صفحه`,
-                        className: `hidden`,
-                        onChange: (e) => {
-                          let t = e.target.files?.[0];
-                          ((e.target.value = ``), t && Ce(t));
-                        },
-                      }),
-                    ],
-                  })
-                : null,
-              (0, q.jsx)(`span`, {
-                className: `text-[10px] text-white/70`,
-                children: n.pageNames[A] || (A === 0 ? `خانه` : `صفحهٔ ${A + 1}`),
-              }),
-              fe.map((e) =>
-                (0, q.jsx)(
-                  `button`,
-                  {
-                    type: `button`,
-                    "data-testid": `page-dot`,
-                    "aria-label": n.pageNames[e] || `صفحهٔ ${e + 1}`,
-                    title: n.pageNames[e] || `صفحهٔ ${e + 1}`,
-                    className: `size-2 rounded-full transition`,
-                    style: {
-                      background: e === A ? W : `rgba(255,255,255,.3)`,
-                      boxShadow: e === A ? `0 0 8px ${W}` : void 0,
-                    },
-                    onClick: () => he(e),
-                  },
-                  e,
-                ),
-              ),
-              h && n.pages < 9
-                ? (0, q.jsx)(`button`, {
-                    type: `button`,
-                    "data-testid": `add-page`,
-                    "aria-label": `افزودن صفحه`,
-                    className: `grid size-5 place-items-center rounded-full border text-[11px]`,
-                    style: { borderColor: `${W}66`, color: W },
-                    onClick: _e,
-                    children: `+`,
-                  })
-                : null,
-            ],
-          }),
-      (0, q.jsxs)(`nav`, {
-        className: `relative z-10 mx-3 mb-2 flex shrink-0 items-center justify-around rounded-[26px] border px-2 py-2.5 ${Oe}`,
-        style: { borderColor: `${W}33`, boxShadow: `0 0 30px ${W}14` },
-        "aria-label": `داک`,
-        children: [
-          (0, q.jsxs)(Be, {
-            to: `/`,
-            className: `flex w-12 flex-col items-center gap-1 text-white/75`,
-            children: [
-              (0, q.jsx)(Ue, { className: `size-5` }),
-              (0, q.jsx)(`span`, { className: `text-[10px]`, children: `ویرایشگر` }),
-            ],
-          }),
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `flex w-12 flex-col items-center gap-1 text-white/75`,
-            onClick: () => S({}),
-            "data-testid": `dock-browser`,
-            children: [
-              (0, q.jsx)(Ke, { className: `size-5`, style: { color: W } }),
-              (0, q.jsx)(`span`, { className: `text-[10px]`, children: `مرورگر` }),
-            ],
-          }),
-          (0, q.jsx)(`button`, {
-            type: `button`,
-            "aria-label": `افزودن برنامه`,
-            className: `grid size-14 place-items-center rounded-[20px] text-black transition active:scale-95`,
-            style: { background: W, boxShadow: `0 0 24px ${W}88` },
-            onClick: () => v(`install`),
-            children: (0, q.jsx)(ae, { className: `size-7` }),
-          }),
-          n.terminal
-            ? (0, q.jsxs)(`button`, {
-                type: `button`,
-                className: `flex w-12 flex-col items-center gap-1 text-white/75`,
-                onClick: () => b(!0),
-                "data-testid": `dock-terminal`,
-                children: [
-                  (0, q.jsx)(it, { className: `size-5` }),
-                  (0, q.jsx)(`span`, { className: `text-[10px]`, children: `کنسول` }),
-                ],
-              })
-            : null,
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `flex w-12 flex-col items-center gap-1 text-white/75`,
-            onClick: () => v(`gemini`),
-            "data-testid": `dock-gemini`,
-            children: [
-              (0, q.jsx)(rt, { className: `size-5` }),
-              (0, q.jsx)(`span`, { className: `text-[10px]`, children: `AI` }),
-            ],
-          }),
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `flex w-12 flex-col items-center gap-1 text-white/75`,
-            onClick: () => window.CodePadHub?.open(),
-            "data-testid": `dock-hub`,
-            children: [
-              (0, q.jsx)(`svg`, {
-                viewBox: `0 0 24 24`,
-                className: `size-5`,
-                fill: `none`,
-                stroke: `currentColor`,
-                strokeWidth: 2,
-                strokeLinecap: `round`,
-                strokeLinejoin: `round`,
-                children: (0, q.jsx)(`path`, { d: `M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z` }),
-              }),
-              (0, q.jsx)(`span`, { className: `text-[10px]`, children: `هاب` }),
-            ],
-          }),
-          (0, q.jsxs)(`button`, {
-            type: `button`,
-            className: `flex w-12 flex-col items-center gap-1 text-white/75`,
-            onClick: () => v(`settings`),
-            children: [
-              (0, q.jsx)(Ae, { className: `size-5` }),
-              (0, q.jsx)(`span`, { className: `text-[10px]`, children: `ظاهر` }),
-            ],
-          }),
-        ],
-      }),
-      (0, q.jsx)(`div`, {
-        className: `relative z-10 mx-auto mb-[max(6px,env(safe-area-inset-bottom))] h-1 w-28 shrink-0 rounded-full`,
-        style: { background: `${W}99` },
-      }),
-      E
-        ? (0, q.jsx)(`div`, {
-            role: `status`,
-            className: `jibos-pop fixed inset-x-0 bottom-28 z-[60] mx-auto w-max max-w-[86vw] rounded-2xl border bg-black/90 px-4 py-2 text-sm`,
-            style: { borderColor: `${W}66`, color: W },
-            children: E,
-          })
-        : null,
-      c
-        ? (0, q.jsx)(vt, { app: c, host: le, accent: W, onClose: () => u(null) }, c.id + c.installedAt)
-        : null,
-      y
-        ? (0, q.jsx)(jn, {
-            api: se,
-            hostname: n.hostname,
-            devMode: n.devMode,
-            setDevMode: (e) => void F({ devMode: e }),
-            onClose: () => b(!1),
-            accent: W,
-          })
-        : null,
-      x ? (0, q.jsx)(xt, { initialUrl: x.url, accent: W, onClose: () => S(null) }) : null,
-      (0, q.jsx)(sn, {
-        open: _ === `settings`,
-        onOpenChange: (e) => v(e ? `settings` : null),
-        prefs: n,
-        setPrefs: P,
-        version: Mn,
-        onOpenDev: () => v(`dev`),
-        onOpenGemini: () => v(`gemini`),
-        geminiConnected: codepadAI.aiReady(i),
-        onExport: () => void be(),
-        onImport: (e) => void Se(e),
-      }),
-      (0, q.jsx)(nn, {
-        open: _ === `gemini`,
-        onOpenChange: (e) => v(e ? `gemini` : null),
-        settings: i,
-        setSettings: oe,
-        accent: W,
-        page: A,
-      }),
-      (0, q.jsx)(mt, {
-        open: _ === `install`,
-        onOpenChange: (e) => v(e ? `install` : null),
-        accent: W,
-        onInstalled: (e, t) => {
-          (B.getState().patch(e.id, { page: A }), I(`«${e.name}» نصب شد`), t && (v(null), u(e)));
-        },
-      }),
-      (0, q.jsx)(It, {
-        open: _ === `dev`,
-        onOpenChange: (e) => v(e ? `dev` : null),
-        prefs: n,
-        setPrefs: (e) => void P(e),
-        runScript: R,
-        onEditApp: (e) => {
-          (v(null), m(e));
-        },
-        onOpenTerminal: () => {
-          (v(null), b(!0));
-        },
-      }),
-      (0, q.jsx)(ut, {
-        app: d,
-        onOpenChange: (e) => !e && f(null),
-        accent: W,
-        devMode: n.devMode,
-        pages: n.pages,
-        onEditCode: (e) => {
-          (f(null), m(e));
-        },
-        onRemove: (t) => {
-          window.confirm(`«${t.name}» حذف شود؟`) && (e(t.id), f(null));
-        },
-      }),
-      (0, q.jsx)(dt, { app: p, onOpenChange: (e) => !e && m(null), accent: W, gemini: i }),
-    ],
-  });
+        )
+      : null,
+    UI.h(`div`, { ref: j, className: `ui-pane-body`, style: { flex: `1 1 0`, paddingBottom: 140 }, "data-testid": `pages` }, tiles(shown, A === 0)),
+    UI.h(
+      `button`,
+      { type: `button`, className: `ui-fab`, "aria-label": `افزودن برنامه`, onClick: () => v(`install`) },
+      UI.h(UI.Icon, { n: `plus` }),
+      `افزودن برنامه`,
+    ),
+    UI.h(
+      `nav`,
+      { className: `ui-dock`, "aria-label": `بخش‌های برنامه` },
+      UI.h(Be, { to: `/`, className: `ui-dock-btn` }, UI.h(UI.Icon, { n: `code` }), `ویرایشگر`),
+      UI.h(`button`, { type: `button`, className: `ui-dock-btn`, "aria-current": `page` }, UI.h(UI.Icon, { n: `grid` }), `برنامه‌ها`),
+      UI.h(`button`, { type: `button`, className: `ui-dock-btn`, "data-testid": `dock-hub`, onClick: () => window.CodePadHub?.open() }, UI.h(UI.Icon, { n: `spark` }), `هاب`),
+      UI.h(`button`, { type: `button`, className: `ui-dock-btn`, "data-studio-launch": "", "aria-label": `بازکردن کارگاه CodePad Studio`, onClick: () => window.CodePadStudio?.open(`projects`) }, UI.h(UI.Icon, { n: `tool` }), `استودیو`),
+      UI.h(`button`, { type: `button`, className: `ui-dock-btn`, onClick: () => v(`settings`) }, UI.h(UI.Icon, { n: `sliders` }), `ظاهر`),
+    ),
+    E ? UI.h(`div`, { role: `status`, className: `ui-root ui-toast` }, E) : null,
+    c ? UI.h(vt, { app: c, host: le, accent: n.accent, onClose: () => u(null) }, c.id + c.installedAt) : null,
+    y
+      ? UI.h(jn, {
+          api: se,
+          hostname: n.hostname,
+          devMode: n.devMode,
+          setDevMode: (e) => void F({ devMode: e }),
+          onClose: () => b(!1),
+          accent: n.accent,
+        })
+      : null,
+    x ? UI.h(xt, { initialUrl: x.url, accent: n.accent, onClose: () => S(null) }) : null,
+    UI.h(sn, {
+      open: _ === `settings`,
+      onOpenChange: (e) => v(e ? `settings` : null),
+      prefs: n,
+      setPrefs: P,
+      version: Mn,
+      onOpenDev: () => v(`dev`),
+      onOpenGemini: () => v(`gemini`),
+      geminiConnected: codepadAI.aiReady(i),
+      onExport: () => void be(),
+      onImport: (e) => void Se(e),
+    }),
+    UI.h(nn, {
+      open: _ === `gemini`,
+      onOpenChange: (e) => v(e ? `gemini` : null),
+      settings: i,
+      setSettings: oe,
+      accent: n.accent,
+      page: A,
+    }),
+    UI.h(mt, {
+      open: _ === `install`,
+      onOpenChange: (e) => v(e ? `install` : null),
+      accent: n.accent,
+      onInstalled: (e, t) => {
+        (B.getState().patch(e.id, { page: A }), I(`«${e.name}» نصب شد`), t && (v(null), u(e)));
+      },
+    }),
+    UI.h(It, {
+      open: _ === `dev`,
+      onOpenChange: (e) => v(e ? `dev` : null),
+      prefs: n,
+      setPrefs: (e) => void P(e),
+      runScript: R,
+      onEditApp: (e) => {
+        (v(null), m(e));
+      },
+      onOpenTerminal: () => {
+        (v(null), b(!0));
+      },
+    }),
+    UI.h(ut, {
+      app: d,
+      onOpenChange: (e) => !e && f(null),
+      accent: n.accent,
+      devMode: n.devMode,
+      pages: n.pages,
+      onEditCode: (e) => {
+        (f(null), m(e));
+      },
+      onRemove: (t) => {
+        window.confirm(`«${t.name}» حذف شود؟`) && (e(t.id), f(null));
+      },
+    }),
+    UI.h(dt, { app: p, onOpenChange: (e) => !e && m(null), accent: n.accent, gemini: i }),
+  );
 }
 export { In as component, Jt as StudioWorkspace, Yt as runStudioAgent };

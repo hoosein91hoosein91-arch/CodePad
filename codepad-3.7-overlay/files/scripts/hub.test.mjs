@@ -76,11 +76,10 @@ test("Nova is no longer offered for new projects (existing projects still open)"
   assert.ok(rt.includes("nava: { label:"), "nava runtime kept so old projects still open");
 });
 
-test("hub is wired: script, styles, entry points; Studio/Cyber no longer sit side by side in the toolbar", () => {
+test("hub is wired: script, styles, entry points", () => {
   const html = read("mobile-src/index.html");
-  for (const f of ["assets/hub.js", "assets/hub.css", "background/libs-loader.js", "assets/python-3d.js"]) assert.ok(html.includes(f), f);
-  assert.match(read("mobile-src/assets/launcher.js"), /CodePadHub\?\.open\(\)[\s\S]{0,80}dock-hub/);
-  assert.match(read("mobile-src/assets/hub.css"), /\.cp-workspaces \[data-studio-launch\]/);
+  for (const f of ["assets/hub.js", "assets/ui.css", "background/libs-loader.js", "assets/python-3d.js"]) assert.ok(html.includes(f), f);
+  assert.match(read("mobile-src/assets/launcher.js"), /dock-hub[\s\S]{0,120}CodePadHub\?\.open\(\)/);
 });
 
 import { addNote, loadNotes, updateNote, removeNote, CVE_RE } from "../mobile-src/assets/hub-security.js";

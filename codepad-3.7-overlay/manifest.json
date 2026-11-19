@@ -1,21 +1,17 @@
 {
- "base": "CodePad-3.7.0-source.zip",
+ "base": null,
  "files": {
   "capacitor.config.json": {
    "base": "6b1e723779b4d7f761bf53b0819bf645511c7a7fd60b44acf663b4af395b88a5",
    "new": "497e9b4d33309b62b4eebdfaaea072061f6fbea38393821f3cc626dbcba4b385"
   },
-  "export-player-src/python-runner.js": {
-   "base": "de7e7d3e998ffbae160d039328776b24b02c8ef6967d02e071419de609c1e891",
-   "new": "7097bf56ab12f6f36e0a124b5ee73e66052663f15386af6f16d193c52e228640"
+  "mobile-src/apk-template.bin": {
+   "base": "9455ed3a3fce9f9b627412d441a726ec9e55fc46a1b96afbb18157cb13bcedf0",
+   "new": "0bc127d89fb3ed7451804b9aa47779a3b53ea1fea24aae9694cbfbddd775e171"
   },
   "mobile-src/assets/ai-provider.js": {
    "base": null,
    "new": "84a22740c8d410c5deb8b4fc36528c7190cf85007a0446e88b261baf20aac11c"
-  },
-  "mobile-src/assets/confidential.css": {
-   "base": null,
-   "new": "810c35ba1fd88966b911caf30eba03b967e94581fa58baeeab93046a4a1b1979"
   },
   "mobile-src/assets/confidential.js": {
    "base": null,
@@ -23,7 +19,7 @@
   },
   "mobile-src/assets/cyber-lab.js": {
    "base": null,
-   "new": "dd87ff4403b43dd9cdae942f2f2c9a130199313a80c0b2bb415da9cfe498493d"
+   "new": "c92c0de781a2c69eb9f00a2ccee5d36707f5b04ffc55678210a020a86675a06e"
   },
   "mobile-src/assets/cyber-samples.js": {
    "base": null,
@@ -35,31 +31,23 @@
   },
   "mobile-src/assets/editor.js": {
    "base": "cde83abd5ce89a935f59ec42617bb1629ecb3e1f8a72728e60987257b6f1915d",
-   "new": "3087eb90681d69ff35451976b098ef60166000c288179683bcd594e7ca77d578"
+   "new": "ae4b5f9f6e12842bcd7813ccb6ab56c684cbe376d8c2dc72685d4046fdcb32ff"
   },
   "mobile-src/assets/focus-playlist.js": {
    "base": null,
    "new": "94ac1eb90803b214a8968ef352cb21fed2dba21e45ad516a26f521db30e90f6b"
   },
-  "mobile-src/assets/hacker.css": {
-   "base": null,
-   "new": "bfd388de99a6d1d524f99ac4e32a053307afb475853712dc718fad23fece14e3"
-  },
   "mobile-src/assets/hub-academy-data.js": {
    "base": null,
    "new": "dc5b4e971ca52fb6a554e20db30f386b6aa0b55ace92b0624a262d17429afcb9"
   },
-  "mobile-src/assets/hub-academy.css": {
-   "base": null,
-   "new": "09ebbffadd974d43e141cbd17eae2d6989ab404d673d4ff5940355e00481151c"
-  },
   "mobile-src/assets/hub-academy.js": {
    "base": null,
-   "new": "e2e0c5f434d9f99e0d6ccb1c698f2bd66f6d53d301b455090f9e2a50318258bc"
+   "new": "057611623e2cca69385c1db8528a865b5714f6e7fce6b789ee1f77e07a49a41c"
   },
   "mobile-src/assets/hub-confidential.js": {
    "base": null,
-   "new": "11eeb19b02cf497b469af64df61bbcdb55cfe108396bb507c90af0f50f9b4757"
+   "new": "eb963845236b27e75c77d2c174741ef17fb2b7265671f8fbb0821c8820e837a9"
   },
   "mobile-src/assets/hub-ctf-data.js": {
    "base": null,
@@ -87,35 +75,55 @@
   },
   "mobile-src/assets/hub-reference.js": {
    "base": null,
-   "new": "f488756215959793c0d0236df86831d8b67e93f9f45ff854cc441689a0aa0c60"
+   "new": "18c3eac5fbb045ac9fd9b432a5c149449aec8b74ff7fc874ca901aad4e4b31e2"
   },
   "mobile-src/assets/hub-security.js": {
    "base": null,
-   "new": "332ebe38ccba1a4f08a1398d628cd49a5468a330fb467316f8147cebe0b0aea6"
+   "new": "2080af53756ac708c98beb994008fb604ac9be35ebbb12039e1a523d536e980f"
   },
   "mobile-src/assets/hub-stats.js": {
    "base": null,
-   "new": "b1d929c8abe72e2f4916093867a9c7a8e14d7988497da7826f12bdf3ab8be83b"
-  },
-  "mobile-src/assets/hub.css": {
-   "base": null,
-   "new": "71d2d419d5af4271323f7759fb543b6738fb3426ba5614bc393b0c08253b30e1"
+   "new": "c6c63f557e7b38c11a703ca6fea1da5ac1ae19f3d9e05c257ebaabf05a77af6d"
   },
   "mobile-src/assets/hub.js": {
    "base": null,
-   "new": "58a84a2fc8cc47f6a4da9a995f584a85759e9a7d3c3eb2f262284aab066d11d0"
+   "new": "db71050cadd112fc18b20a91c8101cf1891c69168a83810b916e52979a10119c"
   },
   "mobile-src/assets/launcher.js": {
    "base": "d5e4a2d7ce3e75d7991629d2e4f8158cd5731e961a5d39c864bde32099baeee8",
-   "new": "0c47b553b956ee6d454b0224b19a6dbcbcb3a94c71beca2116eb029616c990d9"
+   "new": "cf6a515a9c4a76874c6d7cf51f43b633e7c0c420fe0ef4fe64a6148c4bc21247"
   },
-  "mobile-src/assets/music.css": {
-   "base": null,
-   "new": "b2d01a0c7d846707cdb7766f8c0e8ca8653dcba8264eef5d6dfbb59f97e81bc4"
+  "mobile-src/assets/lesson-player.js": {
+   "base": "1d4c0e3f4ee0ab27d0bab15d00891bccd81669b6c154f5a1df52beab2636db20",
+   "new": "552a7971c3edb532ead11416e2ddc2f969da0325b6606d9bef14946a911de66a"
+  },
+  "mobile-src/assets/main.js": {
+   "base": "c4ba156c09d873a2e1ebc7283b73a8766c40f39cb6f72c6e67eb3afcb001d854",
+   "new": "22a864556b5ede2ead7cfeeff70ab04d3c049e142d4c6cfd64cf645efb498a76"
+  },
+  "mobile-src/assets/media-core.js": {
+   "base": "ed00ca7d47ac53779f3a9c98f15a3f5dbd4a2edadd1f3fffee2c61023bab9c69",
+   "new": "a43a4360e7b7fd710fa4124f62535dc769c5d36e54528ebaa1bc0bb61efa42f8"
+  },
+  "mobile-src/assets/media-studio.css": {
+   "base": "3db4ad1f86b5da3a80a03a0138e178eb1bb1a0c47d21ab8b4a78845ff85edc57",
+   "new": "7ddb582b9fbd3c4fce2e2d70988c2a07006773d2ad88f26d311a435c8e2a1227"
+  },
+  "mobile-src/assets/media-studio.js": {
+   "base": "17e9f5c35bab649f8c574b603a8f79bc2dbdf40a62386ef6a9492ad635a63db1",
+   "new": "81a22594de67144fbea71f422f295cebed6ee40ff9fc2c97bd6f5f56fe49bb58"
   },
   "mobile-src/assets/music.js": {
    "base": null,
-   "new": "7367ba72b9b11ad2d057b25199e1f3a2e0b8c2543ecce63a65aec2c2823afea4"
+   "new": "cf6f4924ecad929776375137414b2e63f7546609f08a770cf01d035d4784d9b9"
+  },
+  "mobile-src/assets/opencv-studio.js": {
+   "base": "bd2c2a6e2ed180d0d647d7c7416d741828ff971b79ce67f3fbe34fd792b7a6bd",
+   "new": "8f1dfe0e1b37cd7ead10220f911be9b296d87cfac69895596de28b77c251d713"
+  },
+  "mobile-src/assets/project-import.js": {
+   "base": "b42c2e68cff74d79be3d80a51c72aab3755d7e23425dc8b4294aa476c33cbf2c",
+   "new": "fafdacf2321805872cfa6ebcf428b9cd592349280dd9927fd27f319e3df9b934"
   },
   "mobile-src/assets/project-zip.js": {
    "base": "d39bd45c49a366aa0152a0ee3c3dd613e123de5dbfaf764f144084a0dc7818c2",
@@ -123,11 +131,15 @@
   },
   "mobile-src/assets/python-3d.js": {
    "base": null,
-   "new": "b60c2cf1669d57d6d0238e6ea091d82326f1ad37308f05d6e3666782b7260dff"
+   "new": "f586867511fafb98230350897337cffa023f69855c146335bff085775c21202b"
   },
   "mobile-src/assets/python-engine.js": {
    "base": "9edc05a8d6b6853158cfd786305fd6b9a79bc17ce4f5f7b1190cbeb9d93033f6",
    "new": "bfbf98b1814a0ceae750b6f58a279b8237f8fe721bb1ffd9807ed42f57d48f9a"
+  },
+  "mobile-src/assets/python-graphics.css": {
+   "base": "a2d0f7984a7391ed0490fdda1bc7ecce60367098987fcb0a81e22fe97943f81e",
+   "new": "922862a6169d79100cb1e09ecaac83279c460d453c831dc75779a036f79f3832"
   },
   "mobile-src/assets/python-graphics.js": {
    "base": "4778c7ad035b37c2ca00ac23e1c39f13a96dbe0191a4caedb2ecbd0cfcfec685",
@@ -137,9 +149,13 @@
    "base": "d09882459c0078bf70154f4562a9b3a9208a63b616a7bde7029e8822c9382864",
    "new": "fbf7274f95f0d5d45730171b2507351b9c3bb8e019989d2900de117f916f0551"
   },
+  "mobile-src/assets/recovery.js": {
+   "base": "10df84dc206d3d988b78e41fa99140202da6e78f98da6d3282d64ef6b068e0a6",
+   "new": "e49aa641b5bb631340ce886074d1ff458b2873d16e210d1e4747fc559aa69654"
+  },
   "mobile-src/assets/report-export.js": {
    "base": null,
-   "new": "46f4b5f911ac0dc0374a9bd20c4afb97cdb3be92451bc2d46e077911b6a2836b"
+   "new": "ce202d493bed4e31b1370414c42162c0b7786a7b568363f5076c3794eea4bf2f"
   },
   "mobile-src/assets/run-config.js": {
    "base": null,
@@ -147,7 +163,7 @@
   },
   "mobile-src/assets/runtime.js": {
    "base": "ff4218a9802a6804384fb45414c2cdbe2bd6632af1f8fffdd09a7a4a524aa2c8",
-   "new": "482cd0efeb3834465ba1f448d1a11d0022fd6e7fb127275c89515e12b5c1cbb4"
+   "new": "1d7f1e693f2e720327d65d6ce5908a884f343d34f3e2f3b251bd2613090f08f8"
   },
   "mobile-src/assets/studio-core.js": {
    "base": "a439c1b911dc64bb50a2cac1ee5bd60a1e0faef66210e29b1738dd422f5769f9",
@@ -155,11 +171,95 @@
   },
   "mobile-src/assets/studio.js": {
    "base": "7aa11c842338e4db85b1d6787b25a9b24bdf9ffeda24a4fd5716541ade6f5d8f",
-   "new": "52c640a1ddcbd7b27aa6d5427de9793d12fde25d904af94abb46c702c985e630"
+   "new": "9a80bc515c23bf152ba245d99d03e8031c00483de317b8acb0b9ffe963cd1b5f"
+  },
+  "mobile-src/assets/styles.css": {
+   "base": "1f717115739cc0311b11d937abb9e4958b4eea3b4cc63dfb6287853bc8488f31",
+   "new": "eeb59a5138ab8eb2f5ad055720ded1bc9caefed6fa033119e2b5e962ad03ee8d"
+  },
+  "mobile-src/assets/ui-dom.js": {
+   "base": null,
+   "new": "e94ce0f83439da52d2256c0e6de409c77838de82a73d949351567d0203b9bead"
+  },
+  "mobile-src/assets/ui-icons.js": {
+   "base": null,
+   "new": "206548afc0579cc9a9fed06d58cd46fb1aaadc332e785e63c9d2341899234cac"
+  },
+  "mobile-src/assets/ui-kit.js": {
+   "base": null,
+   "new": "50ac3718921a3f67ff93f0347d0ec2646752cf39e48f719ecca334609d3ff6a7"
+  },
+  "mobile-src/assets/ui-overlay.js": {
+   "base": null,
+   "new": "5127081a5fb3fcbbca2a68eba23eb5b72fd5774690f4bf00c36e0a209324c09c"
+  },
+  "mobile-src/assets/ui.css": {
+   "base": null,
+   "new": "8e9ad678514c72ade4d47944a5ce61871d32e8da6bd3d148973908154c0d52e1"
+  },
+  "mobile-src/assets/update-studio.js": {
+   "base": "d67992d13dedef851a90cc0c6d6ba97ccb533d26f7a446c5c39faaeaf1c90db0",
+   "new": "3eabe32a3e99e6fbce912ad86387f28685ed6e4fadbaa262c8e13c9a3339c4f0"
+  },
+  "mobile-src/assets/vision-host.js": {
+   "base": "7dcda1d99b30984c285a84c16f62c3db6c8ec22b559a5cd678e19649e590c618",
+   "new": "7fb3934240c329751189ac6147286bb5ab4ee69ae10551f1cc6c7262e62ad627"
+  },
+  "mobile-src/assets/vision.css": {
+   "base": "25325fa06edcc49b4fc1268adef8e93b9f825a4d8940eed0dbfd93c434186292",
+   "new": "5581c48696340013df090cab56e7659cd44c97d1fd1ad9c021617bb823ef4862"
+  },
+  "mobile-src/desktop-template.bin": {
+   "base": "8844fceafb0a51b6d32e31c25caae0a99abfee4b947c31b80c6fe55c780a4756",
+   "new": "fa45b14ac0b123435964ae1d6dbeb5698a9f7d9543837931c4599809baca7f71"
+  },
+  "mobile-src/export-overrides.json": {
+   "base": "bf30c3615db64bcf6604d7a32196afaf75cdfef289971253cb29ff3d0aa763c9",
+   "new": "01c77a6f31797c1a62cb7977b4a32ee2c7db58028669adfb6da444dbe05bc1c7"
+  },
+  "mobile-src/export-runtime/assets/python-engine.js": {
+   "base": "9edc05a8d6b6853158cfd786305fd6b9a79bc17ce4f5f7b1190cbeb9d93033f6",
+   "new": "bfbf98b1814a0ceae750b6f58a279b8237f8fe721bb1ffd9807ed42f57d48f9a"
+  },
+  "mobile-src/export-runtime/assets/python-graphics.css": {
+   "base": "a2d0f7984a7391ed0490fdda1bc7ecce60367098987fcb0a81e22fe97943f81e",
+   "new": "922862a6169d79100cb1e09ecaac83279c460d453c831dc75779a036f79f3832"
+  },
+  "mobile-src/export-runtime/assets/python-graphics.js": {
+   "base": "4778c7ad035b37c2ca00ac23e1c39f13a96dbe0191a4caedb2ecbd0cfcfec685",
+   "new": "acd6d27d3cadb8156e6f1c2d5d0e431fc3a7028375d0fe4f02e7ad6c2730842c"
+  },
+  "mobile-src/export-runtime/assets/python-input.js": {
+   "base": "d09882459c0078bf70154f4562a9b3a9208a63b616a7bde7029e8822c9382864",
+   "new": "fbf7274f95f0d5d45730171b2507351b9c3bb8e019989d2900de117f916f0551"
+  },
+  "mobile-src/export-runtime/background/codepad.py": {
+   "base": "0650eb97b685c60a3124a1292db4d2e1f3542422d3edd554a19b7dcfccf8d191",
+   "new": "d922f869050eb3d0c894a9582f32b5e443c0cea053256f40cf9be3689a15cc95"
+  },
+  "mobile-src/export-runtime/background/codepad_console.py": {
+   "base": "cce71f2147c985ffb347f97d8f3a271dea3d0d7732e2371bf9ac29e259673d44",
+   "new": "4753e96d23ef3b191bbc44423df45361f029a608550366bc05e953e8015f10ae"
+  },
+  "mobile-src/export-runtime/background/interactive-input.js": {
+   "base": "8d03865317b24b86618fc3b0de322affedd25d3e92e19ff05fde3b6c9e94dffc",
+   "new": "9b2154369d4da1111db592f740cd9fc5f70ca1b305217fabf3bc2c090b06122b"
+  },
+  "mobile-src/export-runtime/background/native-worker.js": {
+   "base": "4583778598ab6212b6c6acce02354e0e6a82c9e2e872ee6380237e8fc5d1910f",
+   "new": "25a66426375e41f90143f53f448be484a398bb402612c4aeaba9ae4c64b8008f"
+  },
+  "mobile-src/export-runtime/background/python-worker.js": {
+   "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
+   "new": "8ec1e2bce082dcb19b25428db05e09d3dbba00bb5762d4b4d5cbebde352f9077"
+  },
+  "mobile-src/export-runtime/python-runner.js": {
+   "base": "de7e7d3e998ffbae160d039328776b24b02c8ef6967d02e071419de609c1e891",
+   "new": "7097bf56ab12f6f36e0a124b5ee73e66052663f15386af6f16d193c52e228640"
   },
   "mobile-src/index.html": {
    "base": "eddf31ab45fbae51a673637b45befd1998ed83b3f06fa9f95a78b70b8644307d",
-   "new": "4e97be614064f76903a48739d3baeb5edabccf930f23642ffe747f04571de1b0"
+   "new": "5fbee6aaed867b90421ae7f7a6e59d3989b2876aebacb4fd856dfbec8851679b"
   },
   "package.json": {
    "base": "590b6a8f07d9f59f713bbe216cd4b33d45050051086e30c2f21b292645a69d4e",
@@ -181,9 +281,17 @@
    "base": null,
    "new": "0d1d495cfd8c846c70daadc0caaa4ecd95e729821b938cd2f537a4bb47fd0542"
   },
+  "public/background/native-worker.js": {
+   "base": "4583778598ab6212b6c6acce02354e0e6a82c9e2e872ee6380237e8fc5d1910f",
+   "new": "25a66426375e41f90143f53f448be484a398bb402612c4aeaba9ae4c64b8008f"
+  },
   "public/background/python-worker.js": {
    "base": "9f0a7f38e226d80e4edeea6c0fbb74354c5562cd1dfa104f62a3316255a198aa",
    "new": "8ec1e2bce082dcb19b25428db05e09d3dbba00bb5762d4b4d5cbebde352f9077"
+  },
+  "public/background/status.css": {
+   "base": "0eccb64c9320c9f2715e4ab41ef7fd2c72c6c9c322c4da6dfdd522e6f1f6a21e",
+   "new": "79d3517d612998965ee270388e28ab9b45aa149bfaab3c61194da12961e8ddea"
   },
   "public/favicon.svg": {
    "base": "c0e71d00c451894886c3a5bd362d1ff714afe0b2627d697406f8111fe428d2a2",
@@ -349,6 +457,14 @@
    "base": "bc8d515dbd4ae73552c6e6a3592d0f66936fd7f785fbd9aaab73a9e5958f2855",
    "new": "abaf4597d13e56711cf1101f89632da6d50091d7bf60e3c6de4a901dca522e60"
   },
+  "resources/windows/app-launcher/README-Windows.txt": {
+   "base": null,
+   "new": "a70202d7ff64f3f2fb80a01f4b635c255a1c48ca1ef737249940a410adcb493c"
+  },
+  "resources/windows/app-launcher/main.go": {
+   "base": null,
+   "new": "8c882891f1d1ccb282bccd4c7e52a30f413d7669dac34332e1ab874b7641397f"
+  },
   "resources/windows/desktop/README-Desktop.txt": {
    "base": null,
    "new": "33e3228b24bdbf45869bc4683b72ba1e56934fc0c7cc4110779511d91d0a154b"
@@ -391,7 +507,7 @@
   },
   "scripts/build-mobile.mjs": {
    "base": "dafd9e6449995d55986b6a85d04571a2b0e781e3ad09807c542e83fcc6aecd00",
-   "new": "ef8894a74055d25768dcb65873b80b1be15c499ee6d94d8d5ef1d18b171d52ee"
+   "new": "a02709a91b0f0694e2a164d07c8bdf8dbf96a0004faa4342be0eb669b22a3ab2"
   },
   "scripts/build-windows-desktop.mjs": {
    "base": null,
@@ -439,11 +555,19 @@
   },
   "scripts/hub.test.mjs": {
    "base": null,
-   "new": "d6d5c79e41c92e9b12ae5fdff3ad2d86696151191b4b5d41d2e473994cd6fdd8"
+   "new": "fd22e6f4fdad9966538f846bb5c37d069ea30aca0e2cfe699f0ac21db874bedc"
+  },
+  "scripts/make-cpupdate.mjs": {
+   "base": null,
+   "new": "be55d25e2be423bae4d940ef447a8b444c1ed5a04f7d41352189e0bc7e7d421c"
   },
   "scripts/music.test.mjs": {
    "base": null,
    "new": "8d68bb39bbac613d6b596e56839e572be36def949854b8fc55ba2e84e8c322fc"
+  },
+  "scripts/package-windows.py": {
+   "base": null,
+   "new": "60a3eca997760c5e762ffae2b10c4f55c0328e78c71dd7dfd433460250ebee9d"
   },
   "scripts/python-host.test.mjs": {
    "base": null,

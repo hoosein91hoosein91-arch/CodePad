@@ -1,3 +1,4 @@
+import { makeKit, applyUiTheme } from "./ui-kit.js";
 import * as codepadAI from "./ai-provider.js";
 import { readRunConfig } from "./run-config.js";
 import {mediaBlobURL,revokeMediaURL,sandboxMediaDocument} from './sandbox-media.js';
@@ -5824,13 +5825,8 @@ var toThenable = (e) => (t) => {
     );
   },
   persist = persistImpl,
-  WELCOME = [
-    { id:'w1', stream:'sys', text:'CodePad // Night Terminal' },
-    { id:'w2', stream:'sys', text:'کد بنویس، پروژه اجرا کن، خروجی APK بساز.' },
-    { id:'w3', stream:'sys', text:'از Studio پروژهٔ ZIP، ترمینال و کتابخانه‌ها را باز کن.' },
-    { id:'w4', stream:'sys', text:'نمونه‌های دوربین و سه‌بعدی در Studio ← استودیوی دوربین هستند.' },
-    { id:'w5', stream:'sys', text:'Python · JavaScript · HTML · NAVA' },
-  ];
+  WELCOME = [];
+
 function isFile(e) {
   if (!e || typeof e != `object`) return !1;
   let t = e;
@@ -30328,6 +30324,8 @@ var runPython = (e, t, n, entryFile) => runPythonRaw(e, t, n, entryFile),
     dim: 80,
     fontSize: 15,
     autocomplete: !0,
+    palette: `aurora`,
+    ligatures: !1,
   },
   safeStorage = {
     getItem: (e) => (typeof window > `u` ? null : localStorage.getItem(e)),
@@ -30353,13 +30351,17 @@ var runPython = (e, t, n, entryFile) => runPythonRaw(e, t, n, entryFile),
     }),
   );
 function applyTheme(e) {
-  let t = document.documentElement.style;
-  (t.setProperty(`--color-paper`, e.text),
-    t.setProperty(`--color-lime`, e.accent),
-    t.setProperty(`--color-ink`, e.image ? `color-mix(in srgb, ${e.bg} ${e.dim}%, transparent)` : e.bg),
-    t.setProperty(`--editor-font-size`, `${e.fontSize}px`),
-    (document.body.style.background = e.image ? `url("${e.image}") center / cover fixed, ${e.bg}` : ``));
+  applyUiTheme(e);
+  // Retain the exported API for existing modules. Visual values come only
+  // from the shared palette; legacy wallpaper preferences remain stored.
+  const style = document.documentElement.style;
+  style.setProperty('--color-paper', 'var(--ui-text)');
+  style.setProperty('--color-lime', 'var(--ui-primary)');
+  style.setProperty('--color-ink', 'var(--ui-bg)');
+  style.setProperty('--editor-font-size', `${e.fontSize || 15}px`);
+  document.body.style.background = '';
 }
+
 var TermuxBridge = registerPlugin(`TermuxBridge`);
 async function runTermuxCommand(e) {
   if (!Capacitor.isNativePlatform()) throw Error(`اتصال Termux فقط در نسخهٔ نصب‌شدهٔ Android کار می‌کند.`);
@@ -30636,48 +30638,12 @@ function rememberApkVersion(e, t, n = localStorage) {
     i = Number.isInteger(r[e]) ? r[e] : 0;
   ((r[e] = Math.max(t, i)), n.setItem(STORAGE, JSON.stringify(r)));
 }
-function Sheet({ title: e, icon: t, children: n, open: r, onOpenChange: i, testId: o }) {
-  return (0, import_jsx_runtime.jsx)(Dialog, {
-    open: r,
-    onOpenChange: i,
-    children: (0, import_jsx_runtime.jsxs)(DialogPortal, {
-      children: [
-        (0, import_jsx_runtime.jsx)(DialogOverlay, {
-          className: `fixed inset-0 z-40 bg-black/70 backdrop-blur-sm`,
-        }),
-        (0, import_jsx_runtime.jsxs)(DialogContent, {
-          "data-testid": o,
-          "aria-describedby": void 0,
-          className: `jibos-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] w-full max-w-[460px] flex-col gap-4 overflow-y-auto rounded-t-[28px] border border-[color:var(--launcher-accent)]/25 bg-[#050b08]/95 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white shadow-[0_-10px_60px_rgba(0,255,156,.12)] outline-none`,
-          children: [
-            (0, import_jsx_runtime.jsxs)(`div`, {
-              className: `flex items-center justify-between`,
-              children: [
-                (0, import_jsx_runtime.jsxs)(`div`, {
-                  className: `flex items-center gap-2`,
-                  children: [
-                    t,
-                    (0, import_jsx_runtime.jsx)(DialogTitle, { className: `text-lg font-bold`, children: e }),
-                  ],
-                }),
-                (0, import_jsx_runtime.jsx)(DialogClose, {
-                  className: `grid size-9 place-items-center rounded-full bg-white/8`,
-                  "aria-label": `بستن`,
-                  children: (0, import_jsx_runtime.jsx)(X, { className: `size-4` }),
-                }),
-              ],
-            }),
-            n,
-          ],
-        }),
-      ],
-    }),
-  });
+const UI = makeKit(import_react);
+function Sheet({ title, children, open, onOpenChange, testId }) {
+  return UI.h(UI.Sheet, {title, open, onOpenChange, testId}, children);
 }
-var field = `w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-[color:var(--launcher-accent)]`,
-  codeArea = `w-full resize-y rounded-2xl border border-white/10 bg-black/60 p-3 font-mono text-xs leading-5 text-[color:var(--launcher-accent)] outline-none`,
-  primaryBtn = `h-11 rounded-xl font-bold text-black disabled:opacity-50`,
-  ghostBtn = `h-10 rounded-xl bg-white/10 px-3 text-sm`;
+var field = 'ui-input', codeArea = 'ui-input ui-area ui-ltr',
+  primaryBtn = 'ui-btn ui-btn--primary', ghostBtn = 'ui-btn ui-btn--line';
 function ApkExportSheet({ target: e, onClose: t, accent: n = `#c6f135` }) {
   let [r, i] = (0, import_react.useState)(`android`),
     [o, l] = (0, import_react.useState)(``),
@@ -30795,424 +30761,160 @@ function ApkExportSheet({ target: e, onClose: t, accent: n = `#c6f135` }) {
       ((k.current = e), await ee(D, e, j.current));
     },
     F = S === `idle` || S === `collect` ? 0 : S === `build` ? 1 : 2;
-  return (0, import_jsx_runtime.jsxs)(Sheet, {
-    title: `خروجی برنامه`,
-    icon: (0, import_jsx_runtime.jsx)(Package, { className: `size-5`, style: { color: n } }),
-    open: !!e,
-    onOpenChange: (e) => {
-      e || (j.current++, k.current?.abort(), t());
+  return UI.h(
+    UI.Sheet,
+    {
+      title: `خروجی برنامه`,
+      open: !!e,
+      onOpenChange: (ev) => {
+        ev || (j.current++, k.current?.abort(), t());
+      },
+      testId: `apk-export-sheet`,
     },
-    testId: `apk-export-sheet`,
-    children: [
-      (0, import_jsx_runtime.jsx)(`div`, {
-        className: `grid grid-cols-2 gap-2`,
-        role: `group`,
-        "aria-label": `نوع خروجی`,
-        children: [`android`, `windows`].map((e) =>
-          (0, import_jsx_runtime.jsxs)(
-            `button`,
-            {
-              type: `button`,
-              disabled: M,
-              "aria-pressed": r === e,
-              className: `flex min-h-12 items-center justify-center gap-2 rounded-xl border text-sm font-bold transition-colors ${r === e ? `border-lime/40 bg-lime/10 text-lime` : `border-line bg-panel text-mist hover:text-paper`}`,
-              onClick: () => {
-                (i(e), N());
-              },
-              children: [
-                e === `android`
-                  ? (0, import_jsx_runtime.jsx)(Smartphone, { className: `size-4` })
-                  : (0, import_jsx_runtime.jsx)(Monitor, { className: `size-4` }),
-                e === `android` ? `اندروید · APK` : `ویندوز · PC`,
-              ],
-            },
-            e,
-          ),
-        ),
-      }),
-      (0, import_jsx_runtime.jsxs)(`div`, {
-        className: `agent-surface relative shrink-0 overflow-hidden p-5`,
-        children: [
-          (0, import_jsx_runtime.jsx)(`div`, {
-            className: `absolute -end-8 -top-8 size-36 rounded-full opacity-10 blur-2xl`,
-            style: { background: n },
-          }),
-          (0, import_jsx_runtime.jsxs)(`div`, {
-            className: `relative flex items-center gap-4`,
-            children: [
-              (0, import_jsx_runtime.jsx)(`div`, {
-                className: `grid size-16 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/5`,
-                children:
-                  r === `android`
-                    ? (0, import_jsx_runtime.jsx)(Smartphone, { className: `size-8`, style: { color: n } })
-                    : (0, import_jsx_runtime.jsx)(Monitor, { className: `size-8`, style: { color: n } }),
-              }),
-              (0, import_jsx_runtime.jsxs)(`div`, {
-                className: `min-w-0`,
-                children: [
-                  (0, import_jsx_runtime.jsxs)(`p`, {
-                    className: `font-mono text-[10px] tracking-[.18em] text-mist`,
-                    dir: `ltr`,
-                    children: [`YOUR APP · `, r === `android` ? `ANDROID` : `WINDOWS`],
-                  }),
-                  (0, import_jsx_runtime.jsx)(`h3`, {
-                    className: `mt-1 truncate text-xl font-bold`,
-                    "data-testid": `apk-app-name`,
-                    children: o,
-                  }),
-                  (0, import_jsx_runtime.jsx)(`p`, {
-                    className: `mt-1 text-xs leading-5 text-mist`,
-                    children: `آمادهٔ ساخت، با تنظیمات خودکار`,
-                  }),
-                ],
-              }),
-            ],
-          }),
-          (0, import_jsx_runtime.jsxs)(`div`, {
-            className: `relative mt-5 flex items-center justify-between gap-2 border-t border-white/8 pt-4 text-xs`,
-            children: [
-              (0, import_jsx_runtime.jsxs)(`span`, {
-                className: `text-mist`,
-                children: [e?.files.length ?? 0, ` فایل + پیوست‌های پروژه`],
-              }),
-              (0, import_jsx_runtime.jsx)(`span`, {
-                className: `max-w-[55%] truncate rounded-md bg-white/5 px-2 py-1 font-mono`,
-                dir: `ltr`,
-                "data-testid": `apk-entry`,
-                children: u,
-              }),
-            ],
-          }),
-        ],
-      }),
-      (0, import_jsx_runtime.jsx)(`div`, {
-        className: `grid grid-cols-3 gap-2`,
-        "aria-label": `مراحل خروجی برنامه`,
-        children: [`پروژه`, `ساخت`, `ذخیره`].map((e, t) => {
-          let r = t < F || S === `saved`,
-            i = t === F && S !== `saved`;
-          return (0, import_jsx_runtime.jsxs)(
-            `div`,
-            {
-              className: `flex flex-col items-center gap-2 py-1`,
-              children: [
-                (0, import_jsx_runtime.jsx)(`span`, {
-                  className: `grid size-8 place-items-center rounded-full border ${r || i ? `border-transparent` : `border-white/10 bg-white/5 text-mist`}`,
-                  style: r || i ? { background: r ? n : `${n}20`, color: r ? `#101410` : n } : void 0,
-                  children: r
-                    ? (0, import_jsx_runtime.jsx)(Check, { className: `size-4` })
-                    : M && i
-                      ? (0, import_jsx_runtime.jsx)(LoaderCircle, { className: `size-4 animate-spin` })
-                      : t + 1,
-                }),
-                (0, import_jsx_runtime.jsx)(`span`, {
-                  className: `text-xs ${i || r ? `text-paper` : `text-mist`}`,
-                  children: e,
-                }),
-              ],
-            },
-            e,
-          );
-        }),
-      }),
-      (0, import_jsx_runtime.jsx)(`p`, {
-        className: `text-sm leading-6 text-mist`,
-        children:
-          r === `android`
-            ? `قالب، شناسه، نسخه و کلید امضا خودکار آماده می‌شوند. فقط دکمهٔ پایین را بزن و فایل را ذخیره کن.`
-            : `برای ویندوز ۱۰ و ۱۱، نسخهٔ ۶۴ بیتی. ZIP را استخراج کن و Start.exe را باز کن؛ پایتون لازم نیست نصب باشد. نمایش برنامه با Edge یا Chrome انجام می‌شود.`,
-      }),
-      D
-        ? (0, import_jsx_runtime.jsxs)(`div`, {
-            className: `agent-surface flex items-center gap-3 p-4`,
-            "data-testid": `apk-ready`,
-            children: [
-              (0, import_jsx_runtime.jsx)(CircleCheck, { className: `size-6 shrink-0`, style: { color: n } }),
-              (0, import_jsx_runtime.jsxs)(`div`, {
-                children: [
-                  (0, import_jsx_runtime.jsx)(`p`, {
-                    className: `text-sm font-bold`,
-                    children: r === `android` ? `فایل نصب آماده است` : `نسخهٔ قابل حمل آماده است`,
-                  }),
-                  (0, import_jsx_runtime.jsxs)(`p`, {
-                    className: `mt-1 font-mono text-xs text-mist`,
-                    dir: `ltr`,
-                    children: [
-                      (D.length / 1048576).toFixed(1),
-                      ` MB ·`,
-                      ` `,
-                      r === `android` ? `Android APK` : `Windows ZIP + EXE`,
-                    ],
-                  }),
-                ],
-              }),
-            ],
-          })
-        : null,
-      (0, import_jsx_runtime.jsxs)(`div`, {
-        className: `flex gap-2`,
-        children: [
-          (0, import_jsx_runtime.jsxs)(`button`, {
+    UI.h(
+      `div`,
+      { className: `ui-sheet-bar`, role: `group`, "aria-label": `نوع خروجی` },
+      [`android`, `windows`].map((x2) =>
+        UI.h(
+          `button`,
+          {
+            key: x2,
             type: `button`,
             disabled: M,
-            className: `${primaryBtn} flex flex-1 items-center justify-center gap-2`,
-            style: { background: n },
-            onClick: () => void (D ? te() : P()),
-            children: [
-              M
-                ? (0, import_jsx_runtime.jsx)(LoaderCircle, { className: `size-4 animate-spin` })
-                : D
-                  ? (0, import_jsx_runtime.jsx)(Download, { className: `size-4` })
-                  : (0, import_jsx_runtime.jsx)(Package, { className: `size-4` }),
-              M
-                ? S === `save`
-                  ? `در حال ذخیره…`
-                  : `در حال ساخت…`
-                : D
-                  ? `ذخیرهٔ دوباره`
-                  : r === `android`
-                    ? `ساخت و ذخیرهٔ APK`
-                    : `ساخت و ذخیرهٔ PC`,
-            ],
-          }),
-          S === `collect` || S === `build`
-            ? (0, import_jsx_runtime.jsx)(`button`, {
-                type: `button`,
-                "aria-label": r === `android` ? `توقف ساخت APK` : `توقف ساخت PC`,
-                className: `${ghostBtn} min-h-11`,
-                onClick: () => k.current?.abort(),
-                children: (0, import_jsx_runtime.jsx)(Square, { className: `size-4` }),
-              })
-            : null,
-        ],
+            "aria-pressed": r === x2,
+            className: `ui-seg`,
+            onClick: () => {
+              (i(x2), N());
+            },
+          },
+          x2 === `android` ? `اندروید · APK` : `ویندوز · PC`,
+        ),
+      ),
+    ),
+    UI.h(
+      `div`,
+      { className: `ui-card ui-stack` },
+      UI.h(
+        `div`,
+        { style: { display: `flex`, gap: 12, alignItems: `center` } },
+        UI.h(UI.Icon, { n: r === `android` ? `box` : `cpu`, size: 32 }),
+        UI.h(`div`, { className: `ui-row-main` }, UI.h(`strong`, { className: `ui-h2`, "data-testid": `apk-app-name` }, o), UI.h(`span`, null, r === `android` ? `برنامهٔ اندروید` : `برنامهٔ ویندوز`)),
+      ),
+      UI.h(
+        `div`,
+        { style: { display: `flex`, justifyContent: `space-between`, gap: 8, alignItems: `center` } },
+        UI.h(`span`, { className: `ui-caption` }, `${e?.files.length ?? 0} فایل + پیوست‌های پروژه`),
+        UI.h(`span`, { className: `ui-chip ui-ltr`, dir: `ltr`, "data-testid": `apk-entry` }, u),
+      ),
+    ),
+    UI.h(
+      `ol`,
+      { className: `ui-actions`, "aria-label": `مراحل خروجی برنامه`, style: { listStyle: `none`, margin: 0, padding: 0 } },
+      [`پروژه`, `ساخت`, `ذخیره`].map((x2, k2) => {
+        let done = k2 < F || S === `saved`,
+          cur = k2 === F && S !== `saved`;
+        return UI.h(`li`, { key: x2, className: `ui-chip` + (done ? ` ui-chip--ok` : cur ? ` ui-chip--primary` : ``), "aria-current": cur ? `step` : void 0 }, `${k2 + 1}. ${x2}` + (done ? ` (انجام شد)` : ``));
       }),
-      T
-        ? (0, import_jsx_runtime.jsx)(`p`, {
-            role: `status`,
-            className: `break-words text-xs leading-5 text-paper`,
-            "data-testid": `apk-status`,
-            children: T,
-          })
+    ),
+    UI.h(
+      `p`,
+      { className: `ui-muted`, style: { margin: 0 } },
+      r === `android`
+        ? `قالب، شناسه، نسخه و کلید امضا خودکار آماده می‌شوند. فقط دکمهٔ پایین را بزن و فایل را ذخیره کن.`
+        : `برای ویندوز ۱۰ و ۱۱، نسخهٔ ۶۴ بیتی. ZIP را استخراج کن و Start.exe را باز کن؛ پایتون لازم نیست نصب باشد. نمایش برنامه با Edge یا Chrome انجام می‌شود.`,
+    ),
+    D
+      ? UI.h(
+          UI.Note,
+          { tone: `ok`, "data-testid": `apk-ready` },
+          UI.h(`strong`, null, r === `android` ? `فایل نصب آماده است` : `نسخهٔ قابل حمل آماده است`),
+          UI.h(`span`, { className: `ui-ltr`, dir: `ltr`, style: { display: `block` } }, `${(D.length / 1048576).toFixed(1)} MB · ${r === `android` ? `Android APK` : `Windows ZIP + EXE`}`),
+        )
+      : null,
+    UI.h(
+      `div`,
+      { className: `ui-actions` },
+      UI.h(
+        UI.Btn,
+        { kind: `primary`, icon: D ? `save` : `box`, className: `ui-fill`, disabled: M, onClick: () => void (D ? te() : P()) },
+        M ? (S === `save` ? `در حال ذخیره…` : `در حال ساخت…`) : D ? `ذخیرهٔ دوباره` : r === `android` ? `ساخت و ذخیرهٔ APK` : `ساخت و ذخیرهٔ PC`,
+      ),
+      S === `collect` || S === `build`
+        ? UI.h(UI.Btn, { kind: `line`, icon: `stop`, "aria-label": r === `android` ? `توقف ساخت APK` : `توقف ساخت PC`, onClick: () => k.current?.abort() })
         : null,
-      (0, import_jsx_runtime.jsxs)(`details`, {
-        className: `agent-surface p-3`,
-        children: [
-          (0, import_jsx_runtime.jsxs)(`summary`, {
-            className: `flex min-h-11 cursor-pointer items-center gap-2 text-sm`,
-            children: [
-              (0, import_jsx_runtime.jsx)(Settings2, { className: `size-4 text-mist` }),
-              `تنظیمات اختیاری`,
-              (0, import_jsx_runtime.jsx)(ChevronDown, { className: `ms-auto size-4 text-mist` }),
-            ],
-          }),
-          (0, import_jsx_runtime.jsxs)(`div`, {
-            className: `mt-3 grid gap-3`,
-            children: [
-              (0, import_jsx_runtime.jsxs)(`label`, {
-                className: `text-xs text-mist`,
-                children: [
-                  `نام برنامه`,
-                  (0, import_jsx_runtime.jsx)(`input`, {
-                    "aria-label": r === `android` ? `نام APK` : `نام برنامه PC`,
-                    className: `${field} mt-2`,
-                    value: o,
-                    maxLength: 80,
-                    disabled: M,
-                    onChange: (e) => {
-                      (l(e.target.value), N());
-                    },
-                  }),
-                ],
+    ),
+    T ? UI.h(`p`, { role: `status`, "data-testid": `apk-status`, style: { margin: 0, fontSize: 14, overflowWrap: `anywhere` } }, T) : null,
+    UI.h(
+      UI.Details,
+      { title: `تنظیمات اختیاری`, icon: `sliders` },
+      UI.h(UI.Fld, { label: `نام برنامه` }, UI.h(UI.Input, { "aria-label": r === `android` ? `نام APK` : `نام برنامه PC`, value: o, maxLength: 80, disabled: M, onChange: (ev) => { (l(ev.target.value), N()); } })),
+      UI.h(
+        UI.Fld,
+        { label: `فایل شروع` },
+        UI.h(UI.Sel, { mono: !0, "aria-label": r === `android` ? `فایل شروع APK` : `فایل شروع PC`, value: u, disabled: M, onChange: (ev) => { (f(ev.target.value), N()); } }, e?.files.map((z2) => UI.h(`option`, { key: z2.name, value: z2.name }, z2.name))),
+      ),
+      UI.h(UI.Sw, { id: `apk-libs`, label: `فهرست کتابخانه‌های Python`, checked: y, disabled: M, onChange: (v2) => { (x(v2), N()); } }),
+      r === `android`
+        ? UI.h(
+            import_react.Fragment,
+            null,
+            UI.h(
+              UI.Details,
+              { title: `شناسه و نسخهٔ برنامه` },
+              UI.h(UI.Input, { "aria-label": `شناسه APK`, mono: !0, value: p, disabled: M, maxLength: 150, onChange: (ev) => { (m(ev.target.value), g(String(nextApkVersion(ev.target.value))), N()); } }),
+              UI.h(
+                `div`,
+                { className: `ui-actions` },
+                UI.h(UI.Fld, { label: `شمارهٔ نسخه` }, UI.h(UI.Input, { "aria-label": `شماره نسخه APK`, mono: !0, inputMode: `numeric`, value: h, disabled: M, onChange: (ev) => { (g(ev.target.value), N()); } })),
+                UI.h(UI.Fld, { label: `نام نسخه` }, UI.h(UI.Input, { "aria-label": `نام نسخه APK`, mono: !0, value: _, disabled: M, onChange: (ev) => { (v(ev.target.value), N()); } })),
+              ),
+              UI.h(`p`, { className: `ui-caption`, style: { margin: 0 } }, `شمارهٔ نسخهٔ خروجی بعدی روی همین دستگاه خودکار بیشتر می‌شود.`),
+            ),
+            UI.h(
+              UI.Details,
+              { title: `پشتیبان و بازیابی کلید امضا`, icon: `lock` },
+              UI.h(`p`, { className: `ui-caption`, style: { margin: 0 } }, `کلید خودکار روی دستگاه ساخته می‌شود. پیش از پاک‌کردن داده‌های کدپد، پشتیبان بگیر تا بتوانی برنامه‌های قبلی را به‌روزرسانی کنی.`),
+              UI.h(
+                UI.Btn,
+                {
+                  kind: `line`,
+                  disabled: M,
+                  onClick: () =>
+                    void (async () => {
+                      try {
+                        let z2 = await apkSigningKey();
+                        await saveExportFile(`CodePad-private-signing-key.json`, new TextEncoder().encode(JSON.stringify(z2)), `application/json`, new AbortController().signal);
+                      } catch (er) {
+                        E(er instanceof Error ? er.message : String(er));
+                      }
+                    })(),
+                },
+                `پشتیبان کلید امضا (JSON)`,
+              ),
+              UI.h(UI.Btn, { kind: `line`, disabled: M, onClick: () => A.current?.click() }, `بازیابی کلید از فایل پشتیبان`),
+              UI.h(`input`, {
+                ref: A,
+                type: `file`,
+                accept: `application/json,.json`,
+                className: `ui-sr`,
+                "aria-label": `فایل بازیابی کلید امضا`,
+                onChange: (ev) => {
+                  let z2 = ev.target.files?.[0];
+                  ((ev.target.value = ``),
+                    z2 &&
+                      restoreApkSigningKey(z2)
+                        .then(() => {
+                          (N(), E(`کلید امضا بازیابی شد.`));
+                        })
+                        .catch((er) => E(er instanceof Error ? er.message : String(er))));
+                },
               }),
-              (0, import_jsx_runtime.jsxs)(`label`, {
-                className: `text-xs text-mist`,
-                children: [
-                  `فایل شروع`,
-                  (0, import_jsx_runtime.jsx)(`select`, {
-                    "aria-label": r === `android` ? `فایل شروع APK` : `فایل شروع PC`,
-                    className: `${field} mt-2 font-mono`,
-                    dir: `ltr`,
-                    value: u,
-                    disabled: M,
-                    onChange: (e) => {
-                      (f(e.target.value), N());
-                    },
-                    children: e?.files.map((e) =>
-                      (0, import_jsx_runtime.jsx)(`option`, { value: e.name, children: e.name }, e.name),
-                    ),
-                  }),
-                ],
-              }),
-              (0, import_jsx_runtime.jsxs)(`label`, {
-                className: `flex min-h-11 items-center gap-3 text-sm`,
-                children: [
-                  (0, import_jsx_runtime.jsx)(`input`, {
-                    type: `checkbox`,
-                    "aria-label": `همراه کردن فهرست کتابخانه‌ها`,
-                    className: `size-4`,
-                    style: { accentColor: n },
-                    checked: y,
-                    disabled: M,
-                    onChange: (e) => {
-                      (x(e.target.checked), N());
-                    },
-                  }),
-                  `فهرست کتابخانه‌های Python`,
-                ],
-              }),
-              r === `android`
-                ? (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, {
-                    children: [
-                      (0, import_jsx_runtime.jsxs)(`details`, {
-                        className: `border-t border-white/10 pt-2`,
-                        children: [
-                          (0, import_jsx_runtime.jsx)(`summary`, {
-                            className: `flex min-h-11 cursor-pointer items-center text-xs text-mist`,
-                            children: `شناسه و نسخهٔ برنامه`,
-                          }),
-                          (0, import_jsx_runtime.jsx)(`input`, {
-                            "aria-label": `شناسه APK`,
-                            dir: `ltr`,
-                            className: `${field} font-mono`,
-                            value: p,
-                            disabled: M,
-                            maxLength: 150,
-                            onChange: (e) => {
-                              (m(e.target.value), g(String(nextApkVersion(e.target.value))), N());
-                            },
-                          }),
-                          (0, import_jsx_runtime.jsxs)(`div`, {
-                            className: `mt-3 grid grid-cols-2 gap-3`,
-                            children: [
-                              (0, import_jsx_runtime.jsxs)(`label`, {
-                                className: `text-xs text-mist`,
-                                children: [
-                                  `شمارهٔ نسخه`,
-                                  (0, import_jsx_runtime.jsx)(`input`, {
-                                    "aria-label": `شماره نسخه APK`,
-                                    dir: `ltr`,
-                                    inputMode: `numeric`,
-                                    className: `${field} mt-2`,
-                                    value: h,
-                                    disabled: M,
-                                    onChange: (e) => {
-                                      (g(e.target.value), N());
-                                    },
-                                  }),
-                                ],
-                              }),
-                              (0, import_jsx_runtime.jsxs)(`label`, {
-                                className: `text-xs text-mist`,
-                                children: [
-                                  `نام نسخه`,
-                                  (0, import_jsx_runtime.jsx)(`input`, {
-                                    "aria-label": `نام نسخه APK`,
-                                    dir: `ltr`,
-                                    className: `${field} mt-2`,
-                                    value: _,
-                                    disabled: M,
-                                    onChange: (e) => {
-                                      (v(e.target.value), N());
-                                    },
-                                  }),
-                                ],
-                              }),
-                            ],
-                          }),
-                          (0, import_jsx_runtime.jsx)(`p`, {
-                            className: `mt-3 text-xs leading-5 text-mist`,
-                            children: `شمارهٔ نسخهٔ خروجی بعدی روی همین دستگاه خودکار بیشتر می‌شود.`,
-                          }),
-                        ],
-                      }),
-                      (0, import_jsx_runtime.jsxs)(`details`, {
-                        className: `border-t border-white/10 pt-2`,
-                        children: [
-                          (0, import_jsx_runtime.jsxs)(`summary`, {
-                            className: `flex min-h-11 cursor-pointer items-center gap-2 text-xs text-mist`,
-                            children: [
-                              (0, import_jsx_runtime.jsx)(KeyRound, { className: `size-4` }),
-                              `پشتیبان و بازیابی کلید امضا`,
-                            ],
-                          }),
-                          (0, import_jsx_runtime.jsx)(`p`, {
-                            className: `mb-3 text-xs leading-5 text-mist`,
-                            children: `کلید خودکار روی دستگاه ساخته می‌شود. پیش از پاک‌کردن داده‌های کدپد، پشتیبان بگیر تا بتوانی برنامه‌های قبلی را به‌روزرسانی کنی.`,
-                          }),
-                          (0, import_jsx_runtime.jsx)(`button`, {
-                            type: `button`,
-                            disabled: M,
-                            className: `${ghostBtn} min-h-11 w-full`,
-                            onClick: () =>
-                              void (async () => {
-                                try {
-                                  let e = await apkSigningKey();
-                                  await saveExportFile(
-                                    `CodePad-private-signing-key.json`,
-                                    new TextEncoder().encode(JSON.stringify(e)),
-                                    `application/json`,
-                                    new AbortController().signal,
-                                  );
-                                } catch (e) {
-                                  E(e instanceof Error ? e.message : String(e));
-                                }
-                              })(),
-                            children: `پشتیبان کلید امضا (JSON)`,
-                          }),
-                          (0, import_jsx_runtime.jsx)(`button`, {
-                            type: `button`,
-                            disabled: M,
-                            className: `${ghostBtn} mt-2 min-h-11 w-full`,
-                            onClick: () => A.current?.click(),
-                            children: `بازیابی کلید از فایل پشتیبان`,
-                          }),
-                          (0, import_jsx_runtime.jsx)(`input`, {
-                            ref: A,
-                            type: `file`,
-                            accept: `application/json,.json`,
-                            className: `hidden`,
-                            "aria-label": `فایل بازیابی کلید امضا`,
-                            onChange: (e) => {
-                              let t = e.target.files?.[0];
-                              ((e.target.value = ``),
-                                t &&
-                                  restoreApkSigningKey(t)
-                                    .then(() => {
-                                      (N(), E(`کلید امضا بازیابی شد.`));
-                                    })
-                                    .catch((e) => E(e instanceof Error ? e.message : String(e))));
-                            },
-                          }),
-                        ],
-                      }),
-                    ],
-                  })
-                : null,
-            ],
-          }),
-        ],
-      }),
-      (0, import_jsx_runtime.jsxs)(`div`, {
-        className: `grid gap-2 text-[11px] leading-5 text-mist`,
-        children: [
-          (0, import_jsx_runtime.jsxs)(`p`, {
-            className: `flex gap-2`,
-            children: [
-              (0, import_jsx_runtime.jsx)(ShieldCheck, { className: `mt-0.5 size-4 shrink-0` }),
-              `فقط همین پروژه بسته‌بندی می‌شود؛ کلید جمنای و برنامه‌های دیگر همراه خروجی نیستند.`,
-            ],
-          }),
-          (0, import_jsx_runtime.jsxs)(`p`, {
-            className: `flex gap-2`,
-            children: [
-              (0, import_jsx_runtime.jsx)(FileCode2, { className: `mt-0.5 size-4 shrink-0` }),
-              `موتورهای فعلی زبان همراه برنامه‌اند. کتابخانه‌های اضافهٔ Python ممکن است در اولین اجرا اینترنت بخواهند.`,
-            ],
-          }),
-        ],
-      }),
-    ],
-  });
+            ),
+          )
+        : null,
+    ),
+    UI.h(UI.Note, null, `فقط همین پروژه بسته‌بندی می‌شود؛ کلید هوش مصنوعی و برنامه‌های دیگر همراه خروجی نیستند. موتورهای فعلی زبان همراه برنامه‌اند. کتابخانه‌های اضافهٔ Python ممکن است در اولین اجرا اینترنت بخواهند.`),
+  );
 }
 var pythonWarmRequested = !1;
 function warmPython() {

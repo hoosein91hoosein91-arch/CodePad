@@ -1,0 +1,36 @@
+/* Camera, Turtle and 3D share the CodePad shell; selectors are runtime hooks. */
+.cp-vision{position:fixed;inset:0;width:min(1200px,100vw);height:min(900px,100dvh);max-width:100vw;max-height:100dvh;margin:auto;padding:0;border:1px solid var(--ui-line);border-radius:var(--ui-r-sheet);background:var(--ui-bg);color:var(--ui-text);font:16px/1.8 var(--ui-font);overflow:hidden}
+.cp-vision *{box-sizing:border-box}.cp-vision::backdrop{background:var(--ui-scrim)}
+.cp-vision-shell{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;height:100%;min-width:0}
+.cp-vision header{display:flex;align-items:center;gap:16px;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--ui-line)}
+.cp-vision-title{min-width:0}.cp-vision h2{font-size:18px;line-height:1.6;margin:0}.cp-vision small{font-size:12px;color:var(--ui-muted);letter-spacing:0}.cp-vision-actions{display:flex;gap:8px;flex-wrap:wrap}
+.cp-vision button,.cp-vision select,.cp-vision summary{min-height:48px;min-width:48px;padding:8px 16px;border:1px solid var(--ui-line);border-radius:var(--ui-r-control);background:var(--ui-surface-2);color:var(--ui-text);font:600 14px/1.6 var(--ui-font);cursor:pointer}
+.cp-vision button:disabled{opacity:.5;cursor:default}.cp-vision button[aria-pressed=true]{color:var(--ui-primary);border-color:var(--ui-primary)}
+.cp-vision [data-close]{background:var(--ui-primary);color:var(--ui-on-primary);border-color:transparent}
+.cp-vision-toolbar{position:relative;z-index:3;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 24px;background:var(--ui-surface)}
+.cp-vision [role=status]{margin:0;font-size:14px;overflow-wrap:anywhere}.cp-vision [data-status]{flex:1;min-width:160px}.cp-vision-settings{margin-inline-start:auto}
+.cp-vision summary{list-style:none}.cp-vision summary::-webkit-details-marker{display:none}
+.cp-vision-settings-panel{position:absolute;inset-inline-end:24px;top:100%;display:grid;gap:16px;padding:16px;width:min(320px,calc(100vw - 32px));max-height:min(420px,60dvh);overflow:auto;border:1px solid var(--ui-line);border-radius:var(--ui-r-card);background:var(--ui-surface)}
+.cp-vision-settings-panel label{display:grid;gap:8px;font-size:14px}.cp-vision select{width:100%}
+.cp-vision-stage{position:relative;min-width:0;min-height:0;overflow:hidden;display:grid;place-items:center;background:var(--ui-canvas)}
+.cp-vision-empty{position:absolute;inset:0;z-index:2;display:grid;place-content:center;text-align:center;padding:24px;margin:0;background:var(--ui-canvas);color:var(--ui-code);font-size:14px}
+.cp-vision [data-stage],.cp-vision [data-turtle]{display:block;width:100%;height:100%;object-fit:contain}
+.cp-vision figure{position:absolute;inset-inline-end:16px;bottom:16px;margin:0;width:min(28%,240px);border:1px solid var(--ui-line);border-radius:var(--ui-r-control);overflow:hidden;background:var(--ui-surface)}
+.cp-vision [data-monitor]{display:block;width:100%;height:auto}.cp-vision figcaption{padding:8px;font-size:12px;color:var(--ui-muted)}
+.cp-vision:not(.cp-vision-camera-only)[data-monitor-visible=false] figure{display:none}
+.cp-vision-camera-only [data-stage]{display:none}.cp-vision-camera-only figure{inset:0;width:100%;height:100%;max-width:100%;display:grid;place-items:center;border:0;border-radius:0;background:var(--ui-canvas)}
+.cp-vision-camera-only [data-monitor]{max-height:100%;object-fit:contain}.cp-vision-camera-only figcaption{position:absolute;bottom:8px;inset-inline-end:8px;background:var(--ui-surface);border-radius:8px}
+.cp-vision footer{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 24px calc(8px + var(--ui-safe-b));font-size:12px;color:var(--ui-muted);border-top:1px solid var(--ui-line)}
+.cp-vision [data-metrics]{flex:1;min-width:0}.cp-vision-keys{display:flex;flex-wrap:wrap;gap:8px;width:100%}.cp-vision-keys>span{align-self:center;margin-inline-end:auto}.cp-vision-keys button{font-family:var(--ui-mono);padding:8px}
+.cp-vision [data-file-status]{width:100%}.cp-vision [data-file-status]:empty{display:none}
+.cp-vision-turtle [data-stage],.cp-vision-turtle figure,.cp-vision-turtle .cp-vision-settings,.cp-vision-turtle .cp-vision-keys,.cp-vision-turtle [data-monitor-rebuild]{display:none!important}
+.cp-vision-turtle .cp-vision-shell{grid-template-rows:auto auto auto minmax(0,1fr) auto}
+.cp-turtle-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 24px;background:var(--ui-surface);border-bottom:1px solid var(--ui-line)}
+.cp-turtle-transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.cp-turtle-transport label{display:flex;align-items:center;gap:8px;font-size:14px}.cp-turtle-controls select{width:auto}.cp-turtle-controls [data-turtle-progress]{font-size:12px;color:var(--ui-muted)}
+.cp-vision-expanded,.cp-vision.cp-vision-output-only{width:100vw;height:100dvh;max-width:100vw;max-height:100dvh;border:0;border-radius:0;margin:0}
+.cp-vision-output-only .cp-vision-shell{display:flex;flex-direction:column}.cp-vision-output-only .cp-vision-stage{flex:1}
+.cp-vision-output-only header,.cp-vision-output-only .cp-vision-toolbar,.cp-vision-output-only footer,.cp-vision-output-only .cp-turtle-controls,.cp-vision-output-only figcaption{display:none!important}
+.cp-vision .cp-output-back{display:none;position:absolute;z-index:8;top:max(12px,var(--ui-safe-t));left:max(12px,var(--ui-safe-l));width:48px;height:48px;padding:12px;background:var(--ui-surface);color:var(--ui-text);opacity:0;pointer-events:none}
+.cp-output-back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8}.cp-vision-output-only .cp-output-back{display:block}.cp-vision-output-only.cp-output-controls-visible .cp-output-back,.cp-output-back:focus-visible{opacity:1;pointer-events:auto}
+@media(max-width:600px){.cp-vision{border:0;border-radius:0;width:100vw;height:100dvh}.cp-vision header{padding:12px 16px;flex-wrap:wrap}.cp-vision h2{font-size:16px}.cp-vision-title{width:100%}.cp-vision-actions{width:100%}.cp-vision-actions button{flex:1}.cp-vision-toolbar,.cp-turtle-controls,.cp-vision footer{padding-inline:16px}.cp-vision-keys{flex-wrap:nowrap;overflow-x:auto}.cp-vision-keys>span{display:none}.cp-vision-keys button{flex:none}.cp-vision figcaption{display:none}}
+@media(max-height:500px){.cp-vision header{padding:4px 12px;flex-wrap:nowrap}.cp-vision-title{width:auto}.cp-vision small,.cp-vision-footnote{display:none}.cp-vision-actions{width:auto}.cp-vision-toolbar{padding-block:4px}.cp-vision footer{padding:4px 12px}.cp-vision-keys{width:auto;max-width:65%;overflow-x:auto;flex-wrap:nowrap}.cp-vision-keys>span{display:none}.cp-vision-keys button{flex:none}}

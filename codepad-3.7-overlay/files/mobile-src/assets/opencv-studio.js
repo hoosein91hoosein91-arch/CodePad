@@ -1,0 +1,17 @@
+export async function renderOpenCVStudio(host){
+ const rows=[
+ ['دوربین','VideoCapture(0/1), read, set, get, release','دوربین دستگاه و تشخیص دست قبلی حفظ شده‌اند.'],
+ ['فایل ویدیو','VideoCapture("clip.mp4"), POS_MSEC, POS_FRAMES, FPS','پروژهٔ محلی؛ نمونه‌برداری پیش‌فرض ۳۰ فریم/ثانیه، قابل تغییر. FPS و تعداد فریم گزارش‌شده، نرخ نمونه‌برداری‌اند؛ نرخ اصلی فایل نیستند.'],
+ ['بستهٔ واقعی Python','cv2 4.11.0 · core / imgproc / features2d / calib3d / video / ml / dnn / objdetect','خود wheel رسمی Pyodide همراه برنامه است؛ بیش از ۲۴۰۰ نام در cv2. توابع نصب‌شده مستقیماً از کتابخانهٔ واقعی می‌آیند.'],
+ ['رنگ و ماسک','cvtColor, inRange, threshold, adaptiveThreshold, split, merge','تبدیل‌های رنگ، ماسک و آستانه‌های اصلی از خود OpenCV Python.'],
+ ['فیلتر و لبه','blur, GaussianBlur, medianBlur, bilateralFilter, filter2D, Canny, Sobel, Laplacian, convertScaleAbs, equalizeHist','پردازش واقعی با OpenCV.js همراه؛ مشتق‌های uint8 / int16 / float32 / float64.'],
+ ['مورفولوژی','erode, dilate, morphologyEx, getStructuringElement','بازکردن، بستن، گرادیان و کرنل‌های مستطیل، بیضی و صلیب.'],
+ ['هندسه و کانتور','findContours, drawContours, contourArea, arcLength, approxPolyDP, convexHull, moments, isContourConvex, pointPolygonTest, boundingRect','کانتور، سلسله‌مراتب، moments تصویر و نقاط، و هندسه از OpenCV Python واقعی.'],
+ ['تغییر تصویر','resize, rotate, warpAffine, warpPerspective, getRotationMatrix2D, copyMakeBorder, flip, transform','ماتریس، چرخش، تغییر اندازه و حاشیه با پردازش واقعی.'],
+ ['تصویر و پنجره','imread, imdecode, imencode, imwrite, namedWindow, imshow, waitKey, setMouseCallback, getWindowProperty','کُدک‌های واقعی بسته؛ PNG و JPEG بررسی شده‌اند. یک پنجرهٔ خروجی با لمس و ماوس و ذخیرهٔ فایل روی دستگاه.'],
+ ['ویژگی، حرکت و مدل','ORB_create, SIFT_create, matchTemplate, calcHist, calcOpticalFlowPyrLK, findHomography, ml, dnn','الگوریتم‌های بستهٔ واقعی فعال‌اند. آموزش KNN و اجرای مدل ONNX کوچک در تست بررسی شده‌اند؛ مدل‌های خودت را به پروژه اضافه کن.'],
+ ['محدودیت‌های دستگاه','CUDA / desktop HighGUI / FFmpeg / extra contrib builds','همهٔ ماژول‌های موجود در بستهٔ WASM همراه در دسترس‌اند؛ سخت‌افزار CUDA و backendهای سیستم‌عامل دسکتاپ اضافه نمی‌شوند. قابلیت VideoWriter و کُدک‌ها تابع ساخت همین بسته است؛ isOpened را بررسی کن.']
+ ];
+ host.innerHTML=`<div class="ui-intro"><h2>لایه‌های پردازش تصویر</h2><p>بستهٔ واقعی OpenCV Python همراه برنامه است؛ دوربین، لمس، پنجره و فایل ویدیو به امکانات کدپد متصل‌اند. فهرست زیر نمونهٔ بخش‌ها و محدودیت‌هاست.</p><div class="ui-actions"><button data-cv-video-demo class="ui-btn ui-btn--primary">پروژهٔ آمادهٔ پردازش ویدیو</button></div></div><table class="cv-support-table"><thead><tr><th>بخش</th><th>توابع</th><th>پشتیبانی</th></tr></thead><tbody>${rows.map(([name,apis,note])=>`<tr><td>${name}</td><td dir="ltr"><code>${apis}</code></td><td>${note}</td></tr>`).join('')}</tbody></table><p class="ui-caption" data-cv-status role="status"></p>`;
+ host.querySelector('[data-cv-video-demo]').onclick=async()=>{const status=host.querySelector('[data-cv-status]');try{status.textContent='در حال بازکردن پروژه…';const r=await fetch(new URL('../examples/video-lab.zip',import.meta.url));if(!r.ok)throw Error('پروژهٔ نمونه پیدا نشد.');window.CodePadStudio.close();await(await import('./project-import.js')).openZip(new File([await r.blob()],'video-lab.zip',{type:'application/zip'}));}catch(e){status.textContent=e.message;}};
+}

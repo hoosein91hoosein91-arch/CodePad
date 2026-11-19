@@ -225,15 +225,7 @@ function ensureDialog() {
   document.body.append(dialog);
   dialog.querySelector('[data-close]').onclick = () => closeViewer(true);
   dialog.addEventListener('cancel', (e) => { e.preventDefault(); closeViewer(true); });
-  const style = document.createElement('style');
-  style.textContent = `.cp-py3d{position:fixed;inset:0;width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:#000;color:#d9ffe9;overflow:hidden}
-.cp-py3d::backdrop{background:#000}.cp-py3d[open]{display:flex;flex-direction:column}
-.cp-py3d header{display:flex;align-items:center;gap:12px;padding:8px 12px;background:#06120d;border-bottom:1px solid #12382a;z-index:2}
-.cp-py3d header small{color:#53ffa8;letter-spacing:2px;font:600 10px ui-monospace,monospace}.cp-py3d header h2{margin:0;font-size:15px;color:#e8fff3}
-.cp-py3d header div{flex:1}.cp-py3d .cp-py3d-status{font-size:12px;color:#ffd27a}
-.cp-py3d header button{background:#12382a;color:#e8fff3;border:1px solid #1f6b4c;border-radius:8px;padding:7px 14px;font:inherit}
-.cp-py3d section{flex:1;min-height:0;position:relative}.cp-py3d iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}`;
-  document.head.append(style);
+
 }
 function openViewer(cfg) {
   closeViewer(false);
