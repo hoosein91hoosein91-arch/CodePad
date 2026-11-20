@@ -511,7 +511,7 @@
   },
   "scripts/build-windows-desktop.mjs": {
    "base": null,
-   "new": "022a50c942111da99c17ec355d0936b5b366e79015c613f295642da54a01abc0"
+   "new": "42dcfc6b74d90c21120544e91e44e1d4ac9d0f2e2ac93f493668db1a035858d9"
   },
   "scripts/confidential.test.mjs": {
    "base": null,

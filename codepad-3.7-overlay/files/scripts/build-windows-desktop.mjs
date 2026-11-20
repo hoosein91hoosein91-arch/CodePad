@@ -37,9 +37,15 @@ if (embed) {
 // codepad:// scheme. Allow our own scheme in the copy that ships with the desktop app; the web/APK builds are untouched.
 const mainJs = join(stage, 'web/assets/main.js');
 const original = '(e.protocol !== `http:` && e.protocol !== `https:`) || e.origin !== t || !!e.username || !!e.password';
+const patched = '(e.protocol !== `http:` && e.protocol !== `https:` && e.protocol !== `codepad:`) || e.origin !== t || !!e.username || !!e.password';
 const text = readFileSync(mainJs, 'utf8');
-if (text.split(original).length !== 2) throw new Error('main.js changed: the router origin check was not found exactly once; update the desktop patch.');
-writeFileSync(mainJs, text.replace(original, original.replace('e.protocol !== `https:`)', 'e.protocol !== `https:` && e.protocol !== `codepad:`)')));
+if (text.split(patched).length === 2) {
+  // already allows codepad: at the source (this main.js was built from a tree where the patch was applied upstream)
+} else if (text.split(original).length === 2) {
+  writeFileSync(mainJs, text.replace(original, patched));
+} else {
+  throw new Error('main.js changed: the router origin check was not found exactly once (patched or unpatched); update the desktop patch.');
+}
 
 const loaded = createRequire(join(process.cwd(), 'noop.js'))('@electron/packager');
 const packager = typeof loaded === 'function' ? loaded : (loaded.packager ?? loaded.default);
